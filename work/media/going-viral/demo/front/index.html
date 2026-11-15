@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Going Viral</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"><div class="room" id="room"></div><div class="neon" id="neon"></div></div>
+<audio id="music" src="assets/music.mp3" loop preload="none"></audio>
+<div class="heatvig" aria-hidden="true"></div>
+<div class="glitch" id="glitch" aria-hidden="true"></div>
+
+<div class="intro" id="intro">
+  <div class="intro-in">
+    <img class="intro-logo" src="assets/logo.webp" alt="Going Viral" width="720" height="482">
+    <p class="intro-tag" id="introTag">Every reaction pumps the post. Every Hype Check locks it in. Don't get cancelled.</p>
+    <div class="intro-load" aria-hidden="true"><i id="introBar"></i></div>
+    <p class="intro-err" id="introErr" hidden></p>
+    <button class="intro-play" id="introPlay" type="button" disabled>Loading</button>
+    <p class="intro-fine" id="introFine">Best with sound on</p>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <img class="logo" src="assets/logo.webp" alt="Going Viral" width="720" height="482">
+    <div class="tags">
+      <span class="tag" id="rtpTag" hidden>RTP 96.30%</span>
+      <span class="tag" id="timerTag" hidden>0:00</span>
+      <span class="tag" id="netTag" hidden>Net 0.00</span>
+    </div>
+    <div class="top-right">
+      <div class="wallet" id="wallet"><img class="coin" src="assets/coin.webp" alt="" width="20" height="20"><span class="lbl">Balance</span><b id="balance">–</b></div>
+      <button class="icon-btn" id="infoBtn" type="button" aria-label="Game rules">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/></svg>
+      </button>
+      <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound off" aria-pressed="false">
+        <svg id="icoOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+        <svg id="icoOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="stage" aria-label="Game">
+    <div class="hud">
+      <div>
+        <div class="post-head">
+          <div class="ring"><span>GV</span></div>
+          <div class="who"><b>@goingviral</b><small id="roundLabel">Ready to post</small></div>
+          <span class="chip" id="chip">READY</span>
+        </div>
+        <div class="mult-row">
+          <div class="mult-wrap" id="multWrap"><div class="mult" id="mult">×0.00</div></div>
+          <div class="secured">
+            <span class="lockpill off" id="lockPill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span id="lockText">Nothing secured</span></span>
+            <span class="shieldpill" id="shieldPill" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg>Shield up</span>
+          </div>
+        </div>
+      </div>
+      <div class="views"><b id="views">0</b><span>views</span></div>
+    </div>
+    <div class="meter-wrap" aria-hidden="true"><div class="meter"><i id="meter"></i></div><div class="marks" id="marks"></div></div>
+    <div class="board-wrap">
+      <div class="framebox" id="framebox">
+      <img class="bframe" src="assets/board-frame.webp" alt="" aria-hidden="true">
+      <div class="board" id="board">
+        <div class="grid" id="grid"></div>
+        <div class="flash" id="flash" aria-hidden="true"></div>
+        <canvas id="cracks" aria-hidden="true"></canvas>
+        <canvas id="fx" aria-hidden="true"></canvas>
+        <div class="layer">
+          <div class="result" id="result" hidden><img id="resultImg" alt=""><p id="resultText"></p></div>
+          <div class="hype" id="hype" aria-hidden="true" hidden></div>
+          <div class="bigwin" id="bigwin" role="status" hidden><div class="rays"></div><img id="bigwinImg" alt=""><b id="bigwinAmt">0.00</b></div>
+          <div class="check" id="check" hidden>
+            <div class="rays" aria-hidden="true"></div>
+            <img class="check-logo" src="assets/hype-check.webp" alt="Hype Check">
+            <p class="check-sub" id="checkSub">The algorithm is deciding…</p>
+            <div class="check-opts" id="checkOpts">
+              <div class="ck k-lock" data-k="lock"><img src="assets/icon-lock.webp" alt="">LOCK<small>secure it</small></div>
+              <div class="ck k-shield" data-k="shield"><img src="assets/icon-shield.webp" alt="">SHIELD<small>blocks 1 cancel</small></div>
+              <div class="ck k-boost" data-k="boost"><img src="assets/icon-x2.webp" alt="">BOOST<small>×2</small></div>
+              <div class="ck k-repost" data-k="repost"><img src="assets/icon-x5.webp" alt="">REPOST<small>×5</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="onair-bar" id="onAir" hidden><span class="rec" aria-hidden="true"></span>LIVE<span class="sep" aria-hidden="true">·</span><b id="viewers">0</b>&nbsp;watching<span class="sep" aria-hidden="true">·</span><span id="streamLeft"></span></div>
+        <div class="chat" id="chat" aria-hidden="true"></div>
+        <img class="scratcher" id="scratcher" src="assets/coin.webp" alt="" aria-hidden="true" hidden>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="side" aria-label="Controls">
+    <div class="winbox"><span id="winLbl">Win</span><b id="winAmt">0.00</b></div>
+    <div class="replay-bar" id="replayBar" hidden>
+      <dl class="facts">
+        <dt>Mode</dt><dd id="rpMode">BASE</dd>
+        <dt>Amount</dt><dd id="rpAmount">–</dd>
+        <dt>Real cost</dt><dd id="rpCost">–</dd>
+        <dt>Multiplier</dt><dd id="rpMult">–</dd>
+      </dl>
+    </div>
+    <div class="deck">
+      <button type="button" class="rbtn" id="fastBtn" aria-pressed="false" aria-label="Turbo"><img src="assets/icon-turbo.webp" alt=""><span>TURBO</span></button>
+      <button class="action" id="action" type="button"><span class="action-lbl" id="actionLabel">PLAY</span><small id="actionSub">&nbsp;</small></button>
+      <button type="button" class="rbtn" id="autoBtn" aria-label="Autoplay"><img src="assets/icon-auto.webp" alt=""><span id="autoLbl">AUTO</span></button>
+    </div>
+    <div class="field">
+      <span class="lbl">Play amount</span>
+      <div class="stepper">
+        <button type="button" id="amtMinus" aria-label="Lower play amount">−</button>
+        <div class="amount"><b id="amtText">–</b><select id="amtSelect" aria-label="Play amount"></select></div>
+        <button type="button" id="amtPlus" aria-label="Raise play amount">+</button>
+      </div>
+    </div>
+    <div class="row">
+      <button type="button" id="minBtn">MIN</button>
+      <button type="button" id="maxBtn">MAX</button>
+    </div>
+    <p class="msg" id="msg" role="alert" hidden></p>
+    <button class="buy" id="buyBtn" type="button" aria-label="Go Live"><img src="assets/btn-golive.webp" alt="" width="520" height="152"><small id="buyPrice"></small></button>
+    <div class="history" id="history" aria-label="Your recent posts"></div>
+    <div class="pt" id="paytable" aria-label="Win table">
+      <div class="pt-row">
+        <span class="pt-chip"><img src="assets/heart.webp" alt="Heart">+0.04×</span>
+        <span class="pt-chip"><img src="assets/fire.webp" alt="Fire">+0.10×</span>
+        <span class="pt-chip"><img src="assets/rocket.webp" alt="Rocket">+0.24×</span>
+        <span class="pt-chip"><img src="assets/crown.webp" alt="Crown">+0.64×</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-chip k-lock"><img src="assets/icon-lock.webp" alt="">Lock</span>
+        <span class="pt-chip k-shield"><img src="assets/icon-shield.webp" alt="">Shield</span>
+        <span class="pt-chip k-boost"><img src="assets/icon-x2.webp" alt="">Boost</span>
+        <span class="pt-chip k-repost"><img src="assets/icon-x5.webp" alt="">Repost</span>
+        <span class="pt-chip k-live"><img src="assets/live.webp" alt="LIVE">100% = LIVE</span>
+      </div>
+    </div>
+    <div class="st" id="stats" aria-label="This session">
+      <div><span>Rounds</span><b id="stRounds">0</b></div>
+      <div><span>Best win</span><b id="stBest">–</b><small id="stBestAmt"></small></div>
+      <div><span>LIVE streams</span><b id="stLive">0</b></div>
+    </div>
+    <div class="hm" id="hm" aria-label="Hype meter: fill it to go LIVE">
+      <div class="hm-head"><span class="hm-title">HYPE METER</span><span class="hm-now"><span class="hm-lvl" id="hmLvl">Warming up</span><b class="hm-pct" id="hmPct">0%</b></span></div>
+      <div class="hm-body">
+        <div class="hm-tube" id="hmTube">
+          <div class="hm-fill" id="hmFill"><i class="hm-wave"></i><i class="hm-bubbles"></i></div>
+          <div class="hm-ticks" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+          <img class="hm-icon" id="hmIcon" src="assets/fire.webp" alt="">
+        </div>
+        <div class="hm-side">
+          <div class="hm-log" id="hmLog" aria-live="polite"></div>
+          <div class="hm-foot"><span class="hm-count" id="hmHint">Fill it to go LIVE</span><span class="hm-streak" id="hmStreak" hidden><img src="assets/fire.webp" alt=""><b id="hmStreakN">0</b> streak</span></div>
+        </div>
+      </div>
+      <div class="hm-boom" id="hmBoom" hidden>GOING<br>LIVE!</div>
+    </div>
+    <p class="hint" id="hint">Space = Play · ⓘ = rules</p>
+  </aside>
+</div>
+
+<div class="modal" id="buyConfirm" role="dialog" aria-modal="true" aria-labelledby="buyTitle" hidden>
+  <div class="sheet confirm">
+    <img class="confirm-art" src="assets/live.webp" alt="">
+    <h2 id="buyTitle">Go Live?</h2>
+    <p id="buyText"></p>
+    <div class="confirm-btns">
+      <button type="button" class="ghost" id="buyNo">Not now</button>
+      <button type="button" class="go" id="buyYes">Go Live</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="autoPanel" role="dialog" aria-modal="true" aria-labelledby="autoTitle" hidden>
+  <div class="sheet confirm auto">
+    <h2 id="autoTitle">Autoplay</h2>
+    <div class="ap-field"><span class="ap-lbl">Number of plays</span>
+      <div class="seg" id="apRounds"><button type="button" data-v="10" aria-pressed="true">10</button><button type="button" data-v="25">25</button><button type="button" data-v="50">50</button><button type="button" data-v="100">100</button></div></div>
+    <div class="ap-field"><span class="ap-lbl">Stop if a single win is at least</span>
+      <div class="seg" id="apWin"><button type="button" data-v="0" aria-pressed="true">Off</button><button type="button" data-v="10">10×</button><button type="button" data-v="50">50×</button><button type="button" data-v="100">100×</button></div></div>
+    <div class="ap-field"><span class="ap-lbl">Stop if balance falls by</span>
+      <div class="seg" id="apLoss"><button type="button" data-v="0" aria-pressed="true">Off</button><button type="button" data-v="10">10×</button><button type="button" data-v="25">25×</button><button type="button" data-v="50">50×</button></div>
+      <span class="ap-note" id="apLossNote"></span></div>
+    <label class="ap-check"><input type="checkbox" id="apLive" checked> Stop when a LIVE STREAM starts</label>
+    <p class="ap-sum" id="apSum"></p>
+    <div class="confirm-btns">
+      <button type="button" class="ghost" id="apCancel">Cancel</button>
+      <button type="button" class="go" id="apStart">Start autoplay</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="rules" role="dialog" aria-modal="true" aria-labelledby="rulesTitle" hidden>
+  <div class="sheet">
+    <button class="icon-btn close" id="rulesClose" type="button" aria-label="Close rules">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <h2 id="rulesTitle">Going Viral · Game rules</h2>
+    <dl class="facts">
+      <dt>BASE mode</dt><dd>1× the play amount · RTP 96.30% · max win 5,000×</dd>
+      <dt>GO LIVE mode</dt><dd>64× the play amount · RTP 96.30% · max win 5,000×</dd>
+      <dt>Board</dt><dd>36 tiles (6 × 6)</dd>
+    </dl>
+
+    <h3>How to play</h3>
+    <ol>
+      <li>Choose your play amount and press PLAY (or the space bar).</li>
+      <li>Your post goes live and its tiles flip one at a time. Each reaction adds to the post's multiplier.</li>
+      <li>After every 5th reaction a Hype Check fires on its own. It always secures (locks in) the current multiplier and adds one effect.</li>
+      <li>If a CANCELLED tile flips, the post ends and you win your secured multiplier × the play amount. If nothing is secured yet, the round ends with no win.</li>
+      <li>If all 36 tiles flip without a cancel, the post Goes Viral: the multiplier doubles and you win it in full.</li>
+      <li>Reactions and Hype Checks fill the round's Hype Meter. When it reaches 100%, the post goes live and the LIVE STREAM bonus starts (see below).</li>
+    </ol>
+
+    <h3>Reactions</h3>
+    <table>
+      <thead><tr><th>Tile</th><th>Adds to the multiplier</th></tr></thead>
+      <tbody>
+        <tr><td><img src="assets/heart.webp" alt="">Heart</td><td>+0.04×</td></tr>
+        <tr><td><img src="assets/fire.webp" alt="">Fire</td><td>+0.10×</td></tr>
+        <tr><td><img src="assets/rocket.webp" alt="">Rocket</td><td>+0.24×</td></tr>
+        <tr><td><img src="assets/crown.webp" alt="">Crown</td><td>+0.64×</td></tr>
+        <tr><td><img src="assets/cancel.webp" alt="">Cancelled</td><td>Ends the post</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Hype Check effects</h3>
+    <table>
+      <thead><tr><th>Effect</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>Lock</td><td>Secures the multiplier</td></tr>
+        <tr><td>Shield</td><td>Secures it and blocks the next CANCELLED</td></tr>
+        <tr><td>Boost</td><td>Multiplier ×2, then secures it</td></tr>
+        <tr><td>Repost</td><td>Multiplier ×5, then secures it</td></tr>
+        <tr><td>Went Viral (all 36 tiles)</td><td>Multiplier ×2, won in full</td></tr>
+      </tbody>
+    </table>
+    <p>Win = play amount × final multiplier. Wins are capped at 5,000× the play amount: any round whose result would be higher wins exactly 5,000×. A Shield blocks one CANCELLED tile; a blocked tile stays on the board and the post keeps going.</p>
+
+    <h3>Hype Meter</h3>
+    <p>The Hype Meter starts empty at the start of every round and fills as the round plays. Each reaction and each Hype Check adds to it:</p>
+    <table>
+      <thead><tr><th>Event</th><th>Adds to the meter</th></tr></thead>
+      <tbody>
+        <tr><td>Heart / Fire / Rocket / Crown</td><td>+1% / +2% / +4% / +8%</td></tr>
+        <tr><td>Hype Check: Lock / Shield</td><td>+2% / +4%</td></tr>
+        <tr><td>Hype Check: Boost / Repost</td><td>+12% / +35%</td></tr>
+      </tbody>
+    </table>
+    <p>When the meter reaches 100% and at least 7 tiles are still closed, the post goes LIVE straight away. If a CANCELLED tile ends the round first, the meter's progress is lost; it never carries over to the next round. The log next to the meter lists what filled it this round.</p>
+
+    <h3>LIVE STREAM bonus</h3>
+    <p>Going live adds +1.00× to the post (a LIVE tile marks the moment) and starts the stream. The next 6 tiles are live tiles: each one multiplies the post's multiplier, and no CANCELLED can appear during the stream. When the 6th live tile flips, the stream ends and you win the full multiplier × the play amount.</p>
+    <table>
+      <thead><tr><th>Live tile</th><th>Multiplies the post by</th></tr></thead>
+      <tbody>
+        <tr><td><img src="assets/heart.webp" alt="">Heart</td><td>×1.1 or ×1.2</td></tr>
+        <tr><td><img src="assets/fire.webp" alt="">Fire</td><td>×1.5</td></tr>
+        <tr><td><img src="assets/rocket.webp" alt="">Rocket</td><td>×2 or ×3</td></tr>
+        <tr><td><img src="assets/crown.webp" alt="">Crown</td><td>×5</td></tr>
+      </tbody>
+    </table>
+
+    <h3>GO LIVE mode</h3>
+    <p>The GO LIVE button starts a round straight in the LIVE STREAM bonus, from 10.00×, for 64× the play amount. You confirm the price before the round starts. The stream works exactly as above: 6 live tiles, then you win the full multiplier × the play amount. RTP in this mode is 96.30% and the max win is 5,000× the play amount.</p>
+    <p>There are no choices during a round. The whole round is decided by the game server when you press PLAY; the animation shows that result.</p>
+
+    <h3>Controls</h3>
+    <ul>
+      <li>The big round <b>PLAY</b> button starts a round with the selected play amount. The space bar does the same. While a round plays, the button spins and waits.</li>
+      <li><b>− / +</b> and the amount itself change the play amount. <b>MIN</b> and <b>MAX</b> jump to the smallest and largest amounts.</li>
+      <li><b>TURBO</b> (the lightning button left of PLAY) speeds up the animations.</li>
+      <li><b>AUTO</b> (the button right of PLAY) opens the autoplay panel. Choose how many plays, and optionally stop when a single win reaches a size you pick, when your balance falls by a set amount, or when a LIVE STREAM starts. Nothing starts until you press Start autoplay. Autoplay always uses the BASE mode at the selected play amount. Press STOP (or the space bar) at any time; the current round finishes first. Autoplay also stops if your balance is too low for the next play.</li>
+      <li><b>GO LIVE</b> opens a confirmation showing the price (64× the play amount). Confirm to start a round straight in the LIVE STREAM bonus.</li>
+      <li>The <b>speaker</b> button turns sound and music on or off. The <b>ⓘ</b> button opens these rules.</li>
+      <li><b>Win</b> shows what the round has secured so far, and the final win at the end.</li>
+      <li>The <b>Hype Meter</b> shows this round's progress toward the LIVE STREAM, with a log of what filled it. The streak label above it counts rounds in a row that won at least the play amount; it is a label only.</li>
+    </ul>
+
+    <h3>Disclaimer</h3>
+    <p>Malfunction voids all wins and plays. A consistent internet connection is required. In the event of a disconnection, reload the game to finish any uncompleted rounds. The expected return is calculated over many plays. The game display is not representative of any physical device and is for illustrative purposes only. Winnings are settled according to the amount received from the Remote Game Server and not from events within the web browser. TM and © 2026 Engine.</p>
+  </div>
+</div>
+<div class="toast" id="toast" role="alert" hidden></div>
+<script src="game.js"></script>
+</body>
+</html>
