@@ -18,7 +18,7 @@
 @font-face{font-family:"Cabinet Grotesk";src:url("assets/fonts/cabinet-grotesk.woff2") format("woff2");font-weight:100 900;font-display:swap}
 @font-face{font-family:"Martian Mono";src:url("assets/fonts/martian-mono.woff2") format("woff2");font-weight:100 800;font-stretch:75% 112.5%;font-display:swap}
 </style>
-<link rel="stylesheet" href="assets/site.css?v=4aa4ee3e">
+<link rel="stylesheet" href="assets/site.css?v=0765d066">
 <script>document.documentElement.className='js'+(matchMedia('(prefers-reduced-motion: reduce)').matches?' reduce':'')+(matchMedia('(hover: hover) and (pointer: fine)').matches?' fine':' coarse');setTimeout(function(){var c=document.documentElement.classList;if(!c.contains('ready'))c.add('ready','failsafe')},6000);</script>
 </head>
 <body data-page="home" data-theme="paper">
@@ -63,110 +63,58 @@
   </div>
     <div class="work-nav">
       <p class="work-count"><b data-now>01</b><i>/</i><span data-all>06</span></p>
-      <button type="button" class="work-arrow" data-prev aria-label="Previous title" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+      <button type="button" class="work-arrow" data-prev aria-label="Previous title"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
       <button type="button" class="work-arrow" data-next aria-label="Next title"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
     </div>
   </header>
-  <div class="work-stage">
-    <div class="work-titles" aria-hidden="true">
-      <p class="work-title is-on"><span>Going Viral</span></p>
-      <p class="work-title"><span>HODL</span></p>
-      <p class="work-title"><span>Beat Drop</span></p>
-      <p class="work-title"><span>Gacha Grab</span></p>
-      <p class="work-title"><span>Retrograde</span></p>
-      <p class="work-title"><span>Long Shot</span></p>
+  <div class="work-machine" data-work tabindex="0" role="group" aria-label="Titles. The arrow keys roll the reels.">
+    <div class="work-win">
+      <div class="work-window">
+        <ol class="work-reel work-reel-art">
+        <li class="work-item work-face is-on" data-cat="burst" data-rel="stake" style="--accent:#ff2e88" data-meta="Burst|Stake Engine|2026" data-tag="Every reaction pumps the post, every Hype Check locks it in." data-demo="work/going-viral.html#demo">
+          <a class="work-link" href="work/going-viral.html"><span class="work-art"><img src="work/media/going-viral/cover.jpg" alt="" loading="lazy" decoding="async"></span><h3 class="work-name">Going Viral</h3></a>
+        </li>
+        <li class="work-item work-face" data-cat="slot" data-rel="stake" style="--accent:#19f08b" data-meta="Slot|Stake Engine|2026" data-tag="The whole game is the hold-and-win." data-demo="work/hodl.html#demo">
+          <a class="work-link" href="work/hodl.html"><span class="work-art"><img src="work/media/hodl/cover.jpg" alt="" loading="lazy" decoding="async"></span><h3 class="work-name">HODL</h3></a>
+        </li>
+        <li class="work-item work-face" data-cat="slot" data-rel="stake" style="--accent:#ff7a1a" data-meta="Slot|Stake Engine|2026" data-tag="The reels are a drum machine." data-demo="work/beat-drop.html#demo">
+          <a class="work-link" href="work/beat-drop.html"><span class="work-art"><img src="work/media/beat-drop/cover.jpg" alt="" loading="lazy" decoding="async"></span><h3 class="work-name">Beat Drop</h3></a>
+        </li>
+        <li class="work-item work-face" data-cat="burst" data-rel="stake" style="--accent:#ff6fb5" data-meta="Burst|Stake Engine|2026" data-tag="Pick a machine, drop the claw, crack the capsule." data-demo="work/gacha-grab.html#demo">
+          <a class="work-link" href="work/gacha-grab.html"><span class="work-art"><img src="work/media/gacha-grab/cover.jpg" alt="" loading="lazy" decoding="async"></span><h3 class="work-name">Gacha Grab</h3></a>
+        </li>
+        <li class="work-item work-face" data-cat="slot" data-rel="stake" style="--accent:#e8b84a" data-meta="Slot|Stake Engine|2026" data-tag="Seven planets in a brass orrery." data-demo="work/retrograde.html#demo">
+          <a class="work-link" href="work/retrograde.html"><span class="work-art"><img src="work/media/retrograde/cover.jpg" alt="" loading="lazy" decoding="async"></span><h3 class="work-name">Retrograde</h3></a>
+        </li>
+        <li class="work-item work-face" data-cat="burst" data-rel="independent" style="--accent:#e3a23c" data-meta="Burst|Independent|2026" data-tag="Choose a range and fire one bullet." data-demo="work/long-shot.html#demo">
+          <a class="work-link" href="work/long-shot.html"><span class="work-art"><img src="work/media/long-shot/cover.jpg" alt="" loading="lazy" decoding="async"></span><h3 class="work-name">Long Shot</h3></a>
+        </li>
+        </ol>
+        <div class="work-reel work-reel-name" aria-hidden="true">
+        <p class="work-face is-on"><span>Going Viral</span></p>
+        <p class="work-face"><span>HODL</span></p>
+        <p class="work-face"><span>Beat Drop</span></p>
+        <p class="work-face"><span>Gacha Grab</span></p>
+        <p class="work-face"><span>Retrograde</span></p>
+        <p class="work-face"><span>Long Shot</span></p>
+        </div>
+        <div class="work-reel work-reel-fig" aria-hidden="true">
+        <div class="work-face work-fig"><b>5,000x</b><span class="work-fig-l"><span>Max win</span><span>RTP 96.30%</span></span></div>
+        <div class="work-face work-fig"><b>10,000x</b><span class="work-fig-l"><span>Max win</span><span>RTP 96.30%</span></span></div>
+        <div class="work-face work-fig"><b>8,080x</b><span class="work-fig-l"><span>Max win</span><span>RTP 96.30%</span></span></div>
+        <div class="work-face work-fig"><b>10,000x</b><span class="work-fig-l"><span>Max win</span><span>RTP 96.30%</span></span></div>
+        <div class="work-face work-fig"><b>10,000x</b><span class="work-fig-l"><span>Max win</span><span>RTP 96.30%</span></span></div>
+        <div class="work-face work-fig"><b>10,000x</b><span class="work-fig-l"><span>Max win</span><span>RTP 96.30%</span></span></div>
+        </div>
+      </div>
+      <i class="work-line" aria-hidden="true"></i>
     </div>
-    <ol class="work-shelf" data-work aria-label="Titles">
-    <li class="work-item is-on" data-cat="burst" data-rel="stake" style="--accent:#ff2e88">
-      <a class="work-link" href="work/going-viral.html">
-        <span class="work-art"><img src="work/media/going-viral/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-        <h3 class="work-name">Going Viral</h3>
-      </a>
-      <div class="work-cap">
-        <div class="work-words">
-          <p class="work-meta"><span>Burst</span><span>Stake Engine</span><span>2026</span></p>
-          <p class="work-tag">Every reaction pumps the post, every Hype Check locks it in.</p>
-        </div>
-        <dl class="work-facts"><div><dt>Max win</dt><dd>5,000x</dd></div><div><dt>RTP</dt><dd>96.30%</dd></div></dl>
-        <a class="work-play btn btn-accent" href="work/going-viral.html#demo"><span>Play<i> the demo</i></span></a>
-      </div>
-    </li>
-    <li class="work-item" data-cat="slot" data-rel="stake" style="--accent:#19f08b">
-      <a class="work-link" href="work/hodl.html">
-        <span class="work-art"><img src="work/media/hodl/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-        <h3 class="work-name">HODL</h3>
-      </a>
-      <div class="work-cap">
-        <div class="work-words">
-          <p class="work-meta"><span>Slot</span><span>Stake Engine</span><span>2026</span></p>
-          <p class="work-tag">The whole game is the hold-and-win.</p>
-        </div>
-        <dl class="work-facts"><div><dt>Max win</dt><dd>10,000x</dd></div><div><dt>RTP</dt><dd>96.30%</dd></div></dl>
-        <a class="work-play btn btn-accent" href="work/hodl.html#demo"><span>Play<i> the demo</i></span></a>
-      </div>
-    </li>
-    <li class="work-item" data-cat="slot" data-rel="stake" style="--accent:#ff7a1a">
-      <a class="work-link" href="work/beat-drop.html">
-        <span class="work-art"><img src="work/media/beat-drop/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-        <h3 class="work-name">Beat Drop</h3>
-      </a>
-      <div class="work-cap">
-        <div class="work-words">
-          <p class="work-meta"><span>Slot</span><span>Stake Engine</span><span>2026</span></p>
-          <p class="work-tag">The reels are a drum machine.</p>
-        </div>
-        <dl class="work-facts"><div><dt>Max win</dt><dd>8,080x</dd></div><div><dt>RTP</dt><dd>96.30%</dd></div></dl>
-        <a class="work-play btn btn-accent" href="work/beat-drop.html#demo"><span>Play<i> the demo</i></span></a>
-      </div>
-    </li>
-    <li class="work-item" data-cat="burst" data-rel="stake" style="--accent:#ff6fb5">
-      <a class="work-link" href="work/gacha-grab.html">
-        <span class="work-art"><img src="work/media/gacha-grab/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-        <h3 class="work-name">Gacha Grab</h3>
-      </a>
-      <div class="work-cap">
-        <div class="work-words">
-          <p class="work-meta"><span>Burst</span><span>Stake Engine</span><span>2026</span></p>
-          <p class="work-tag">Pick a machine, drop the claw, crack the capsule.</p>
-        </div>
-        <dl class="work-facts"><div><dt>Max win</dt><dd>10,000x</dd></div><div><dt>RTP</dt><dd>96.30%</dd></div></dl>
-        <a class="work-play btn btn-accent" href="work/gacha-grab.html#demo"><span>Play<i> the demo</i></span></a>
-      </div>
-    </li>
-    <li class="work-item" data-cat="slot" data-rel="stake" style="--accent:#e8b84a">
-      <a class="work-link" href="work/retrograde.html">
-        <span class="work-art"><img src="work/media/retrograde/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-        <h3 class="work-name">Retrograde</h3>
-      </a>
-      <div class="work-cap">
-        <div class="work-words">
-          <p class="work-meta"><span>Slot</span><span>Stake Engine</span><span>2026</span></p>
-          <p class="work-tag">Seven planets in a brass orrery.</p>
-        </div>
-        <dl class="work-facts"><div><dt>Max win</dt><dd>10,000x</dd></div><div><dt>RTP</dt><dd>96.30%</dd></div></dl>
-        <a class="work-play btn btn-accent" href="work/retrograde.html#demo"><span>Play<i> the demo</i></span></a>
-      </div>
-    </li>
-    <li class="work-item" data-cat="burst" data-rel="independent" style="--accent:#e3a23c">
-      <a class="work-link" href="work/long-shot.html">
-        <span class="work-art"><img src="work/media/long-shot/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-        <h3 class="work-name">Long Shot</h3>
-      </a>
-      <div class="work-cap">
-        <div class="work-words">
-          <p class="work-meta"><span>Burst</span><span>Independent</span><span>2026</span></p>
-          <p class="work-tag">Choose a range and fire one bullet.</p>
-        </div>
-        <dl class="work-facts"><div><dt>Max win</dt><dd>10,000x</dd></div><div><dt>RTP</dt><dd>96.30%</dd></div></dl>
-        <a class="work-play btn btn-accent" href="work/long-shot.html#demo"><span>Play<i> the demo</i></span></a>
-      </div>
-    </li>
-    </ol>
+    <button type="button" class="work-spin" data-spin aria-label="Spin to a title picked at random"><span>Spin</span></button>
+    <p class="work-meta" data-meta><span>Burst</span><span>Stake Engine</span><span>2026</span></p>
+    <p class="work-tag" data-tag aria-live="polite">Every reaction pumps the post, every Hype Check locks it in.</p>
+    <a class="work-play btn btn-accent" data-play href="work/going-viral.html#demo"><span>Play<i> the demo</i></span></a>
   </div>
-  <div class="work-foot">
-    <span class="work-bar" aria-hidden="true"><i></i></span>
-    <p class="work-lead">Swipe or drag through the titles. Open one to read its numbers and play the demo.</p>
-  </div>
+  <p class="work-lead">Roll the reels or hit Spin. Open a title to read its numbers and play the demo.</p>
 </section>
 
 <section class="craft" data-theme="ink" aria-labelledby="craft-h">
@@ -220,6 +168,6 @@
 </main>
 <div class="work-cursor" data-cursor aria-hidden="true">Open</div>
 <div class="curtain" data-curtain aria-hidden="true"><div class="curtain-count" data-count>0</div></div>
-<script src="assets/home.js?v=2bbb2edc" defer></script>
+<script src="assets/home.js?v=d790e126" defer></script>
 </body>
 </html>
