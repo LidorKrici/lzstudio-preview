@@ -5,19 +5,28 @@
   'use strict';
 
   /* ---------- Constants ---------- */
-  const CELLS = 36, COLS = 6;
+  const R = window.GV_RULES;               // rules.js, generated from math/game.mjs (one source for math and screen)
+  const CELLS = R.CELLS, COLS = 6;
   const API = 1000000;                      // RGS money: 1,000,000 = 1.00
-  const MODE = 'base';
-  const MAX_WIN_X = 5000;
-  const BUY_MODE = 'live';                 // the Go Live mode in index.json
-  const STREAM_TILES = 6;
+  const MODE = 'base';                      // the default mode (TRENDING)
+  const STREAM_TILES = R.STREAM_TILES;
+  // v2 modes. Risk modes cost 1x; the two bonus buys start straight in the stream.
+  const MODEDEF = Object.fromEntries(R.MODES.map(m => {
+    const buy = m.buy ? R.BUYS[m.buy] : null, prof = R.PROFILES[buy ? buy.profile : m.profile];
+    return [m.name, { name: m.name, buy: !!buy, label: buy ? buy.label : prof.label, cost: buy ? buy.cost : 1, start: buy ? buy.start : 0,
+      maxX: prof.cap / 100, meterFull: prof.meterFull, check: prof.check, prof }];
+  }));
+  const RISK_MODES = ['chill', 'base', 'viral'];
+  const BUY_MODES = R.MODES.filter(m => m.buy).map(m => m.name);
+  const isBuyMode = m => !!(MODEDEF[m] && MODEDEF[m].buy);
+  const modeOf = name => MODEDEF[String(name || '').toLowerCase()] || MODEDEF[MODE];
   const TIERS = ['heart', 'fire', 'rocket', 'crown'];
   const TIER_COLORS = { heart: '#ff2e88', fire: '#ffb020', rocket: '#33e4f0', crown: '#ffd23f' };
   const IMG = {
     heart: 'assets/heart.webp', fire: 'assets/fire.webp', rocket: 'assets/rocket.webp', crown: 'assets/crown.webp',
     cancelled: 'assets/cancel.webp', cancelDrama: 'assets/cancel-drama.webp', cancelTxt: 'assets/txt-cancelled.webp',
     live: 'assets/live.webp', liveTxt: 'assets/txt-werelive.webp', tileBack: 'assets/tile-back.webp',
-    bigwin: 'assets/big-win.webp', megawin: 'assets/mega-win.webp'
+    bigwin: 'assets/big-win.webp', megawin: 'assets/mega-win.webp', epicwin: 'assets/epic-win.webp'
   };
   // v2 art: every character has a blink frame (same framing) and a celebration pose. Effects are drawn in code.
   const POSE = {};
@@ -61,7 +70,7 @@
   }
   // Opened straight from disk there is no server: a rough offline preview. Its rules are not weighted like the
   // published math, so it pays more than the real game and must not be used to judge returns.
-  const LOCAL = !P.replay && !P.sessionID && !P.rgs && location.protocol === 'file:';
+  const LOCAL = !P.replay && !P.sessionID && !P.rgs;
 
   /* ---------- Currency display (Engine table) ---------- */
   const CUR = {
@@ -111,7 +120,9 @@
   const S = {
     balance: 0, levels: [], amount: 0, minBet: 0, maxBet: 0, busy: false, ready: false,
     sound: true, interacted: false, fast: false, history: [], shownX: 0, jur: {},
-    sessionStart: Date.now(), net: 0, minRoundMs: 0, replayData: null, buyCost: 64,
+    sessionStart: Date.now(), net: 0, minRoundMs: 0, replayData: null,
+    mode: MODE, roundMode: MODE, buyPick: 'live',
+    costs: Object.fromEntries(R.MODES.map(m => [m.name, modeOf(m.name).cost])),
     auto: null, stats: { rounds: 0, bestX: 0, bestUnits: 0, lives: 0 }
   };
   const speed = () => (S.fast ? 0.45 : 1);
@@ -144,63 +155,67 @@
     replay: () => rgs(`/bet/replay/${encodeURIComponent(P.game)}/${encodeURIComponent(P.version)}/${encodeURIComponent(P.mode)}/${encodeURIComponent(P.event)}`)
   };
 
-  // Local demo for opening the file straight from disk: same rules, play coins, no server.
+  // Local demo for opening the file straight from disk: the same rules as the math (rules.js), play coins, no server.
+  // It draws rounds unweighted, so its returns are only a rough preview of the published game.
   const Local = (() => {
-    const REACT = [['heart', 4, 1, 58], ['fire', 10, 2, 27], ['rocket', 24, 4, 11], ['crown', 64, 8, 4]];
-    const STREAM = [[11, 400], [12, 280], [15, 200], [20, 90], [30, 25], [50, 5]];
-    const HYPE = [['boost', 12, 16], ['repost', 35, 3], ['shield', 4, 21], ['lock', 2, 60]];
-    const pick = list => { let r = Math.random() * list.reduce((s, x) => s + x[x.length - 1], 0); for (const x of list) if ((r -= x[x.length - 1]) < 0) return x; return list[list.length - 1]; };
-    function streamOut(ev, mult, take, fin) {
+    const pick = list => { let r = Math.random() * list.reduce((s, x) => s + x.weight, 0); for (const x of list) if ((r -= x.weight) < 0) return x; return list[list.length - 1]; };
+    function streamOut(ev, mult, take, fin, table) {
       for (let k = 0; k < STREAM_TILES; k++) {
-        const s = pick(STREAM)[0];
+        const s = pick(table).x;
         mult = Math.round(mult * s / 10);
         ev.push({ type: 'stream', tile: take(), x: s / 10, mult, left: STREAM_TILES - 1 - k });
       }
       ev.push({ type: 'streamEnd', mult });
       return fin(mult);
     }
-    function round(buy) {
+    function round(modeName) {
+      const md = modeOf(modeName), p = md.prof;
       const free = Array.from({ length: CELLS }, (_, i) => i), ev = [];
       let mult = 0, locked = 0, shield = false, n = 0, meter = 0;
       const take = () => free.splice(Math.floor(Math.random() * free.length), 1)[0];
-      const fin = pay => { const capped = pay >= MAX_WIN_X * 100; pay = Math.min(pay, MAX_WIN_X * 100); ev.push({ type: 'final', payout: pay, capped }); return { ev, pay }; };
-      if (buy) { ev.push({ type: 'live', tile: take(), add: 1000, mult: 1000, meter: 100, bought: true }); return streamOut(ev, 1000, take, fin); }
+      const fin = pay => { const capped = pay >= p.cap; pay = Math.min(pay, p.cap); ev.push({ type: 'final', payout: pay, capped }); return { ev, pay }; };
+      const meterOf = Object.fromEntries(p.reactions.map(r => [r.name, r.meter]).concat(p.hype.map(h => [h.name, h.meter])));
+      if (md.buy) {
+        const b = R.BUYS[md.name];
+        ev.push({ type: 'live', tile: take(), add: b.start, mult: b.start, meter: p.meterFull, bought: true });
+        return streamOut(ev, b.start, take, fin, b.stream);
+      }
       for (;;) {
-        if (Math.random() < 0.125 + n * 0.004) {
+        if (Math.random() < p.cancel[0] + n * p.cancel[1]) {
           const tile = take();
           if (shield) { shield = false; ev.push({ type: 'cancel', tile, saved: true, mult, locked, meter }); if (!free.length) break; continue; }
           ev.push({ type: 'cancel', tile, saved: false, mult, locked, meter });
           return fin(locked);
         }
-        const r = pick(REACT), tile = take();
-        mult += r[1]; n++; meter = Math.min(100, meter + r[2]);
-        ev.push({ type: 'reveal', tile, reaction: r[0], add: r[1], mult, meter });
-        if (n % 5 === 0 && free.length) {
-          const hp = pick(HYPE), h = hp[0];
+        const r = pick(p.reactions), tile = take();
+        mult += r.add; n++; meter = Math.min(p.meterFull, meter + r.meter);
+        ev.push({ type: 'reveal', tile, reaction: r.name, add: r.add, mult, meter });
+        if (n % p.check === 0 && free.length) {
+          const h = pick(p.hype).name;
           if (h === 'boost') mult *= 2; if (h === 'repost') mult *= 5; if (h === 'shield') shield = true;
-          locked = mult; meter = Math.min(100, meter + hp[1]);
+          locked = mult; meter = Math.min(p.meterFull, meter + meterOf[h]);
           ev.push({ type: 'hype', outcome: h, mult, locked, meter });
         }
-        if (meter >= 100 && free.length > STREAM_TILES) {
-          mult += 100; ev.push({ type: 'live', tile: take(), add: 100, mult, meter: 100 });
-          return streamOut(ev, mult, take, fin);
+        if (meter >= p.meterFull && free.length > STREAM_TILES) {
+          mult += R.LIVE_START; ev.push({ type: 'live', tile: take(), add: R.LIVE_START, mult, meter: p.meterFull });
+          return streamOut(ev, mult, take, fin, p.stream);
         }
         if (!free.length) break;
       }
-      mult *= 2; ev.push({ type: 'viral', mult });
+      mult *= R.VIRAL_BONUS; ev.push({ type: 'viral', mult });
       return fin(mult);
     }
     let bal = 1000 * API, open = null, id = 1;
     const levels = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100].map(v => v * API);
     return {
-      authenticate: async () => ({ balance: { amount: bal, currency: currency }, config: { minBet: levels[0], maxBet: levels[levels.length - 1], stepBet: 100000, defaultBetLevel: API, betLevels: levels, gameModes: [{ mode: 'BASE', costMultiplier: 1, maxBet: levels[levels.length - 1] }, { mode: 'LIVE', costMultiplier: 64, maxBet: levels[levels.length - 1] }], jurisdiction: {} } }),
+      authenticate: async () => ({ balance: { amount: bal, currency: currency }, config: { minBet: levels[0], maxBet: levels[levels.length - 1], stepBet: 100000, defaultBetLevel: API, betLevels: levels, gameModes: R.MODES.map(m => ({ mode: m.name.toUpperCase(), costMultiplier: modeOf(m.name).cost, maxBet: levels[levels.length - 1] })), jurisdiction: {} } }),
       play: async (amount, mode = MODE) => {
         if (open) throw new RgsError(400, 'ERR_VAL', 'round active');
-        const buy = mode === BUY_MODE, cost = amount * (buy ? 64 : 1);
+        const md = modeOf(mode), cost = amount * md.cost;
         if (cost > bal) throw new RgsError(400, 'ERR_IPB', 'insufficient balance');
         bal -= cost;
-        const r = round(buy), payout = Math.round(amount * r.pay / 100);
-        const rd = { betID: id++, amount, payout, payoutMultiplier: r.pay / 100, active: payout > 0, mode: buy ? 'LIVE' : 'BASE', state: r.ev };
+        const r = round(md.name), payout = Math.round(amount * r.pay / 100);
+        const rd = { betID: id++, amount, payout, payoutMultiplier: r.pay / 100, active: payout > 0, mode: md.name.toUpperCase(), state: r.ev };
         if (rd.active) open = rd;
         return { balance: { amount: bal, currency }, round: rd };
       },
@@ -272,19 +287,20 @@
   }
   function syncMusic() {
     const mu = $('music');
-    mu.volume = 0.3;
+    mu.volume = document.body.classList.contains('bigwin-on') ? 0.08 : 0.22;
     if (S.sound && S.interacted) { const p = mu.play(); if (p && p.catch) p.catch(() => {}); } else mu.pause();
   }
   const sfx = {
-    scratch: () => { if (!sample('scratch', 0.45)) noise(0.22, 0.12, 3200); },
+    scratch: () => { if (!sample('scratch', 0.32)) noise(0.22, 0.06, 3200); },
     pop: i => { if (!sample('pop', 0.7, 1 + Math.min(i, 30) * 0.015)) tone(520 * Math.pow(1.045, Math.min(i, 30)), 0.14, 'triangle', 0.16); },
     cash: () => { if (!sample('cash', 0.8)) [784, 988, 1175, 1568].forEach((f, k) => tone(f, 0.22, 'triangle', 0.13, k * 0.065)); },
-    bust: () => { if (!sample('bust', 0.9)) { noise(0.7, 0.5, 600, 'lowpass'); tone(62, 0.7, 'sine', 0.3); } },
+    bust: () => { if (!sample('bust', 0.7)) { tone(233, 0.3, 'triangle', 0.12); tone(156, 0.6, 'triangle', 0.12, 0.34); tone(62, 0.7, 'sine', 0.3); } },
     tick: () => { if (!sample('tick', 0.5)) tone(1250, 0.05, 'square', 0.035); },
     thump: () => { tone(58, 0.16, 'sine', 0.32); tone(52, 0.2, 'sine', 0.26, 0.19); },
     lock: () => { tone(880, 0.08, 'square', 0.06); tone(1320, 0.12, 'triangle', 0.08, 0.07); },
     shield: () => { [660, 990, 1320].forEach((f, k) => tone(f, 0.25, 'sine', 0.09, k * 0.05)); },
     hype: () => { if (!sample('hype', 0.75)) [523, 659, 784, 1047].forEach((f, k) => tone(f, 0.16, 'square', 0.05, k * 0.05)); },
+    count: p => tone(560 + p * 900, 0.045, 'triangle', 0.045),
     bigwin: () => { if (!sample('bigwin', 0.9)) [523, 659, 784, 1047, 1319, 1568, 2093].forEach((f, k) => tone(f, 0.3, 'triangle', 0.12, k * 0.08)); }
   };
   // v2: the old video overlays are gone (they weighed 2.5MB). Big moments are drawn in code instead.
@@ -405,15 +421,29 @@
   }
 
   /* ---------- Characters: celebration on reveal, then idle breathing and blinks ---------- */
-  // Shows a character on a tile: it lands in its celebration pose, then settles into its normal pose.
+  // v2.3: hand-animated clips (one play, transparent). Each one starts and ends on the character's still pose,
+  // so the switch back to the still image is invisible.
+  // Only characters whose clip passed review are listed; the others keep the pose-swap animation.
+  const ANIM = { heart: 'assets/anim-heart.webp', fire: 'assets/anim-fire.webp', rocket: 'assets/anim-rocket.webp', crown: 'assets/anim-crown.webp', live: 'assets/anim-live.webp' };
+  const ANIM_MS = 3150;
+  let animSeq = 0, animsOn = 0;
+  const animSrc = key => ANIM[key] + '?p=' + (++animSeq);   // a fresh URL restarts the clip from its first frame
+  // Shows a character on a tile: it plays its animation, then rests on its still pose.
   function showSym(c, key, color, celebrateMs = 650) {
     const p = POSE[key];
     c.sym = key;
     if (color) c.el.style.setProperty('--tc', color);
     if (!p) return;
     if (reduced || document.hidden) { c.img.src = p.base; return; }
-    c.img.src = p.win;
     clearTimeout(c.poseT);
+    if (ANIM[key] && animsOn < 10) {
+      animsOn++;
+      c.el.classList.add('animd');
+      c.img.src = animSrc(key);
+      c.poseT = setTimeout(() => { animsOn = Math.max(0, animsOn - 1); c.el.classList.remove('animd'); if (c.sym === key) { c.img.src = p.base; c.el.classList.remove('settle'); void c.el.offsetWidth; c.el.classList.add('settle'); setTimeout(() => c.el.classList.remove('settle'), 320); } }, ANIM_MS);
+      return;
+    }
+    c.img.src = p.win;
     c.poseT = setTimeout(() => { if (c.sym === key) c.img.src = p.base; }, Math.round(celebrateMs * speed()));
   }
   // Every so often one open character blinks (the blink frame has the exact same framing).
@@ -447,6 +477,40 @@
     }
     const heat = Number(getComputedStyle(board).getPropertyValue('--heat')) || 0;
     reactT = setTimeout(floatReact, document.body.classList.contains('onair') ? 220 : S.busy ? Math.round(520 - heat * 300) : 1600);
+  }
+  // Neighbouring characters hop when a new one lands next to them.
+  function hopNeighbors(c) {
+    if (reduced || document.hidden) return;
+    const cx = c.i % COLS, cy = Math.floor(c.i / COLS);
+    cells.forEach(o => {
+      if (o === c || !o.open || !o.sym) return;
+      const d = Math.max(Math.abs(o.i % COLS - cx), Math.abs(Math.floor(o.i / COLS) - cy));
+      if (d !== 1) return;
+      setTimeout(() => { o.el.classList.remove('hop'); void o.el.offsetWidth; o.el.classList.add('hop'); setTimeout(() => o.el.classList.remove('hop'), 520); }, 260 + Math.random() * 120);
+    });
+  }
+  // Hero moment: a top-tier character takes over the board for a beat, then the round carries on.
+  function heroShow(key, color) {
+    if (reduced || document.hidden || !POSE[key]) return Promise.resolve();
+    const h = document.createElement('div'), im = document.createElement('img');
+    h.className = 'hero'; h.style.setProperty('--hc', color);
+    im.src = ANIM[key] ? animSrc(key) : POSE[key].win; im.alt = '';
+    h.append(im); board.append(h);
+    board.classList.remove('punch'); void board.offsetWidth; board.classList.add('punch');
+    const ms = Math.round(1250 * speed());
+    setTimeout(() => h.remove(), ms + 60);
+    return sleep(900);
+  }
+  // Cancel: the closed tiles collapse in a wave that spreads out from the cancelled tile.
+  function collapseFrom(c) {
+    if (reduced || document.hidden || !c) return;
+    const cx = c.i % COLS, cy = Math.floor(c.i / COLS);
+    cells.forEach(o => {
+      if (o.open) return;
+      const d = Math.hypot(o.i % COLS - cx, Math.floor(o.i / COLS) - cy);
+      o.el.style.setProperty('--cd', (d * 0.055 * speed()).toFixed(3) + 's');
+      o.el.classList.add('collapse');
+    });
   }
   // At the end of a winning round, every character on the board celebrates together.
   function celebrateAll() {
@@ -542,9 +606,19 @@
   }
   function shake() { if (!reduced) { board.classList.remove('shake'); void board.offsetWidth; board.classList.add('shake'); } }
   let hypeTimer = 0;
+  // v2.4: the fixed hype lines are drawn captions in the logo's style; numbers (stream ×N, MAX WIN) stay live text.
+  const HYPE_ART = {
+    'TRENDING': 'hy-trending', 'GOING VIRAL': 'logo', 'BLOWING UP': 'hy-blowingup', 'MEGA VIRAL': 'hy-megaviral',
+    'BREAKING THE INTERNET': 'hy-breaking', 'LOCKED IN': 'hy-locked', 'SHIELD UP': 'hy-shield', 'BOOST ×2': 'hy-boost',
+    'CELEBRITY REPOST ×5': 'hy-repost', 'SHIELD SAVED IT': 'hy-shieldsaved', 'GOING LIVE': 'hy-goinglive',
+    "YOU'RE LIVE!": 'hy-youlive', 'WENT VIRAL ×2': 'hy-wentviral'
+  };
+  const hypeSrc = label => HYPE_ART[label] ? 'assets/' + HYPE_ART[label] + '.webp' : '';
   function showHype(label, color) {
-    const h = $('hype');
-    h.textContent = label; h.style.setProperty('--hype', color); h.hidden = false;
+    const h = $('hype'), src = hypeSrc(label);
+    if (src) { const im = new Image(); im.src = src; im.alt = label; h.replaceChildren(im); h.classList.add('art'); }
+    else { h.textContent = label; h.classList.remove('art'); }
+    h.style.setProperty('--hype', color); h.hidden = false;
     h.style.animation = 'none'; void h.offsetWidth; h.style.animation = '';
     clearTimeout(hypeTimer);
     hypeTimer = setTimeout(() => { h.hidden = true; }, 1450);
@@ -603,33 +677,22 @@
     for (let k = 0; k < n; k++) branch(fx0 * dpr, fy0 * dpr, a0 + k / n * 6.283, reach * (0.22 + Math.random() * 0.38), 2.6 * dpr, 0);
     board.classList.remove('cracked'); void board.offsetWidth; board.classList.add('cracked');
   }
+  // v2.4: nothing follows the mouse any more (no room parallax, no board tilt). Lidor found it mirror-like.
+  // Only the gloss on the tiles keeps a slow, steady sweep of its own.
   function initLight() {
     if (reduced) return;
     const grid = $('grid');
-    let tx = 0.5, ty = 0.5, x = 0.5, y = 0.5, tiltX = 0, tiltY = 0, lastInput = -1e9, frame = 0;
-    window.addEventListener('pointermove', e => {
-      const r = grid.getBoundingClientRect();
-      if (!r.width) return;
-      tx = (e.clientX - r.left) / r.width; ty = (e.clientY - r.top) / r.height; lastInput = performance.now();
-    }, { passive: true });
+    let frame = 0;
     const loop = now => {
       requestAnimationFrame(loop);
-      if (document.hidden) return;
-      const idle = now - lastInput > 2500;
-      if (idle) { const t = now / 1000; tx = 0.5 + Math.cos(t * 0.55) * 0.8; ty = 0.5 + Math.sin(t * 0.8) * 0.65; }
-      x += (tx - x) * 0.12; y += (ty - y) * 0.12;
-      const clamp = v => Math.max(-0.8, Math.min(0.8, v));
-      tiltX += ((idle ? 0 : clamp(x - 0.5) * 3) - tiltX) * 0.1;
-      tiltY += ((idle ? 0 : clamp(0.5 - y) * 3) - tiltY) * 0.1;
-      if (idle && (frame++ & 1)) return;
-      grid.style.setProperty('--mx', x.toFixed(3)); grid.style.setProperty('--my', y.toFixed(3));
-      // The room behind drifts a little against the pointer (parallax), so the scene has depth.
-      const root = document.documentElement.style;
-      root.setProperty('--px', ((x - 0.5) * -1).toFixed(3)); root.setProperty('--py', ((y - 0.5) * -1).toFixed(3));
-      grid.style.setProperty('--tx', tiltX.toFixed(2)); grid.style.setProperty('--ty', tiltY.toFixed(2));
+      if (document.hidden || (frame++ & 1)) return;
+      const t = now / 1000;
+      grid.style.setProperty('--mx', (0.5 + Math.cos(t * 0.55) * 0.8).toFixed(3));
+      grid.style.setProperty('--my', (0.5 + Math.sin(t * 0.8) * 0.65).toFixed(3));
     };
     requestAnimationFrame(loop);
   }
+
   function jiggleOne() {
     if (reduced || document.hidden) return;
     const closed = cells.filter(c => !c.open && !c.el.classList.contains('target'));
@@ -688,18 +751,90 @@
     el.textContent = money(units);
     if (animate && !reduced) { const w = $('wallet'); w.classList.remove('up'); void w.offsetWidth; w.classList.add('up'); }
   }
-  function showBigWin(units, x) {
-    const bw = $('bigwin'), amt = $('bigwinAmt'), t0 = performance.now(), dur = 1100 * speed(), mega = x >= 50;
-    $('bigwinImg').src = mega ? IMG.megawin : IMG.bigwin;
-    $('bigwinImg').alt = mega ? 'Mega win' : 'Big win';
-    bw.hidden = false;
-    const count = () => {
-      const t = Math.min(1, (performance.now() - t0) / dur);
-      amt.textContent = t >= 1 ? winMoney(units) : money(Math.round(units * (1 - Math.pow(1 - t, 3))));
-      if (t < 1) setTimeout(count, 30);
+  // v2.4 big win: a full-screen takeover like the leading games. The amount counts up and the banner
+  // climbs tiers on the way (BIG -> MEGA -> EPIC) while a coin fountain fills the screen. Tap skips to the end.
+  const BW_TIERS = [{ x: 10, img: IMG.bigwin, name: 'Big win', col: '#ffd23f' }, { x: 50, img: IMG.megawin, name: 'Mega win', col: '#ff2e88' }, { x: 250, img: IMG.epicwin, name: 'Epic win', col: '#b45cff' }];
+  const coinImg = new Image(); coinImg.src = 'assets/coin.webp';
+  const Coins = (() => {
+    let cv, ctx, ps = [], rate = 0, on = false, w = 0, h = 0, dpr = 1, acc = 0, last = 0, running = false;
+    function size() { const r = cv.getBoundingClientRect(); dpr = Math.min(1.5, window.devicePixelRatio || 1); w = r.width; h = r.height; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    function spawn() {
+      if (ps.length > 170 || !w) return;
+      const side = Math.random(), s = Math.max(22, Math.min(w, h) * (0.045 + Math.random() * 0.04));
+      const fromX = side < 0.5 ? w * (0.5 + (Math.random() - 0.5) * 0.3) : side < 0.75 ? w * 0.06 : w * 0.94;
+      const aim = (w * 0.5 - fromX) / w;
+      ps.push({ x: fromX, y: h + s, vx: (aim * 9 + (Math.random() - 0.5) * 7) * (w / 900), vy: -(h / 900) * (17 + Math.random() * 9), s, r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.3, f: Math.random() * 6.28, vf: 0.12 + Math.random() * 0.2 });
+    }
+    function frame(now) {
+      if (!on && !ps.length) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); running = false; return; }
+      const dt = Math.min(2.5, (now - (last || now)) / 16.7 || 1); last = now;
+      if (on) { acc += rate * dt; while (acc >= 1) { spawn(); acc--; } }
+      const g = (h / 900) * 0.55 * dt;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+      ps = ps.filter(p => {
+        p.vy += g; p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt; p.f += p.vf * dt;
+        if (p.y > h + p.s * 2 && p.vy > 0) return false;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.scale(Math.max(0.12, Math.abs(Math.cos(p.f))), 1);
+        if (coinImg.complete && coinImg.naturalWidth) ctx.drawImage(coinImg, -p.s / 2, -p.s / 2, p.s, p.s);
+        ctx.restore();
+        return true;
+      });
+      requestAnimationFrame(frame);
+    }
+    return {
+      start(level) {
+        if (reduced || document.hidden) return;
+        cv = cv || $('bwCoins'); ctx = ctx || cv.getContext('2d'); size();
+        rate = [1.1, 2, 3.2][level] || 1.1; on = true;
+        if (!running) { running = true; last = 0; requestAnimationFrame(frame); }
+      },
+      level(k) { if (!on) return; rate = [1.1, 2, 3.2][k] || rate; for (let i = 0; i < 14 + k * 10; i++) spawn(); },
+      stop() { on = false; }
     };
-    count(); confetti(180); rain(mega ? 48 : 30); sfx.bigwin(); playFx('vidWin');
-    return sleep(2600).then(() => { bw.hidden = true; });
+  })();
+  function showBigWin(units, x) {
+    const el = $('bwx'), img = $('bwxImg'), amt = $('bwxAmt'), xl = $('bwxX');
+    const top = Math.max(0, BW_TIERS.filter(t => x >= t.x).length - 1);
+    const quick = reduced || document.hidden;
+    const dur = quick ? 0 : [2600, 4000, 5400][top] * (S.fast ? 0.55 : 1);
+    let tier = -1, skip = false, lastTick = 0;
+    el.className = 'bwx'; el.hidden = false;
+    const setTier = k => {
+      tier = k; const t = BW_TIERS[k];
+      img.src = t.img; img.alt = t.name; el.style.setProperty('--bwc', t.col);
+      el.classList.remove('slam', 'quake', 't0', 't1', 't2'); void el.offsetWidth; el.classList.add('slam', 't' + k);
+      if (k) { el.classList.add('quake'); Coins.level(k); }
+      sfx.bigwin();
+    };
+    setTier(0); Coins.start(0); el.classList.add('counting');
+    document.body.classList.add('bigwin-on'); syncMusic();
+    const onSkip = () => { skip = true; };
+    el.addEventListener('pointerdown', onSkip);
+    return new Promise(res => {
+      const t0 = performance.now();
+      const finish = () => {
+        el.classList.remove('counting'); el.classList.add('land');
+        amt.textContent = winMoney(units); xl.textContent = fmtX(x);
+        if (top > tier) setTier(top);
+        sfx.cash();
+        setTimeout(() => {
+          el.classList.add('out'); Coins.stop();
+          setTimeout(() => { el.hidden = true; el.className = 'bwx'; el.removeEventListener('pointerdown', onSkip); document.body.classList.remove('bigwin-on'); syncMusic(); res(); }, 360);
+        }, quick ? 900 : skip ? 700 : 1500);
+      };
+      const step = () => {
+        const now = performance.now(), t = skip || !dur ? 1 : Math.min(1, (now - t0) / dur);
+        if (t >= 1) return finish();
+        const e = 1 - Math.pow(1 - t, 2.2), cx = x * e;
+        const k = Math.max(0, BW_TIERS.filter(tt => cx >= tt.x).length - 1);
+        if (k > tier) setTier(k);
+        amt.textContent = money(Math.round(units * e)); xl.textContent = fmtX(Math.max(0, cx));
+        if (now - lastTick > 85) { lastTick = now; sfx.count(t); }
+        // A hidden tab stops animation frames; fall back to a timer so the round never stalls.
+        if (document.hidden) setTimeout(step, 50); else requestAnimationFrame(step);
+      };
+      step();
+    });
   }
   function renderHistory(fresh) {
     $('history').replaceChildren(...S.history.map((x, k) => {
@@ -781,7 +916,7 @@
     resetBoard();
     setMult(0); setLocked(0); setShield(false); setWin(0); setHeat(0);
     hmReset();
-    $('result').hidden = true; $('bigwin').hidden = true; $('hype').hidden = true;
+    $('result').hidden = true; $('hype').hidden = true;
     setChip('live', 'LIVE');
     $('roundLabel').textContent = 'Live now';
     await sleep(500);
@@ -811,9 +946,11 @@
           c.tg.textContent = '+' + (e.add / 100).toFixed(2) + '×';
           markLatest(c); c.el.classList.add('on');
           c.el.classList.remove('popin'); void c.el.offsetWidth; c.el.classList.add('popin');
-          setTimeout(() => c.el.classList.remove('popin'), 700);
-          const col = TIER_COLORS[e.reaction] || '#ffd23f';
-          showSym(c, e.reaction, col, 520 + TIERS.indexOf(e.reaction) * 180);
+          setTimeout(() => c.el.classList.remove('popin'), Math.round(780 * speed()));
+          const col = TIER_COLORS[e.reaction] || '#ffd23f', tier = TIERS.indexOf(e.reaction);
+          c.el.style.setProperty('--jump', [16, 24, 32, 42][tier] + '%');
+          showSym(c, e.reaction, col, 520 + tier * 180);
+          hopNeighbors(c);
           ringAt(c, col); burstAt(c, col); sparks(c, col, 12 + TIERS.indexOf(e.reaction) * 6);
           setMult(e.mult / 100); setHeat(e.mult / 100);
           sfx.pop(state.revealed);
@@ -821,6 +958,8 @@
           hmSet(e.meter, e.reaction.charAt(0).toUpperCase() + e.reaction.slice(1), '', IMG[e.reaction]);
           const ms = MILESTONES.filter(m => prev < m.m && e.mult / 100 >= m.m).pop();
           if (ms) { showHype(ms.label, ms.color); flashBoard(ms.color); confetti(50); sfx.hype(); }
+          // Rocket and crown get a hero moment on the board (crown bigger). Timing only; the result is already fixed.
+          if (tier >= 2 && !ms) await heroShow(e.reaction, col);
           await sleep(Math.max(420, 780 - state.revealed * 15));
         } else if (e.saved) {
           // The shield blocks this cancel: the tile is stamped and the post keeps going.
@@ -879,7 +1018,7 @@
         c.tg.textContent = '×' + e.x;
         markLatest(c);
         c.el.classList.remove('popin'); void c.el.offsetWidth; c.el.classList.add('popin');
-        setTimeout(() => c.el.classList.remove('popin'), 700);
+        setTimeout(() => c.el.classList.remove('popin'), Math.round(780 * speed()));
         const col = e.x >= 10 ? '#ffd23f' : e.x >= 3 ? '#ff2e88' : '#ff3d4a';
         showSym(c, e.x >= 10 ? 'crown' : e.x >= 3 ? 'rocket' : e.x >= 2 ? 'fire' : 'heart', col, e.x >= 3 ? 1000 : 600);
         ringAt(c, col); burstAt(c, col); sparks(c, col, 14 + Math.min(40, e.x * 4));
@@ -889,7 +1028,7 @@
         setWin(Math.round(amount * e.mult / 100), true);
         setOnAir(e.mult / 100, e.left);
         sfx.pop(10 + (STREAM_TILES - e.left) * 3);
-        chatPush(e.x >= 5 ? '×' + e.x + '!!! 🤯' : '×' + e.x + ' 🔥');
+        chatPush(e.x >= 5 ? '×' + e.x + ' NO WAY!!!' : '×' + e.x + ' LETS GO');
         hmLog('Live ×' + e.x, 'live', streamImg(e.x));
         if (e.x >= 3) { showHype('×' + e.x, col); flashBoard(col); confetti(e.x >= 10 ? 200 : 80); if (e.x >= 10) { rain(40); sfx.bigwin(); } else sfx.hype(); }
         await sleep(e.x >= 3 ? 1100 : 650);
@@ -912,8 +1051,9 @@
         finalPay = e.payout;
         if (e.capped) {
           ending = 'cap';
-          setMult(MAX_WIN_X); setLocked(MAX_WIN_X, true);
-          showHype('MAX WIN ' + group(String(MAX_WIN_X)) + '×', '#ffd23f');
+          const mx = modeOf(S.roundMode).maxX;
+          setMult(mx); setLocked(mx, true);
+          showHype('MAX WIN ' + group(String(mx)) + '×', '#ffd23f');
           flashBoard('#ffd23f'); confetti(200);
           await sleep(1500);
         } else if (ending === 'viral' || ending === 'live') setLocked(e.payout / 100, true);
@@ -924,6 +1064,7 @@
     $('grid').classList.add('over');
     if (ending === 'cancel') {
       glitchScreen(); if (bustCell) drawCracks(bustCell); flashBoard('#ff3d4a'); playFx('vidBust'); shake(); sfx.bust();
+      collapseFrom(bustCell);
       setChip('bust', 'CANCELLED');
       setMult(state.mult / 100, 'dead');
       $('roundLabel').textContent = winX > 0 ? `Cancelled · secured ${fmtX(winX)}` : 'Cancelled';
@@ -941,7 +1082,10 @@
     stopChat();
     $('resultImg').src = ending === 'cancel' ? IMG.cancelTxt : ending === 'live' ? POSE.live.win : POSE.crown.win;
     $('resultImg').alt = ending === 'cancel' ? 'Cancelled' : ending === 'live' ? 'Live stream' : 'Went viral';
-    $('resultText').textContent = winUnits > 0 ? `You win ${winMoney(winUnits)} · ${fmtX(winX)}` : 'No win this time';
+    // A cancelled post still pays what was secured: say that plainly, so CANCELLED and a win never contradict.
+    $('resultText').textContent = winUnits <= 0 ? 'Nothing secured'
+      : ending === 'cancel' ? `Secured ${fmtX(winX)} kept · ${winMoney(winUnits)}`
+      : `You win ${winMoney(winUnits)} · ${fmtX(winX)}`;
     r.hidden = false;
     return { winX, winUnits, live: events.some(e => e.type === 'live') };
   }
@@ -954,6 +1098,10 @@
     const el = $('hm'), lv = Math.max(0, Math.min(1, HM.lv));
     el.style.setProperty('--lv', lv.toFixed(3));
     $('hmPct').textContent = Math.round(lv * 100) + '%';
+    // the compact bar shown where the tall meter does not fit (portrait phones, small popouts)
+    $('hmMini').style.setProperty('--lv', lv.toFixed(3));
+    $('hmMini').classList.toggle('full', lv >= 1);
+    $('hmMiniPct').textContent = Math.round(lv * 100) + '%';
     if (bump && !reduced) { const p = $('hmPct'); p.classList.remove('bump'); void p.offsetWidth; p.classList.add('bump'); }
     $('hmLvl').textContent = HM_LEVELS.filter(l => lv >= l[0]).pop()[1];
     $('hmIcon').src = lv >= 1 ? IMG.live : lv >= 0.75 ? IMG.crown : lv >= 0.5 ? IMG.rocket : lv >= 0.25 ? IMG.fire : IMG.heart;
@@ -1000,7 +1148,7 @@
   // Sets the meter from an event's meter value (0-100) and logs what filled it.
   function hmSet(meter, text, cls, img) {
     if (!Number.isFinite(meter)) return;
-    const prev = HM.lv, lv = Math.min(1, meter / 100), gain = lv - prev;
+    const prev = HM.lv, lv = Math.min(1, meter / modeOf(S.roundMode).meterFull), gain = lv - prev;
     HM.lv = lv;
     if (text) hmLog((gain > 0 ? '+' + Math.round(gain * 100) + '% ' : '') + text, cls, img);
     if (gain >= 0.1) hmSparks(Math.round(10 + gain * 50));
@@ -1013,7 +1161,7 @@
   // The meter hits 100%: it bursts and the post goes live.
   function hmGoLive(bought) {
     HM.lv = 1; hmRender(true);
-    hmLog(bought ? 'GO LIVE · stream starts at 10.00×' : 'METER FULL · going LIVE', 'live', IMG.live);
+    hmLog(bought ? modeOf(S.roundMode).label + ' · stream starts at ' + fmtX(modeOf(S.roundMode).start / 100) : 'METER FULL · going LIVE', 'live', IMG.live);
     const el = $('hm'), boom = $('hmBoom');
     el.classList.remove('hm-flashing'); void el.offsetWidth; el.classList.add('hm-flashing');
     if (!reduced) { const s = document.querySelector('.side'); s.classList.remove('boom'); void s.offsetWidth; s.classList.add('boom'); }
@@ -1036,7 +1184,7 @@
     const i = S.levels.indexOf(S.amount);
     $('amtMinus').disabled = S.busy || i <= 0;
     $('amtPlus').disabled = S.busy || i >= S.levels.length - 1;
-    $('minBtn').disabled = S.busy; $('maxBtn').disabled = S.busy; sel.disabled = S.busy;
+    sel.disabled = S.busy;
   }
   function setAmount(v) {
     if (!S.levels.includes(v)) v = S.levels.reduce((best, l) => Math.abs(l - v) < Math.abs(best - v) ? l : best, S.levels[0]);
@@ -1095,28 +1243,54 @@
     $('autoBtn').disabled = !S.ready || (S.busy && !auto);
     $('actionSub').textContent = S.amount ? money(S.amount) : ' ';
     $('buyBtn').disabled = S.busy || !S.ready || auto;
-    $('buyPrice').textContent = S.amount ? money(S.amount * S.buyCost) : '';
+    $('buyPrice').textContent = S.amount ? 'from ' + money(S.amount * Math.min(...BUY_MODES.map(m => S.costs[m]))) : '';
+    document.querySelectorAll('#risk button').forEach(b => { b.disabled = S.busy || !S.ready || auto; b.setAttribute('aria-pressed', String(b.dataset.mode === S.mode)); });
     fillLevels();
   }
   // Go Live costs more than 2x, so it always asks first and states the price.
   function onBuy() {
     S.interacted = true;
     if (S.busy || !S.ready || P.replay) return;
-    const cost = S.amount * S.buyCost;
-    if (cost > S.balance) { showMsg('Your balance is too low for Go Live at this play amount.'); return; }
-    $('buyText').textContent = 'Start the LIVE STREAM bonus right away for ' + money(cost) + ' (' + S.buyCost + '× your play amount of ' + money(S.amount) + ')?';
+    if (S.amount * S.costs[BUY_MODES[0]] > S.balance) { showMsg('Your balance is too low for a bonus at this play amount.'); return; }
+    renderBuy();
     $('buyConfirm').hidden = false;
     $('buyYes').focus({ preventScroll: true });
   }
+  // The bonus sheet: one card per bonus mode with its real price; the confirm button names the chosen price.
+  function renderBuy() {
+    if (S.amount * S.costs[S.buyPick] > S.balance) S.buyPick = BUY_MODES[0];
+    document.querySelectorAll('#buyOpts .bo').forEach(b => {
+      const m = b.dataset.mode, cost = S.amount * S.costs[m], md = modeOf(m);
+      b.setAttribute('aria-pressed', String(m === S.buyPick));
+      b.disabled = cost > S.balance;
+      b.querySelector('.bo-price').textContent = money(cost);
+      b.querySelector('.bo-x').textContent = S.costs[m] + '× play amount';
+      b.querySelector('.bo-start').textContent = 'Stream starts at ' + fmtX(md.start / 100);
+    });
+    const cost = S.amount * S.costs[S.buyPick];
+    $('buyTitle').textContent = modeOf(S.buyPick).label + '?';
+    $('buyText').textContent = 'Start the LIVE STREAM bonus right away for ' + money(cost) + ' (' + S.costs[S.buyPick] + '× your play amount of ' + money(S.amount) + ').';
+    $('buyYes').textContent = 'Confirm ' + money(cost);
+  }
   function closeBuy() { $('buyConfirm').hidden = true; }
-  async function onPlay(mode = MODE) {
+  function setRisk(m) {
+    if (S.busy || S.auto || !RISK_MODES.includes(m)) return;
+    S.mode = m; renderAction(); renderPaytable();
+  }
+  // The win table under the controls follows the chosen risk mode.
+  function renderPaytable() {
+    const p = modeOf(S.mode).prof;
+    p.reactions.forEach(r => { const el = document.querySelector('#paytable [data-r="' + r.name + '"]'); if (el) el.textContent = '+' + (r.add / 100).toFixed(2) + '×'; });
+    const d = $('riskInfo'); if (d) d.textContent = 'Hype Check every ' + p.check + ' · max ' + group(String(p.cap / 100)) + '×';
+  }
+  async function onPlay(mode = S.mode) {
     S.interacted = true;
     if (P.replay) return runReplay();
     if (S.busy || !S.ready) return;
-    const cost = S.amount * (mode === BUY_MODE ? S.buyCost : 1);
+    const cost = S.amount * S.costs[mode];
     if (cost > S.balance) { showMsg('Your balance is too low for this play amount.'); return; }
     showMsg('');
-    S.busy = true; renderAction();
+    S.busy = true; S.roundMode = mode; renderAction();
     const t0 = Date.now();
     let res;
     try { res = await Server.play(S.amount, mode); }
@@ -1126,8 +1300,9 @@
   }
   async function finishRound(round, t0, mode) {
     const amount = round.amount || S.amount;
-    const isBuy = mode ? mode === BUY_MODE : /live/i.test(String(round.mode || ''));
-    const spent = amount * (isBuy ? S.buyCost : 1);
+    const md = modeOf(mode || round.mode);
+    S.roundMode = md.name;
+    const spent = amount * (S.costs[md.name] || md.cost);
     let outcome;
     try { outcome = await playRound(eventsOf(round.state), amount); }
     catch (e) { outcome = { winX: 0, winUnits: 0 }; }
@@ -1169,7 +1344,7 @@
   function apSummary() {
     const n = segValue('apRounds'), w = segValue('apWin'), l = segValue('apLoss');
     $('apLossNote').textContent = l ? 'Stops if your balance drops by ' + money(S.amount * l) + ' from where autoplay started.' : '';
-    $('apSum').textContent = n + ' plays of ' + money(S.amount) + ' each (BASE mode)' + (w ? ', stops on a ' + w + '× win' : '') + (l ? ', stops if your balance falls by ' + money(S.amount * l) : '') + ($('apLive').checked ? ', stops when a LIVE STREAM starts' : '') + '.';
+    $('apSum').textContent = n + ' plays of ' + money(S.amount) + ' each (' + modeOf(S.mode).label + ' mode)' + (w ? ', stops on a ' + w + '× win' : '') + (l ? ', stops if your balance falls by ' + money(S.amount * l) : '') + ($('apLive').checked ? ', stops when a LIVE STREAM starts' : '') + '.';
   }
   function openAuto() {
     S.interacted = true;
@@ -1195,7 +1370,7 @@
       if (S.amount > S.balance) { stopAuto('Autoplay stopped: balance too low for the next play.'); break; }
       S.auto.left--;
       renderAction();
-      await onPlay(MODE);
+      await onPlay(S.mode);
       const a = S.auto, o = S.lastOutcome || {};
       if (!a) break;
       if (S.busy) { stopAuto('Autoplay stopped.'); break; }
@@ -1219,7 +1394,8 @@
     const amount = Number.isFinite(P.amount) && P.amount > 0 ? P.amount : API;
     const cost = Number(data.costMultiplier) || 1;
     S.amount = amount;
-    $('rpMode').textContent = String(P.mode).toUpperCase();
+    S.roundMode = modeOf(P.mode).name;
+    $('rpMode').textContent = modeOf(P.mode).label;
     $('rpAmount').textContent = money(amount);
     $('rpCost').textContent = money(Math.round(amount * cost));
     $('rpMult').textContent = fmtX(Number(data.payoutMultiplier) || 0);
@@ -1232,13 +1408,31 @@
   }
 
   /* ---------- Rules, sound, keys ---------- */
+  // The numbers in the rules come from rules.js (the math's own tables), so they always match the upload.
+  function renderRules() {
+    const td = (t, cls) => { const d = document.createElement('td'); d.textContent = t; if (cls) d.className = cls; return d; };
+    const row = cells => { const tr = document.createElement('tr'); cells.forEach(c => tr.append(c)); return tr; };
+    $('rModes').replaceChildren(...R.MODES.map(m => { const md = modeOf(m.name); return row([td(md.label), td(md.cost + '×'), td('96.30%'), td(group(String(md.maxX)) + '×')]); }));
+    const names = { heart: 'Heart', fire: 'Fire', rocket: 'Rocket', crown: 'Crown' };
+    $('rReact').replaceChildren(...Object.keys(names).map(k => {
+      const first = document.createElement('td'), im = document.createElement('img'); im.src = IMG[k]; im.alt = ''; first.append(im, names[k]);
+      return row([first, ...RISK_MODES.map(m => td('+' + (modeOf(m).prof.reactions.find(r => r.name === k).add / 100).toFixed(2) + '×'))]);
+    }));
+    const xs = t => t.map(v => v.x / 10);
+    const tables = [xs(R.PROFILES.trending.stream), xs(R.PROFILES.viral.stream), xs(R.BUYS.superlive.stream)];
+    const all = Array.from(new Set(tables.flat())).sort((a, b) => a - b);
+    $('rStream').replaceChildren(...all.map(x => row([td('×' + x), ...tables.map(t => td(t.includes(x) ? '✓' : '–'))])));
+    $('rFull').textContent = RISK_MODES.map(m => modeOf(m).meterFull + ' (' + modeOf(m).label + ')').join(', ');
+    $('rLiveStart').textContent = fmtX(R.BUYS.live.start / 100); $('rLiveCost').textContent = String(S.costs.live);
+    $('rSuperStart').textContent = fmtX(R.BUYS.superlive.start / 100); $('rSuperCost').textContent = String(S.costs.superlive);
+  }
   function openRules() { $('rules').hidden = false; $('rulesClose').focus({ preventScroll: true }); }
   function closeRules() { $('rules').hidden = true; $('infoBtn').focus({ preventScroll: true }); }
   function bind() {
     const mark = () => { if (S.interacted) return; S.interacted = true; loadSamples(); syncMusic(); };
     document.addEventListener('pointerdown', mark, { passive: true });
     document.addEventListener('keydown', mark);
-    $('action').addEventListener('click', () => { if (S.auto) stopAuto('Autoplay stopped.'); else onPlay(MODE); });
+    $('action').addEventListener('click', () => { if (S.auto) stopAuto('Autoplay stopped.'); else onPlay(S.mode); });
     $('autoBtn').addEventListener('click', openAuto);
     $('apCancel').addEventListener('click', closeAuto);
     $('apStart').addEventListener('click', startAuto);
@@ -1251,14 +1445,17 @@
     $('apLive').addEventListener('change', apSummary);
     $('buyBtn').addEventListener('click', onBuy);
     $('buyNo').addEventListener('click', closeBuy);
-    $('buyYes').addEventListener('click', () => { closeBuy(); onPlay(BUY_MODE); });
+    $('buyYes').addEventListener('click', () => { closeBuy(); onPlay(S.buyPick); });
+    $('buyOpts').addEventListener('click', e => { const b = e.target.closest('.bo'); if (!b || b.disabled) return; S.buyPick = b.dataset.mode; renderBuy(); });
+    $('risk').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setRisk(b.dataset.mode); });
     $('buyConfirm').addEventListener('click', e => { if (e.target === $('buyConfirm')) closeBuy(); });
     $('amtMinus').addEventListener('click', () => stepAmount(-1));
     $('amtPlus').addEventListener('click', () => stepAmount(1));
     $('amtSelect').addEventListener('change', e => setAmount(Number(e.target.value)));
-    $('minBtn').addEventListener('click', () => setAmount(S.minBet));
-    $('maxBtn').addEventListener('click', () => setAmount(S.maxBet));
-    $('fastBtn').addEventListener('click', () => { S.fast = !S.fast; $('fastBtn').setAttribute('aria-pressed', String(S.fast)); });
+    $('fastBtn').addEventListener('click', () => {
+      S.fast = !S.fast; $('fastBtn').setAttribute('aria-pressed', String(S.fast));
+      document.documentElement.style.setProperty('--spd', S.fast ? '0.6' : '1');
+    });
     $('infoBtn').addEventListener('click', openRules);
     $('rulesClose').addEventListener('click', closeRules);
     $('rules').addEventListener('click', e => { if (e.target === $('rules')) closeRules(); });
@@ -1319,8 +1516,8 @@
     if (auth.balance) { currency = auth.balance.currency || currency; setBalance(auth.balance.amount); }
     S.jur = cfg.jurisdiction || {};
     // The Go Live price comes from the RGS config when it lists the mode.
-    const gm = (cfg.gameModes || []).find(m => String(m.mode).toLowerCase() === BUY_MODE);
-    if (gm && Number(gm.costMultiplier) > 0) S.buyCost = Number(gm.costMultiplier);
+    // Bonus prices come from the RGS config when it lists the mode.
+    (cfg.gameModes || []).forEach(g => { const k = String(g.mode).toLowerCase(); if (k in S.costs && Number(g.costMultiplier) > 0) S.costs[k] = Number(g.costMultiplier); });
     $('buyBtn').hidden = !!S.jur.disabledBuyFeature;
     buildLevels(cfg);
     if (!S.levels.length) throw new RgsError(0, 'CONFIG', 'No play amounts available');
@@ -1345,7 +1542,7 @@
       return s;
     }));
     if (P.replay) { document.body.classList.add('replay'); $('replayBar').hidden = false; $('hint').hidden = true; $('introTag').textContent = 'Round replay'; $('introFine').hidden = true; }
-    bind(); initLight(); hmRender(false);
+    bind(); initLight(); hmRender(false); renderRules(); renderPaytable();
     $('app').inert = true;
     const [, err] = await Promise.all([preload(), connect().then(() => null, e => e)]);
     $('introBar').style.transform = 'scaleX(1)';
@@ -1354,6 +1551,9 @@
       return;
     }
     S.ready = true;
+    renderRules();
+    // Character clips load in the background once the game is up (they are not needed for the first reveal to work).
+    setTimeout(() => [...Object.values(ANIM), ...Object.keys(HYPE_ART).map(hypeSrc), IMG.megawin, IMG.epicwin].forEach(src => { const i = new Image(); i.src = src; }), 300);
     if (P.replay) { renderAction(); setWin(0); }
     else {
       if (S.resume && S.resume.amount && S.levels.includes(S.resume.amount)) S.amount = S.resume.amount;

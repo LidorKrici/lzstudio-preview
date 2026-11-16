@@ -18,7 +18,7 @@
 @font-face{font-family:"Cabinet Grotesk";src:url("assets/fonts/cabinet-grotesk.woff2") format("woff2");font-weight:100 900;font-display:swap}
 @font-face{font-family:"Martian Mono";src:url("assets/fonts/martian-mono.woff2") format("woff2");font-weight:100 800;font-stretch:75% 112.5%;font-display:swap}
 </style>
-<link rel="stylesheet" href="assets/site.css?v=56be7367">
+<link rel="stylesheet" href="assets/site.css?v=092c0cc3">
 <script>document.documentElement.className='js'+(matchMedia('(prefers-reduced-motion: reduce)').matches?' reduce':'')+(matchMedia('(hover: hover) and (pointer: fine)').matches?' fine':' coarse');setTimeout(function(){var c=document.documentElement.classList;if(!c.contains('ready'))c.add('ready','failsafe')},6000);</script>
 </head>
 <body data-page="contact" data-theme="ink">
@@ -33,43 +33,54 @@
 </header>
 
 <main id="main" class="reach">
-  <div class="reach-top"><p class="reach-h">Contact</p><p class="reach-hint"><span class="m">Point at the address. A click copies it.</span><span class="t" data-copy-label>Tap to copy</span></p></div>
-  <button type="button" class="reach-addr" data-copy data-email="hello@lzstud.io" aria-label="Copy the address hello@lzstud.io"><span class="reach-line" aria-hidden="true">hello@</span><span class="reach-line is-out" aria-hidden="true">lzstud.io</span></button>
-  <i class="reach-floor" aria-hidden="true"></i>
-  <div class="reach-body">
-    <div class="reach-say">
-      <h1>Looking for original titles for your lobby?</h1>
-      <p>Tell us what you need. We answer every message ourselves.</p>
-      <div class="reach-acts">
-        <button type="button" class="reach-copy" data-copy aria-label="Copy the address hello@lzstud.io"><span data-copy-label>Copy</span></button>      </div>
-      <p class="reach-said" data-copy-said role="status" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)"></p>
+  <section class="reach-open" data-theme="ink">
+    <div class="reach-top"><p class="reach-h">Contact</p><p class="reach-hint"><span class="m">Point at the address. A click copies it.</span><span class="t" data-copy-label>Tap to copy</span></p></div>
+    <div class="reach-stage">
+      <button type="button" class="reach-addr" data-copy data-email="hello@lzstud.io" aria-label="Copy the address hello@lzstud.io"><span class="reach-line" aria-hidden="true">hello@</span><span class="reach-line is-out" aria-hidden="true">lzstud.io</span></button>
+      <i class="reach-floor" aria-hidden="true"></i>
     </div>
+    <div class="reach-foot">
+      <h1 class="reach-lead">Looking for original titles for your lobby?</h1>
+      <div class="reach-side">
+        <p>Tell us what you need. We answer every message ourselves.</p>
+        <div class="reach-acts"><button type="button" class="reach-copy" data-copy aria-label="Copy the address hello@lzstud.io"><span data-copy-label>Copy</span></button></div>
+        <p class="reach-said" data-copy-said role="status" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)"></p>
+      </div>
+    </div>
+  </section>
+  <section class="reach-desk" data-theme="accent">
     <form class="reach-form" data-ticket action="mailto:hello@lzstud.io" method="post" enctype="text/plain">
-      <i class="ticket-slot" aria-hidden="true"></i>
-      <div class="ticket">
-        <div class="ticket-stub"><span class="ticket-small">Ticket 000 001</span><svg viewBox="6 0 128 134" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="17" stroke-miterlimit="6"><path d="M20.5 15V110.5H56"/><path d="M52 23.5H112L64 110.5H120"/></g></svg><span class="ticket-small">Keep this part</span></div>
-        <div class="ticket-body">
-          <div><p class="ticket-small">LZ Studio / Cash-out voucher / Good for one answer</p><p class="ticket-h">Let's talk</p></div>
-          <div class="ticket-fields">
+      <div class="reach-say">
+        <h2>Or write it on the ticket.</h2>
+        <p>It opens in your own mail, already written. Nothing is sent from this page.</p>
+      </div>
+      <div class="reach-print">
+        <i class="ticket-slot" aria-hidden="true"></i>
+        <div class="ticket">
+          <div class="ticket-stub"><span class="ticket-small">Ticket 000 001</span><svg viewBox="6 0 128 134" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="17" stroke-miterlimit="6"><path d="M20.5 15V110.5H56"/><path d="M52 23.5H112L64 110.5H120"/></g></svg><span class="ticket-small">Keep this part</span></div>
+          <div class="ticket-body">
+            <div><p class="ticket-small">LZ Studio / Cash-out voucher / Good for one answer</p><p class="ticket-h">Let's talk</p></div>
+            <div class="ticket-fields">
           <label class="ticket-field"><span class="ticket-small">Name</span><input type="text" name="name" placeholder="Your name" autocomplete="name" spellcheck="false"></label>
           <label class="ticket-field"><span class="ticket-small">Company</span><input type="text" name="company" placeholder="Where you work" autocomplete="organization" spellcheck="false"></label>
           <label class="ticket-field"><span class="ticket-small">About</span><input type="text" name="about" placeholder="What you are looking for" autocomplete="off"></label>
+            </div>
           </div>
+          <div class="ticket-bar" aria-hidden="true"><i></i><span class="ticket-small">Insert here</span></div>
         </div>
-        <div class="ticket-bar" aria-hidden="true"><i></i><span class="ticket-small">Insert here</span></div>
       </div>
-      <div class="reach-send"><p>It opens in your own mail, already written. Nothing is sent from this page.</p><button type="submit" class="btn btn-accent"><span>Send the ticket</span></button></div>
+      <div class="reach-send"><button type="submit" class="btn btn-ink"><span>Send the ticket</span></button></div>
     </form>
-  </div>
-</main>
-
+    
 <footer class="foot">
   <p class="foot-brand"><svg viewBox="6 0 128 134" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="17" stroke-miterlimit="6"><path d="M20.5 15V110.5H56"/><path d="M52 23.5H112L64 110.5H120"/></g></svg><span>LZ Studio</span></p>
   <p class="foot-note">18+ only. Demo builds use play money and have no cash value.</p>
   
   <p class="foot-copy">&copy; 2026 LZ Studio</p>
 </footer>
+  </section>
+</main>
 <div class="curtain" data-curtain aria-hidden="true"><div class="curtain-count" data-count>0</div></div>
-<script src="assets/contact.js?v=bb8e87f4" defer></script>
+<script src="assets/contact.js?v=bf01483d" defer></script>
 </body>
 </html>
