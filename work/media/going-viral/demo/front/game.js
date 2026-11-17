@@ -1694,7 +1694,7 @@
   /* ---------- Start ---------- */
   function preload() {
     const poses = Object.values(POSE).flatMap(p => [p.base, p.blink, p.win]);
-    const srcs = Array.from(new Set(Object.values(IMG).concat(poses, ['assets/logo.webp', 'assets/coin.webp', 'assets/hype-check.webp', 'assets/tile-open.webp', 'assets/board-frame.webp',
+    const srcs = Array.from(new Set(Object.values(IMG).concat(poses, ['assets/logo.webp', 'assets/coin.webp', 'assets/hype-check.webp', 'assets/tile-open.webp', 'assets/board-frame-slim.webp',
       'assets/icon-lock.webp', 'assets/icon-shield.webp', 'assets/icon-x2.webp', 'assets/icon-x5.webp', 'assets/btn-golive.webp'])));
     let done = 0;
     return new Promise(res => {

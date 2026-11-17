@@ -112,11 +112,12 @@ body.onair .neon{opacity:.4;filter:brightness(1.2) saturate(1.5) hue-rotate(-18d
 
 /* The board is a square that takes the largest size the stage allows. */
 .board-wrap{flex:1;min-height:0;container-type:size;display:grid;place-items:center}
-/* v2: the board sits inside an illustrated live-stream frame. The frame's window is 69.5% of its width. */
-/* The frame art has ~5% empty margin on each side, so the box may grow past the container without the art touching its neighbours. */
-.framebox{position:relative;width:min(112cqw,104cqh);aspect-ratio:1/1;flex:none}
+/* v2: the board sits inside an illustrated live-stream frame. */
+/* The slim frame art has ~2.5% empty margin on each side, so the box may grow a little past the container. */
+.framebox{position:relative;width:min(104cqw,102cqh);aspect-ratio:1/1;flex:none}
 .bframe{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:0;filter:drop-shadow(0 18px 30px rgba(0,0,0,.55))}
-.framebox .board{position:absolute;left:14.8%;top:18.2%;width:69.5%}
+/* v2.9.1: the slim frame (same corners and decoration, half-thick tube): its window is 84.75% of the box */
+.framebox .board{position:absolute;left:7.4%;top:9.1%;width:84.75%}
 .board{position:relative;width:min(100cqw,100cqh);aspect-ratio:1/1;padding:clamp(4px,1.2cqmin,10px);border-radius:14px;background:rgba(14,4,24,.9);box-shadow:inset 0 3px 20px rgba(0,0,0,.65);z-index:1}
 .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:clamp(3px,1.2cqmin,8px);height:100%;transform:perspective(1200px) rotateX(calc(var(--ty,0) * 1deg)) rotateY(calc(var(--tx,0) * 1deg))}
 /* v2: closed tiles are the illustrated tile back (painted on the scratch canvas); open tiles are the illustrated open face. */
