@@ -106,12 +106,12 @@
   // Balance and amounts: the currency's normal decimals.
   const money = units => withSym(numStr(units, meta().dec));
   // Wins: exact, so a tiny play amount still shows the precise win (up to 6 decimals).
-  function winMoney(units) {
-    const base = meta().dec;
-    let dec = base;
+  function winDec(units) {
+    let dec = meta().dec;
     while (dec < 6 && Math.round(Math.abs(units) / Math.pow(10, 6 - dec)) * Math.pow(10, 6 - dec) !== Math.abs(units)) dec++;
-    return withSym(numStr(units, dec));
+    return dec;
   }
+  function winMoney(units, dec = winDec(units)) { return withSym(numStr(units, dec)); }
   const fmtX = x => '×' + (x >= 100 ? group(x.toFixed(0)) : x >= 10 ? x.toFixed(1) : x.toFixed(2));
   const compact = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M'
     : n >= 1e3 ? (n / 1e3).toFixed(n >= 1e5 ? 0 : 1).replace(/\.0$/, '') + 'K' : String(Math.round(n));
@@ -412,43 +412,85 @@
   }
   function markLatest(c) { cells.forEach(o => o.el.classList.remove('latest')); if (c) c.el.classList.add('latest'); }
   function resetBoard() {
+    if (MOTION && MOTION.ready) MOTION.clear();
     $('grid').classList.remove('over', 'spot');
     board.classList.remove('checking', 'cracked', 'shielded', 'hot', 'blazing', 'onair');
     document.body.classList.remove('onair');
     roomReset();
-    stopChat(); $('onAir').hidden = true;
+    stopChat(); cineOff(); $('onAir').hidden = true;
     cells.forEach(c => { c.open = false; c.sym = null; c.el.className = 'cell'; c.el.style.removeProperty('--tc'); c.img.removeAttribute('src'); c.tg.textContent = ''; paintCover(c); });
+    dealIn();
   }
 
-  /* ---------- Characters: celebration on reveal, then idle breathing and blinks ---------- */
-  // v2.3: hand-animated clips (one play, transparent). Each one starts and ends on the character's still pose,
-  // so the switch back to the still image is invisible.
-  // Only characters whose clip passed review are listed; the others keep the pose-swap animation.
-  const ANIM = { heart: 'assets/anim-heart.webp', fire: 'assets/anim-fire.webp', rocket: 'assets/anim-rocket.webp', crown: 'assets/anim-crown.webp', live: 'assets/anim-live.webp' };
-  const ANIM_MS = 3150;
-  let animSeq = 0, animsOn = 0;
-  const animSrc = key => ANIM[key] + '?p=' + (++animSeq);   // a fresh URL restarts the clip from its first frame
-  // Shows a character on a tile: it plays its animation, then rests on its still pose.
+  /* ---------- Board motion: the tiles themselves move ---------- */
+  const boardMotion = () => !reduced && !document.hidden && typeof Element.prototype.animate === 'function';
+  const cxy = c => [c.i % COLS, Math.floor(c.i / COLS)];
+  // A new post: the fresh tiles flip in as a diagonal wave from the top-left corner.
+  function dealIn() {
+    if (!boardMotion()) return;
+    const sp = speed();
+    cells.forEach(c => {
+      const [x, y] = cxy(c);
+      c.el.animate([
+        { transform: 'perspective(500px) rotateY(-95deg) scale(.55)', opacity: 0 },
+        { transform: 'perspective(500px) rotateY(14deg) scale(1.06)', opacity: 1, offset: 0.65 },
+        { transform: 'none', opacity: 1 }
+      ], { duration: 340 * sp, delay: (x + y) * 22 * sp, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'backwards' });
+    });
+  }
+  // A tile opens: the closed tiles around it are pushed out by a shockwave that fades with distance,
+  // and the board takes a small hit that grows with the tier.
+  function ripple(c, tier) {
+    if (!boardMotion()) return;
+    const sp = speed(), [ox, oy] = cxy(c), amp = 2.5 + tier * 1.6;
+    cells.forEach(o => {
+      if (o === c || o.open || o.el.classList.contains('target')) return;
+      const [x, y] = cxy(o), dx = x - ox, dy = y - oy, d = Math.hypot(dx, dy), a = amp * Math.exp(-(d - 1) * 0.42);
+      if (a < 0.6) return;
+      const px = (dx / d * a).toFixed(1), py = (dy / d * a).toFixed(1), s = (1 - a * 0.006).toFixed(3);
+      // translate/scale (not transform), so it never fights the target lift or the reveal kick
+      o.el.animate([
+        { translate: '0 0', scale: '1' },
+        { translate: `${px}px ${py}px`, scale: s, offset: 0.3 },
+        { translate: `${(-px * 0.3).toFixed(1)}px ${(-py * 0.3).toFixed(1)}px`, scale: '1', offset: 0.65 },
+        { translate: '0 0', scale: '1' }
+      ], { duration: 460 * sp, delay: d * 38 * sp, easing: 'ease-out' });
+    });
+    const hit = 1.2 + tier * 1.3;
+    $('grid').animate([
+      { translate: '0 0', scale: '1' },
+      { translate: `0 ${hit.toFixed(1)}px`, scale: (1 - hit * 0.0025).toFixed(4), offset: 0.25 },
+      { translate: `0 ${(-hit * 0.35).toFixed(1)}px`, scale: '1', offset: 0.6 },
+      { translate: '0 0', scale: '1' }
+    ], { duration: 300 * sp, easing: 'ease-out' });
+  }
+  // The impact on the tile itself: the PixiJS layer when it is on, the DOM ring, burst and sparks otherwise.
+  function revealFx(c, col, tier, n) {
+    if (motionOn() && MOTION.impact(c.el, col, tier)) return;
+    ringAt(c, col); burstAt(c, col); sparks(c, col, n);
+  }
+
+  /* ---------- Characters: celebration on reveal, then idle life ---------- */
+  // v2.6: open characters are drawn by the motion layer (motion.js, PixiJS): a skinned rig per character with
+  // its own celebration, idle life and particles. The <img> pose swap below is the fallback (no WebGL,
+  // reduced motion, hidden tab).
+  const MOTION = window.GVMotion;
+  const motionOn = () => !!(MOTION && MOTION.ready) && !reduced && !document.hidden;
+  // Shows a character on a tile: it celebrates, then rests on its still pose.
   function showSym(c, key, color, celebrateMs = 650) {
     const p = POSE[key];
     c.sym = key;
     if (color) c.el.style.setProperty('--tc', color);
     if (!p) return;
-    if (reduced || document.hidden) { c.img.src = p.base; return; }
     clearTimeout(c.poseT);
-    if (ANIM[key] && animsOn < 10) {
-      animsOn++;
-      c.el.classList.add('animd');
-      c.img.src = animSrc(key);
-      c.poseT = setTimeout(() => { animsOn = Math.max(0, animsOn - 1); c.el.classList.remove('animd'); if (c.sym === key) { c.img.src = p.base; c.el.classList.remove('settle'); void c.el.offsetWidth; c.el.classList.add('settle'); setTimeout(() => c.el.classList.remove('settle'), 320); } }, ANIM_MS);
-      return;
-    }
+    if (motionOn() && MOTION.show(c.i, key, c.el, c.img, celebrateMs)) { c.img.src = p.base; c.el.classList.add('px'); return; }
+    if (reduced || document.hidden) { c.img.src = p.base; return; }
     c.img.src = p.win;
     c.poseT = setTimeout(() => { if (c.sym === key) c.img.src = p.base; }, Math.round(celebrateMs * speed()));
   }
   // Every so often one open character blinks (the blink frame has the exact same framing).
   function blinkOne() {
-    if (reduced || document.hidden) return;
+    if (reduced || document.hidden || motionOn()) return;
     const open = cells.filter(c => c.open && c.sym && POSE[c.sym] && c.img.src.endsWith(POSE[c.sym].base.slice(6)));
     if (!open.length) return;
     const c = open[Math.floor(Math.random() * open.length)], p = POSE[c.sym];
@@ -486,17 +528,21 @@
       if (o === c || !o.open || !o.sym) return;
       const d = Math.max(Math.abs(o.i % COLS - cx), Math.abs(Math.floor(o.i / COLS) - cy));
       if (d !== 1) return;
-      setTimeout(() => { o.el.classList.remove('hop'); void o.el.offsetWidth; o.el.classList.add('hop'); setTimeout(() => o.el.classList.remove('hop'), 520); }, 260 + Math.random() * 120);
+      setTimeout(() => {
+        if (o.el.classList.contains('px')) { MOTION.hop(o.i); return; }
+        o.el.classList.remove('hop'); void o.el.offsetWidth; o.el.classList.add('hop'); setTimeout(() => o.el.classList.remove('hop'), 520);
+      }, 260 + Math.random() * 120);
     });
   }
   // Hero moment: a top-tier character takes over the board for a beat, then the round carries on.
   function heroShow(key, color) {
     if (reduced || document.hidden || !POSE[key]) return Promise.resolve();
+    board.classList.remove('punch'); void board.offsetWidth; board.classList.add('punch');
+    if (motionOn() && MOTION.hero(key)) return sleep(900);
     const h = document.createElement('div'), im = document.createElement('img');
     h.className = 'hero'; h.style.setProperty('--hc', color);
-    im.src = ANIM[key] ? animSrc(key) : POSE[key].win; im.alt = '';
+    im.src = POSE[key].win; im.alt = '';
     h.append(im); board.append(h);
-    board.classList.remove('punch'); void board.offsetWidth; board.classList.add('punch');
     const ms = Math.round(1250 * speed());
     setTimeout(() => h.remove(), ms + 60);
     return sleep(900);
@@ -515,7 +561,10 @@
   // At the end of a winning round, every character on the board celebrates together.
   function celebrateAll() {
     if (reduced || document.hidden) return;
-    cells.forEach((c, k) => { if (c.open && POSE[c.sym]) setTimeout(() => showSym(c, c.sym, null, 1400), k * 18); });
+    cells.forEach((c, k) => {
+      if (!c.open || !POSE[c.sym]) return;
+      setTimeout(() => { if (c.el.classList.contains('px')) MOTION.celebrate(c.i); else showSym(c, c.sym, null, 1400); }, k * 18);
+    });
   }
 
   /* ---------- Effects ---------- */
@@ -706,13 +755,13 @@
   let tweenId = 0;
   function setMult(x, cls) {
     const el = $('mult'), from = S.shownX, id = ++tweenId, t0 = performance.now(), d = reduced || document.hidden ? 0 : 260;
-    const finish = () => { if (id !== tweenId) return; S.shownX = x; el.textContent = fmtX(x); };
+    const finish = () => { if (id !== tweenId) return; S.shownX = x; el.textContent = fmtX(x); fitText(el, hudOf(el), APART()); };
     if (d) {
       setTimeout(finish, d + 40);
       const tick = now => {
         if (id !== tweenId) return;
         const t = Math.max(0, Math.min(1, (now - t0) / d)), v = from + (x - from) * (1 - Math.pow(1 - t, 3));
-        el.textContent = fmtX(v);
+        el.textContent = fmtX(v); fitText(el, hudOf(el), APART());
         if (t < 1) requestAnimationFrame(tick); else finish();
       };
       requestAnimationFrame(tick);
@@ -730,17 +779,61 @@
     const p = $('lockPill');
     p.classList.toggle('off', !(x > 0));
     $('lockText').textContent = x > 0 ? `Secured ${fmtX(x)}` : 'Nothing secured';
+    fitText($('lockText'), hudOf(p));
     if (animate && !reduced) { p.classList.remove('pop'); void p.offsetWidth; p.classList.add('pop'); }
   }
   function setShield(on) { $('shieldPill').hidden = !on; board.classList.toggle('shielded', on); }
+  // A long amount (big win, long currency code, small popout) shrinks to fit its box instead of being cut off.
+  // It must stay inside its own box, inside `box` (if given) and on screen.
+  // `apart` = two elements that must not overlap (e.g. the Secured pill and the views counter beside the multiplier).
+  const hits = (a, b) => {
+    if (!a || !b) return false;
+    const p = a.getBoundingClientRect(), q = b.getBoundingClientRect();
+    return p.width > 0 && q.width > 0 && p.left < q.right && q.left < p.right && p.top < q.bottom && q.top < p.bottom;
+  };
+  function fitText(el, box, apart) {
+    if (!el) return;
+    el.style.fontSize = '';
+    const over = () => {
+      const r = el.getBoundingClientRect();
+      if (!r.width) return false;
+      // The real width of the text (an ellipsis hides overflow from scrollWidth when it is under a pixel or two).
+      const rg = document.createRange(); rg.selectNodeContents(el);
+      // Compare in exact (fractional) pixels: clientWidth is rounded, and the browser shows an ellipsis for any overflow.
+      const cs = getComputedStyle(el), px = k => parseFloat(cs[k]) || 0;
+      const inner = r.width - px('paddingLeft') - px('paddingRight') - px('borderLeftWidth') - px('borderRightWidth');
+      if (cs.display !== 'inline' && (el.scrollWidth > el.clientWidth || rg.getBoundingClientRect().width > inner + 0.01)) return true;
+      if (apart && apart.some(([a, b]) => hits(a, b))) return true;
+      let L = 0, Rt = document.documentElement.clientWidth;
+      if (box) { const b = box.getBoundingClientRect(), cs = getComputedStyle(box); L = Math.max(L, b.left + parseFloat(cs.paddingLeft) * 0.5); Rt = Math.min(Rt, b.right - parseFloat(cs.paddingRight) * 0.5); }
+      return r.right > Rt + 1 || r.left < L - 1;
+    };
+    // Measure the resting layout: a beat or pop animation scaling the HUD must not count as overflow.
+    const scope = el.closest('.hud') || el.parentElement;
+    scope.classList.add('fitm');
+    try {
+      if (!over()) return;
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      while (size > 9 && over()) { size -= 1; el.style.fontSize = size + 'px'; }
+    } finally { scope.classList.remove('fitm'); }
+  }
+  const hudOf = el => el.closest('.hud');
+  const APART = () => [[$('lockPill'), $('views')], [$('lockPill'), document.querySelector('.side')]];
+  function fitAll() {
+    fitText($('mult'), hudOf($('mult')), APART()); fitText($('lockText'), hudOf($('lockText')));
+    fitText($('winAmt'), $('winAmt').closest('.winbox')); fitText($('amtText')); fitText($('buyPrice'), $('buyBtn').closest('.side'));
+  }
   let winShown = 0, winTimer = 0;
   function setWin(units, animate) {
     const el = $('winAmt'), from = winShown, t0 = performance.now(), d = animate && !reduced ? 600 : 0;
     winShown = units;
     clearTimeout(winTimer);
+    // The count-up uses the final win's decimals, so a sub-cent win never flashes as 0.00 on the way.
+    const dec = Math.max(winDec(units), winDec(from));
     const step = () => {
       const t = d ? Math.min(1, (performance.now() - t0) / d) : 1;
-      el.textContent = t >= 1 ? winMoney(units) : money(Math.round(from + (units - from) * t));
+      el.textContent = t >= 1 ? winMoney(units) : winMoney(Math.round(from + (units - from) * t), dec);
+      if (t >= 1 || !el.style.fontSize) fitText(el, el.closest('.winbox'));
       if (t < 1) winTimer = setTimeout(step, 30);
     };
     step();
@@ -828,7 +921,7 @@
         const e = 1 - Math.pow(1 - t, 2.2), cx = x * e;
         const k = Math.max(0, BW_TIERS.filter(tt => cx >= tt.x).length - 1);
         if (k > tier) setTier(k);
-        amt.textContent = money(Math.round(units * e)); xl.textContent = fmtX(Math.max(0, cx));
+        amt.textContent = winMoney(Math.round(units * e), winDec(units)); xl.textContent = fmtX(Math.max(0, cx));
         if (now - lastTick > 85) { lastTick = now; sfx.count(t); }
         // A hidden tab stops animation frames; fall back to a timer so the round never stalls.
         if (document.hidden) setTimeout(step, 50); else requestAnimationFrame(step);
@@ -905,11 +998,105 @@
     tick();
   }
   function stopChat() { clearTimeout(chatTimer); chatTimer = 0; }
+  // Viewers follow the multiplier, capped where the win is capped (the views counter does the same).
+  const viewersAt = x => Math.max(1, Math.min(x, modeOf(S.roundMode).maxX)) * 40000;
   function setOnAir(x, left) {
-    $('viewers').textContent = compact(Math.max(1, x) * 40000);
+    $('viewers').textContent = compact(viewersAt(x));
     $('streamLeft').textContent = left > 0 ? left + ' live tile' + (left === 1 ? '' : 's') + ' left' : 'Stream ending';
   }
   const streamImg = x => (x >= 10 ? IMG.crown : x >= 3 ? IMG.rocket : x >= 2 ? IMG.fire : IMG.heart);
+
+  /* ---------- v2.8: the LIVE STREAM as a broadcast ----------
+     Presentation only, the round is already decided by its events: a countdown into a full-screen "We're live"
+     card, a broadcast frame while the stream runs, letterbox cuts on big tiles, and a
+     stream recap before the win screen. A tap skips any card; reduced motion and hidden tabs skip them all. */
+  const cineOK = () => !reduced && !document.hidden;
+  let cineTimer = 0;
+  function letterbox(ms) {
+    if (!cineOK()) return;
+    clearTimeout(cineTimer);
+    document.body.classList.add('cine');
+    if (ms) cineTimer = setTimeout(() => document.body.classList.remove('cine'), Math.round(ms * speed()));
+  }
+  function cineOff() { clearTimeout(cineTimer); document.body.classList.remove('cine'); }
+  // A big stream tile: the camera pushes in on it for a beat.
+  function pushIn(c) {
+    if (!cineOK() || !c || typeof Element.prototype.animate !== 'function') return;
+    const g = $('grid'), gr = g.getBoundingClientRect(), r = c.el.getBoundingClientRect();
+    g.style.transformOrigin = `${(r.left - gr.left + r.width / 2).toFixed(0)}px ${(r.top - gr.top + r.height / 2).toFixed(0)}px`;
+    g.animate([{ scale: '1' }, { scale: '1.07', offset: 0.28 }, { scale: '1.07', offset: 0.6 }, { scale: '1' }],
+      { duration: Math.round(1150 * speed()), easing: 'cubic-bezier(.3,0,.2,1)' });
+  }
+  // Waits up to ms (scaled by turbo), or less if the card was tapped.
+  const cineWait = (ms, skipped) => new Promise(res => {
+    const end = performance.now() + ms * speed();
+    const f = () => (skipped() || performance.now() >= end ? res() : setTimeout(f, 30));
+    f();
+  });
+  function countTo(el, to, ms, fmt) {
+    const t0 = performance.now();
+    const f = () => {
+      const t = Math.min(1, (performance.now() - t0) / (ms * speed()));
+      el.textContent = fmt(to * (1 - Math.pow(1 - t, 3)));
+      if (t < 1 && !el.closest('[hidden]')) setTimeout(f, 33);
+    };
+    f();
+  }
+  function cineCard(kind) {
+    const el = $('golive');
+    el.className = 'golive ' + kind; el.hidden = false;
+    let skip = false;
+    const onSkip = () => { skip = true; el.classList.add('skipped'); };
+    el.addEventListener('pointerdown', onSkip);
+    const close = () => new Promise(res => {
+      el.classList.add('out');
+      setTimeout(() => { el.hidden = true; el.className = 'golive'; el.removeEventListener('pointerdown', onSkip); res(); }, 320);
+    });
+    return { el, skipped: () => skip, close };
+  }
+  // 3, 2, 1, then the post is live.
+  async function goLiveIntro(viewers) {
+    if (!cineOK()) return;
+    const card = cineCard('intro'), cnt = $('glCount');
+    $('glTitle').textContent = 'Going live in';
+    $('glViewers').textContent = '0';
+    const t0 = performance.now(), clock = setInterval(() => {
+      const s = Math.floor((performance.now() - t0) / 1000);
+      $('glTime').textContent = '00:00:' + String(s).padStart(2, '0');
+    }, 250);
+    for (const n of [3, 2, 1]) {
+      if (card.skipped()) break;
+      cnt.textContent = String(n);
+      cnt.classList.remove('tick'); void cnt.offsetWidth; cnt.classList.add('tick');
+      sfx.thump(); tone(660 + (3 - n) * 220, 0.12, 'square', 0.05);
+      await cineWait(460, card.skipped);
+    }
+    card.el.classList.add('on');
+    sfx.hype(); tone(1320, 0.35, 'triangle', 0.08, 0.05);
+    countTo($('glViewers'), viewers, 900, v => compact(v));
+    await cineWait(1500, card.skipped);
+    if (card.skipped()) { $('glViewers').textContent = compact(viewers); await sleep(250); }
+    clearInterval(clock);
+    await card.close();
+  }
+  // The stream is over: a recap card with what happened on air, before the win screen.
+  async function streamRecap(st, x) {
+    if (!cineOK()) return;
+    const card = cineCard('recap');
+    $('glTitle').textContent = 'Stream ended';
+    const rows = [['Peak viewers', compact(st.peak)], ['Live tiles', String(st.hits)], ['Best tile', st.best ? '×' + st.best : '-'], ['Stream total', fmtX(x)]];
+    $('glStats').replaceChildren(...rows.map(([k, v], i) => {
+      const d = document.createElement('div'); d.style.setProperty('--i', i);
+      const a = document.createElement('span'), b = document.createElement('b');
+      a.textContent = k; b.textContent = v; d.append(a, b); return d;
+    }));
+    letterbox(0);
+    sfx.hype();
+    rows.forEach((_, i) => setTimeout(() => { if (!card.skipped()) tone(780 + i * 160, 0.1, 'triangle', 0.06); }, Math.round((260 + i * 180) * speed())));
+    await cineWait(2300, card.skipped);
+    document.body.classList.remove('cine');
+    await card.close();
+  }
 
   async function playRound(events, amount) {
     const state = { mult: 0, locked: 0, amount, revealed: 0 };
@@ -921,6 +1108,7 @@
     $('roundLabel').textContent = 'Live now';
     await sleep(500);
     let finalPay = 0, ending = 'cancel', bustCell = null;
+    const bc = { on: false, hits: 0, best: 0, peak: 0 };
     for (const e of events) {
       if (e.type === 'reveal' || e.type === 'cancel') {
         const c = cells[e.tile];
@@ -951,7 +1139,7 @@
           c.el.style.setProperty('--jump', [16, 24, 32, 42][tier] + '%');
           showSym(c, e.reaction, col, 520 + tier * 180);
           hopNeighbors(c);
-          ringAt(c, col); burstAt(c, col); sparks(c, col, 12 + TIERS.indexOf(e.reaction) * 6);
+          revealFx(c, col, tier, 12 + tier * 6); ripple(c, tier);
           setMult(e.mult / 100); setHeat(e.mult / 100);
           sfx.pop(state.revealed);
           popFrom(c, e.reaction, e.add / 100);
@@ -970,7 +1158,7 @@
           flashBoard('#33e4f0'); shake(); sfx.shield();
           showHype('SHIELD SAVED IT', '#33e4f0');
           hmLog('Shield blocked a cancel', 'good');
-          sparks(c, '#33e4f0', 30);
+          revealFx(c, '#33e4f0', 2, 30); ripple(c, 2);
           await sleep(1300);
         } else {
           c.el.classList.remove('bustprep'); c.el.classList.add('dead', 'on');
@@ -992,20 +1180,25 @@
           c.tg.textContent = 'LIVE'; markLatest(c);
           c.cv.style.opacity = '0';
           showSym(c, 'live', '#ff3d4a', 1400);
+          revealFx(c, '#ff3d4a', 4, 40); ripple(c, 4);
         }
         state.mult = e.mult; ending = 'live';
+        bc.on = true; bc.peak = viewersAt(e.mult / 100);
+        hmGoLive(!!e.bought);
+        // v2.8: the countdown card. Without it (reduced motion, hidden tab) the old hype caption says it instead.
+        const cine = cineOK();
+        if (cine) { await sleep(e.bought ? 250 : 650); await goLiveIntro(bc.peak); }
         document.body.classList.add('onair');
         board.classList.add('onair'); $('onAir').hidden = false; setOnAir(e.mult / 100, STREAM_TILES);
         setChip('live', 'ON AIR');
         $('roundLabel').textContent = 'Live stream';
-        showHype(e.bought ? 'GOING LIVE' : "YOU'RE LIVE!", '#ff3d4a');
+        if (!cine) showHype(e.bought ? 'GOING LIVE' : "YOU'RE LIVE!", '#ff3d4a');
         flashBoard('#ff3d4a'); shake(); confetti(120); rain(20); sfx.hype(); playFx('vidWin');
         setMult(e.mult / 100); setHeat(e.mult / 100);
         setLocked(e.mult / 100, true);
         setWin(Math.round(amount * e.mult / 100), true);
         startChat();
-        hmGoLive(!!e.bought);
-        await sleep(1700);
+        await sleep(cine ? 1000 : 1700);
       } else if (e.type === 'stream') {
         const c = cells[e.tile];
         if (!c) continue;
@@ -1021,8 +1214,11 @@
         setTimeout(() => c.el.classList.remove('popin'), Math.round(780 * speed()));
         const col = e.x >= 10 ? '#ffd23f' : e.x >= 3 ? '#ff2e88' : '#ff3d4a';
         showSym(c, e.x >= 10 ? 'crown' : e.x >= 3 ? 'rocket' : e.x >= 2 ? 'fire' : 'heart', col, e.x >= 3 ? 1000 : 600);
-        ringAt(c, col); burstAt(c, col); sparks(c, col, 14 + Math.min(40, e.x * 4));
+        const st = e.x >= 10 ? 4 : e.x >= 3 ? 3 : e.x >= 2 ? 1 : 0;
+        revealFx(c, col, st, 14 + Math.min(40, e.x * 4)); ripple(c, st);
         state.mult = e.mult;
+        bc.hits++; bc.best = Math.max(bc.best, e.x); bc.peak = Math.max(bc.peak, viewersAt(e.mult / 100));
+        if (e.x >= 5) { letterbox(1250); pushIn(c); }
         setMult(e.mult / 100); setHeat(e.mult / 100);
         setLocked(e.mult / 100, false);
         setWin(Math.round(amount * e.mult / 100), true);
@@ -1069,12 +1265,14 @@
       setMult(state.mult / 100, 'dead');
       $('roundLabel').textContent = winX > 0 ? `Cancelled · secured ${fmtX(winX)}` : 'Cancelled';
     } else {
-      setChip('max', ending === 'cap' ? 'MAX WIN' : ending === 'live' ? 'STREAM ENDED' : 'WENT VIRAL');
+      setChip('max', ending === 'cap' ? 'MAX WIN' : ending === 'live' ? 'OFF AIR' : 'WENT VIRAL');
       $('roundLabel').textContent = ending === 'cap' ? `Max win ${fmtX(winX)} (capped)` : ending === 'live' ? `Live stream ${fmtX(winX)}` : `Went viral ${fmtX(winX)}`;
     }
     setHeat(0);
     setWin(winUnits, true);
     if (ending !== 'cancel' || winX >= 1) celebrateAll();
+    cineOff();
+    if (bc.on) { await sleep(500); await streamRecap(bc, winX); }
     if (winX >= 10) await showBigWin(winUnits, winX);
     else if (winX >= 1) { confetti(70); sfx.cash(); roomPulse('win'); }
     const r = $('result');
@@ -1180,7 +1378,10 @@
     const sel = $('amtSelect');
     sel.replaceChildren(...S.levels.map(v => { const o = document.createElement('option'); o.value = String(v); o.textContent = money(v); return o; }));
     sel.value = String(S.amount);
-    $('amtText').textContent = money(S.amount);
+    const at = $('amtText');
+    at.classList.remove('two'); at.textContent = money(S.amount); fitText(at);
+    // Still too long (a code like USDT or BTC after the number): put the code under the number.
+    if (at.scrollWidth > at.clientWidth + 1 && meta().after) { at.classList.add('two'); at.textContent = numStr(S.amount, meta().dec) + '\n' + meta().sym; fitText(at); }
     const i = S.levels.indexOf(S.amount);
     $('amtMinus').disabled = S.busy || i <= 0;
     $('amtPlus').disabled = S.busy || i >= S.levels.length - 1;
@@ -1244,6 +1445,7 @@
     $('actionSub').textContent = S.amount ? money(S.amount) : ' ';
     $('buyBtn').disabled = S.busy || !S.ready || auto;
     $('buyPrice').textContent = S.amount ? 'from ' + money(S.amount * Math.min(...BUY_MODES.map(m => S.costs[m]))) : '';
+    fitText($('buyPrice'), $('buyBtn').closest('.side'));
     document.querySelectorAll('#risk button').forEach(b => { b.disabled = S.busy || !S.ready || auto; b.setAttribute('aria-pressed', String(b.dataset.mode === S.mode)); });
     fillLevels();
   }
@@ -1324,7 +1526,7 @@
     if (left > 0) await new Promise(r => setTimeout(r, left));
     S.busy = false;
     $('multWrap').classList.remove('beat');
-    renderAction();
+    renderAction(); fitAll();
   }
   function stUpdate(outcome, payout) {
     const st = S.stats;
@@ -1404,7 +1606,7 @@
     if (S.busy || !S.replayData) return;
     S.busy = true; renderAction();
     try { await playRound(eventsOf(S.replayData.state), S.amount); } catch (e) { toast('This replay could not be shown.'); }
-    S.busy = false; S.replayed = true; renderAction();
+    S.busy = false; S.replayed = true; renderAction(); fitAll();
   }
 
   /* ---------- Rules, sound, keys ---------- */
@@ -1478,6 +1680,7 @@
       e.preventDefault();
       if (S.auto) stopAuto('Autoplay stopped.'); else onPlay();
     });
+    window.addEventListener('resize', fitAll);
     setInterval(jiggleOne, 700);
     setInterval(blinkOne, 650);
     floatReact();
@@ -1544,7 +1747,8 @@
     if (P.replay) { document.body.classList.add('replay'); $('replayBar').hidden = false; $('hint').hidden = true; $('introTag').textContent = 'Round replay'; $('introFine').hidden = true; }
     bind(); initLight(); hmRender(false); renderRules(); renderPaytable();
     $('app').inert = true;
-    const [, err] = await Promise.all([preload(), connect().then(() => null, e => e)]);
+    const motion = MOTION && !reduced ? MOTION.init({ grid: $('grid'), speed }) : Promise.resolve(false);
+    const [, err] = await Promise.all([preload(), connect().then(() => null, e => e), motion]);
     $('introBar').style.transform = 'scaleX(1)';
     if (err) {
       fatal(P.replay ? 'This replay could not be loaded.' : errText(err.code === 'NETWORK' || err.status === 0 ? { code: 'NETWORK' } : err));
@@ -1552,8 +1756,8 @@
     }
     S.ready = true;
     renderRules();
-    // Character clips load in the background once the game is up (they are not needed for the first reveal to work).
-    setTimeout(() => [...Object.values(ANIM), ...Object.keys(HYPE_ART).map(hypeSrc), IMG.megawin, IMG.epicwin].forEach(src => { const i = new Image(); i.src = src; }), 300);
+    // Late art loads in the background once the game is up (it is not needed for the first reveal).
+    setTimeout(() => [...Object.keys(HYPE_ART).map(hypeSrc), IMG.megawin, IMG.epicwin].forEach(src => { const i = new Image(); i.src = src; }), 300);
     if (P.replay) { renderAction(); setWin(0); }
     else {
       if (S.resume && S.resume.amount && S.levels.includes(S.resume.amount)) S.amount = S.resume.amount;

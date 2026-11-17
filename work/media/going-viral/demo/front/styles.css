@@ -632,8 +632,6 @@ body.onair .bframe{animation-duration:.9s}
 }
 
 /* v2.3: while a hand-animated clip plays, the code-driven jump steps aside (the clip has its own) */
-.cell.popin.animd img{animation:popLite .3s ease-out both}
-.cell.on.animd:not(.popin):not(.dead) img{animation:none}
 @keyframes popLite{0%{opacity:0;transform:scale(.4)}100%{opacity:1;transform:none}}
 /* When a clip ends the still pose takes over with a tiny squash, so the hand-off reads as a landing */
 .cell.settle img{animation:settle .3s cubic-bezier(.3,.7,.4,1)!important}
@@ -813,3 +811,107 @@ body.onair .bframe{animation-duration:.9s}
   .bo-price{font-size:15px}
   .bo-start,.bo-x{font-size:9px}
 }
+
+/* ---------- v2.6: character motion layer (motion.js) ---------- */
+/* One transparent WebGL canvas over the grid draws the open characters; it shares the grid's tilt and filters. */
+.grid{position:relative}
+.px-layer{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
+.cell.px img{visibility:hidden}
+/* v2.7 board motion: a wave of light runs diagonally across the closed tiles every few seconds
+   (opacity only, so it stays on the compositor). Open, cancelled and blocked tiles keep ::after hidden. */
+.cell::after{display:block;background:linear-gradient(125deg,transparent 34%,rgba(255,255,255,.5) 50%,transparent 66%);opacity:0;animation:tileGlint 5.2s ease-in-out infinite;animation-delay:calc((var(--cx,0) + var(--cy,0)) * .08s)}
+@keyframes tileGlint{0%,9%,100%{opacity:0}4.5%{opacity:.7}}
+.grid.over .cell::after{animation:none}
+@media (prefers-reduced-motion:reduce){.cell::after{animation:none}}
+/* v2.7.1 fit fixes (Stake audit): long wins and long currency codes stay on screen and inside their boxes */
+@media (min-aspect-ratio:6/5) and (min-height:521px){
+  /* the counter column never grows wider than its slot, so ×5,000 stays on screen */
+  .hud>div{max-width:100%;min-width:0}
+  .hud .post-head{max-width:100%}
+  .hud .who{min-width:0}
+  .hud .who small{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+}
+/* a long amount such as 100.00 USDT stacks its code under the number */
+.amount b.two{white-space:pre;line-height:1.02;text-align:center}
+/* the bonus price wraps instead of pushing the bar off screen */
+.buy small{max-width:150px;white-space:normal;text-align:center;line-height:1.1;overflow-wrap:anywhere}
+/* small popouts: the result card stays on the board */
+@media (max-height:520px){
+  .result{gap:4px}
+  .result img{width:min(60%,200px)}
+  .result.viral img{width:min(26%,90px)}
+  .result p{font-size:11px;padding:4px 8px;line-height:1.2;max-width:96%}
+}
+
+/* v2.8 LIVE STREAM as a broadcast: countdown card, broadcast frame, letterbox cuts, recap card */
+.bcast{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:0;transition:opacity .5s}
+body.onair .bcast{opacity:1}
+.bcast::before{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 2px rgba(255,61,74,.55),inset 0 0 60px rgba(255,61,74,.28);animation:bcastPulse 1.4s ease-in-out infinite}
+.bcast::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
+.bcast i,.gl-vf i{position:absolute;width:clamp(16px,4vmin,40px);height:clamp(16px,4vmin,40px);border:solid #fff;border-width:0;opacity:.8}
+.bcast i{margin:clamp(6px,1.4vmin,14px)}
+.bcast i:nth-child(1),.gl-vf i:nth-child(1){top:0;left:0;border-top-width:3px;border-left-width:3px}
+.bcast i:nth-child(2),.gl-vf i:nth-child(2){top:0;right:0;border-top-width:3px;border-right-width:3px}
+.bcast i:nth-child(3),.gl-vf i:nth-child(3){bottom:0;left:0;border-bottom-width:3px;border-left-width:3px}
+.bcast i:nth-child(4),.gl-vf i:nth-child(4){bottom:0;right:0;border-bottom-width:3px;border-right-width:3px}
+@keyframes bcastPulse{50%{box-shadow:inset 0 0 0 2px rgba(255,61,74,.9),inset 0 0 90px rgba(255,61,74,.4)}}
+
+.lbox{position:fixed;inset:0;z-index:31;pointer-events:none}
+.lbox::before,.lbox::after{content:"";position:absolute;left:0;right:0;height:min(8vh,56px);background:#000;transition:transform .35s cubic-bezier(.3,0,.2,1)}
+.lbox::before{top:0;transform:translateY(-101%)}
+.lbox::after{bottom:0;transform:translateY(101%)}
+body.cine .lbox::before,body.cine .lbox::after{transform:none}
+
+
+.golive{position:fixed;inset:0;z-index:55;display:grid;place-items:center;overflow:hidden;cursor:pointer;background:radial-gradient(circle at 50% 46%,rgba(120,10,30,.82) 0,rgba(14,3,20,.94) 58%,#07010c 100%);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);animation:bwxIn .3s ease-out both}
+.golive.out{animation:bwxOut .32s ease-in both}
+.golive::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,transparent 1px 3px)}
+.gl-rays{position:absolute;left:50%;top:46%;width:max(150vw,150vh);aspect-ratio:1/1;opacity:0;background:repeating-conic-gradient(rgba(255,61,74,.4) 0 7deg,transparent 7deg 15deg);-webkit-mask:radial-gradient(circle,#000 6%,transparent 52%);mask:radial-gradient(circle,#000 6%,transparent 52%);animation:spin 12s linear infinite;transition:opacity .4s}
+.golive.on .gl-rays,.golive.recap .gl-rays{opacity:.7}
+.gl-vf{position:absolute;inset:clamp(10px,4vmin,36px);pointer-events:none}
+.gl-rec{position:absolute;top:clamp(14px,5vmin,44px);left:clamp(18px,6vmin,56px);display:flex;align-items:center;gap:6px;font-family:var(--font-display);font-weight:800;font-size:clamp(9px,2.2vmin,14px);letter-spacing:.12em;color:#fff}
+.gl-rec .rec{background:var(--red);box-shadow:0 0 10px var(--red)}
+.gl-rec b{font-variant-numeric:tabular-nums;font-weight:600;opacity:.85}
+.gl-core{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:min(1.4vh,10px);width:min(92vw,760px);max-height:100%;text-align:center}
+.gl-title{margin:0;font-family:var(--font-display);font-weight:800;font-size:clamp(11px,min(3vw,3.6vh),24px);letter-spacing:.2em;text-transform:uppercase;color:#ffd0d6}
+.gl-count{font-family:var(--font-display);font-weight:900;font-size:clamp(70px,min(30vw,40vh),260px);line-height:1;color:#fff;text-shadow:0 0 30px var(--red),0 0 80px rgba(255,61,74,.6),0 8px 0 #5a0a1c}
+.gl-count.tick{animation:glTick .46s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes glTick{0%{transform:scale(2.2);opacity:0;filter:blur(8px)}35%{transform:scale(.92);opacity:1;filter:none}100%{transform:scale(1)}}
+.gl-live{display:none;position:relative;align-items:center;justify-content:center}
+.gl-logo{width:min(80vw,50vh,560px);height:auto;filter:drop-shadow(0 14px 28px rgba(0,0,0,.6)) drop-shadow(0 0 30px rgba(255,61,74,.7));animation:bwxSlam .6s cubic-bezier(.2,1.6,.4,1) both}
+.gl-char{position:absolute;right:-22%;bottom:-14%;width:min(26vw,26vh,200px);height:auto;filter:drop-shadow(0 10px 20px rgba(0,0,0,.6));animation:glChar .7s .15s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes glChar{from{transform:translate(40%,30%) rotate(25deg) scale(.4);opacity:0}to{transform:none;opacity:1}}
+.gl-view{display:none;margin:0;align-items:center;gap:7px;padding:.35em 1em;border-radius:999px;background:var(--red);font-family:var(--font-display);font-weight:800;font-size:clamp(11px,min(3vw,3.4vh),22px);color:#fff;box-shadow:0 0 24px rgba(255,61,74,.6);font-variant-numeric:tabular-nums}
+.gl-stats{display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:min(1.6vh,12px) min(3vw,24px);width:min(86vw,560px)}
+.gl-stats div{display:flex;flex-direction:column;align-items:center;padding:min(1.4vh,10px) 8px;border-radius:14px;background:rgba(19,7,28,.78);border:1px solid rgba(255,61,74,.55);opacity:0;animation:glRow .45s calc(.25s + var(--i) * .18s) cubic-bezier(.2,1.4,.4,1) forwards}
+.gl-stats span{font-size:clamp(9px,min(2.2vw,2.6vh),14px);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.gl-stats b{font-family:var(--font-display);font-weight:900;font-size:clamp(16px,min(5vw,6vh),40px);line-height:1.1;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gl-stats div:last-child b{color:var(--yellow);text-shadow:0 0 18px rgba(255,210,63,.6)}
+@keyframes glRow{from{opacity:0;transform:translateY(14px) scale(.9)}to{opacity:1;transform:none}}
+.golive.skipped .gl-stats div{animation-duration:.01s;animation-delay:0s}
+/* intro: countdown, then the logo and the viewer count */
+.golive.intro.on .gl-count,.golive.intro.on .gl-title{display:none}
+.golive.intro.on .gl-live{display:flex}
+.golive.intro.on .gl-view{display:inline-flex}
+.golive.intro.on::before{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:#fff;animation:glFlash .45s ease-out forwards}
+@keyframes glFlash{from{opacity:.85}to{opacity:0}}
+/* recap: title, the phone, and the stats */
+.golive.recap .gl-count{display:none}
+.golive.recap .gl-title{font-size:clamp(14px,min(4.4vw,5.4vh),36px);color:#fff;text-shadow:0 0 20px var(--red)}
+.golive.recap .gl-stats{display:grid}
+.golive.recap .gl-rec{display:none}
+@media (max-height:520px){
+  .gl-core{gap:4px}
+  .gl-char{width:min(20vw,30vh,120px)}
+  .gl-stats div{padding:3px 6px;border-radius:10px}
+}
+@media (prefers-reduced-motion:reduce){.bcast::before,.gl-rays{animation:none}}
+/* fitText measures with animations' transforms switched off for one synchronous layout (never painted) */
+.fitm,.fitm *{transform:none!important;scale:none!important;translate:none!important;rotate:none!important}
+.golive.recap .gl-live{display:flex}
+.golive.recap .gl-logo{display:none}
+.golive.recap .gl-char{position:relative;right:auto;bottom:auto;width:min(26vh,34vw,190px)}
+@media (max-aspect-ratio:1/1){.golive.intro .gl-char{right:-3%;bottom:-30%;width:min(30vw,150px)}}
+@media (max-height:520px){.golive.recap .gl-live{display:none}}
+.golive.recap .gl-live{order:-1}
+@media (max-height:520px){.bcast i{display:none}}

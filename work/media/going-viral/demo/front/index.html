@@ -166,6 +166,25 @@
   </aside>
 </div>
 
+<div class="bcast" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div class="lbox" aria-hidden="true"></div>
+<div class="golive" id="golive" role="status" hidden>
+  <div class="gl-rays" aria-hidden="true"></div>
+  <div class="gl-vf" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="gl-rec" aria-hidden="true"><span class="rec"></span>REC <b id="glTime">00:00:00</b></div>
+  <div class="gl-core">
+    <p class="gl-title" id="glTitle">Going live in</p>
+    <b class="gl-count" id="glCount" aria-hidden="true">3</b>
+    <div class="gl-live">
+      <img class="gl-char" src="assets/live-win.webp" alt="">
+      <img class="gl-logo" src="assets/txt-werelive.webp" alt="We're live">
+    </div>
+    <p class="gl-view"><span class="rec" aria-hidden="true"></span><b id="glViewers">0</b>&nbsp;watching</p>
+    <div class="gl-stats" id="glStats"></div>
+  </div>
+  <small class="bwx-skip">Tap to skip</small>
+</div>
+
 <div class="bwx" id="bwx" role="status" hidden>
   <div class="bwx-rays" aria-hidden="true"></div>
   <div class="bwx-core"><img id="bwxImg" alt=""><b id="bwxAmt">0.00</b><span id="bwxX">×0</span></div>
@@ -216,7 +235,7 @@
     <h2 id="rulesTitle">Going Viral · Game rules</h2>
     <h3>Modes</h3>
     <table>
-      <thead><tr><th>Mode</th><th>Cost</th><th>RTP</th><th>Max win</th></tr></thead>
+      <thead><tr><th>Mode</th><th>Price</th><th>RTP</th><th>Max win</th></tr></thead>
       <tbody id="rModes"></tbody>
     </table>
     <p>Board: 36 tiles (6 × 6). Every mode has an RTP of 96.30%. The expected return is calculated over many plays.</p>
@@ -296,6 +315,8 @@
       <li><b>GO LIVE</b> opens the bonus panel: pick GO LIVE or SUPER LIVE; each shows its price. Confirm to start the round.</li>
       <li>The <b>speaker</b> button turns sound and music on or off. The <b>ⓘ</b> button opens these rules.</li>
       <li><b>Win</b> shows what the round has secured so far, and the final win at the end.</li>
+      <li>A big win plays a short celebration; tap or click anywhere on it to skip to the result. Going live (a 3, 2, 1 countdown) and the end of a stream (a recap of the stream) play short scenes too, skipped the same way.</li>
+      <li>The <b>Play</b> button on the opening screen enters the game. If a round was left unfinished (for example after a disconnection), it reads <b>Resume</b> and finishes that round first, at its original play amount.</li>
       <li>The <b>Hype Meter</b> shows this round's progress toward the LIVE STREAM, with a log of what filled it. The streak label counts rounds in a row that won at least the play amount; it is a label only.</li>
     </ul>
 
@@ -304,6 +325,8 @@
   </div>
 </div>
 <div class="toast" id="toast" role="alert" hidden></div>
+<script src="vendor/pixi-gv.min.js"></script>
+<script src="motion.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
