@@ -1,7 +1,8 @@
 /* Going Viral: character motion (PixiJS v8.23, trimmed build vendor/pixi-gv.min.js, see tools/pixi-bundle).
  * The characters on the board are drawn by one transparent WebGL layer over the grid instead of <img> clips.
- * Each character is a skinned mesh: soft-weighted bones for arms and props, a heartbeat bulge, a flame wave,
- * and the whole body squashes, stretches and leans about its feet. Particles are per character.
+ * Each character is an LZ Rig (vendor/lz-rig.js, data rigs.js from tools/make-rigs.mjs): a skinned mesh per pose,
+ * soft-weighted bones for arms and props, a heartbeat bulge, a flame wave; it squashes, stretches and leans about its feet.
+ * Particles, glow, rays and gloss are per character and stay in this file.
  * game.js keeps the old <img> path as the fallback (no WebGL, reduced motion, hidden tab).
  * API (window.GVMotion): init({ grid, speed }), show(i, key, cellEl, imgEl, celebrateMs), celebrate(i), hop(i),
  * hero(key), impact(cellEl, color, tier), clear(). `ready` is true once the layer is up. */
@@ -26,8 +27,9 @@
   }
 
   /* ---------- the five characters ----------
-     rig: bones per pose in texture space (0..1). p = pivot, box = [u0, u1, v0, v1] region the bone moves, f = soft edge.
-     win(k, pump, o) shapes the celebration, idle(x, t, i, o) the life after it. o.b[bone] = { rot, sc }. */
+     Used here: tier, glow, ray, anchor, burst, amb (and jewels / wifi / exhaust for the ambient life).
+     NOT used at run time any more: rig / win / idle are the v2.7 hand-written motion, kept as the readable source of
+     tools/make-rigs.mjs, which turns them into the LZ Rig data in rigs.js. Change motion there, then run it. */
   const SYM = {
     heart: {
       tier: 1, glow: '#ff3d9e', ray: 0xffd6ee, anchor: [0.5, 0.88], burst: 'hearts', amb: 'beatHeart', bulge: { c: [0.48, 0.5], r: 0.36 },
@@ -108,7 +110,7 @@
 
   const M = { ready: false };
   let PX = null, app = null, layer = null, fxLayer = null, gridEl = null, speedFn = () => 1, wall = 0, hero = null, layerTint = 0xffffff;
-  const T = {}, RIGS = {}, chars = new Map();
+  const T = {}, chars = new Map();
 
   /* ---------- textures ---------- */
   function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
@@ -117,7 +119,8 @@
     KEYS.forEach(k => names.push([k, `assets/${k}.webp`], [k + 'Blink', `assets/${k}-blink.webp`], [k + 'Win', `assets/${k}-win.webp`]));
     // WebGL refuses images from file:// pages, so the offline demo reads the same art from data URIs.
     let art = null;
-    if (location.protocol === 'file:') { await loadScript('motion-art.js'); art = window.GV_ART; }
+    // The data-URI copy lives beside the package (../offline), so it never ships to Stake.
+    if (location.protocol === 'file:') { await loadScript('../offline/motion-art.js').catch(() => {}); art = window.GV_ART || null; }
     const list = await Promise.all(names.map(([k, url]) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res([k, i]); i.onerror = rej; i.src = art ? art[k] : url; })));
     return Object.fromEntries(list);
   }
@@ -165,48 +168,20 @@
   const BURST = () => ({ hearts: T.mini, embers: T.dot, smoke: T.puff, coins: T.coin, confetti: T.confetti });
   const BURST_BLEND = { hearts: 'normal', embers: 'add', smoke: 'normal', coins: 'normal', confetti: 'normal' };
 
-  /* ---------- rigs (once per character and mesh density) ---------- */
-  function buildRig(key, uv) {
-    const def = SYM[key], n = uv.length / 2, [ax, ay] = def.anchor;
-    const rest = (u, v) => [(u - ax) * TEX_PX, (v - ay) * TEX_PX];
-    const out = {};
-    for (const pose of ['base', 'win']) {
-      const bones = Object.entries(def.rig[pose]).map(([name, b]) => ({ name, p: rest(...b.p), w: new Float32Array(n), def: b }));
-      const r = { rx: new Float32Array(n), ry: new Float32Array(n), B: new Float32Array(n), Wv: new Float32Array(n), bones, bc: def.bulge ? rest(...def.bulge.c) : [0, 0] };
-      for (let i = 0; i < n; i++) {
-        const u = uv[2 * i], v = uv[2 * i + 1];
-        [r.rx[i], r.ry[i]] = rest(u, v);
-        let tot = 0;
-        for (const b of bones) {
-          const [u0, u1, v0, v1] = b.def.box, f = b.def.f;
-          const w = ramp(u0 - f, u0 + f, u) * (1 - ramp(u1 - f, u1 + f, u)) * ramp(v0 - f, v0 + f, v) * (1 - ramp(v1 - f, v1 + f, v));
-          b.w[i] = w; tot += w;
-        }
-        if (tot > 1) for (const b of bones) b.w[i] /= tot;
-        const free = 1 - Math.min(1, tot);
-        if (def.bulge) { const d = Math.hypot(u - def.bulge.c[0], v - def.bulge.c[1]) / def.bulge.r; r.B[i] = d < 1 ? (1 - d) * (1 - d) * free : 0; }
-        if (def.wave) r.Wv[i] = Math.pow(1 - v, 2) * free;
-      }
-      out[pose] = r;
-    }
-    out.blink = out.base;
-    return out;
-  }
-
-  /* ---------- one character ---------- */
+  /* ---------- one character ----------
+     The character itself is an LZ Rig (vendor/lz-rig.js, data in rigs.js built by tools/make-rigs.mjs): one skinned
+     mesh per pose image, soft-weighted bones for arms and props, the heartbeat bulge, the flame wave.
+     Tracks: 0 = body life (win pump, then idle), 1 = the pop (appear, settle), 2 = blink, 3 = hop.
+     Glow, rays, gloss, particles and ambient life stay here and read the rig (pop/body bones, the 'glow' channel). */
   class Char {
     constructor(key, idx, big) {
-      this.idx = idx; this.big = big; this.grid = big ? 24 : 10; this.key = null;   // 10 x 10 = 100 vertices: PixiJS batches the board into one draw
+      this.idx = idx; this.big = big; this.grid = big ? 24 : 10; this.key = null; this.rigs = {};   // 10 x 10 = 100 vertices: PixiJS batches the board into one draw
       const root = this.root = new PX.Container();
       this.rays = big ? new PX.Sprite(T.rays) : null;
       if (this.rays) { this.rays.anchor.set(0.5); this.rays.blendMode = 'add'; root.addChild(this.rays); }
       this.glow = new PX.Sprite(T.heart.glow); this.glow.anchor.set(0.5); this.glow.blendMode = 'add';
       this.back = new PX.Container();
       this.box = new PX.Container();
-      this.mesh = new PX.MeshPlane({ texture: T.heart.win, verticesX: this.grid, verticesY: this.grid }); this.mesh.autoResize = false;
-      this.meshTex = T.heart.win;
-      this.posBuf = this.mesh.geometry.getAttribute('aPosition').buffer;
-      this.box.addChild(this.mesh);
       if (big) {     // the big hero gets a gloss sweep, masked to the character
         this.shineBox = new PX.Container();
         this.shineMask = new PX.Sprite(T.heart.win); this.shineMask.width = this.shineMask.height = TEX_PX;
@@ -218,6 +193,7 @@
       this.front = new PX.Container();
       root.addChild(this.glow, this.back, this.box, this.fx, this.front);
       this.pool = { burst: this.sprites(big ? 18 : 9, this.back), amb: this.sprites(3, this.back) };
+      this.hopSeen = -1e9; this.hop0 = -1e9; this.last = wall; this.phase = 3;
       this.setKey(key);
       layer.addChild(root);
     }
@@ -225,9 +201,10 @@
     setKey(key) {
       if (key === this.key) return;
       this.key = key; const d = this.def = SYM[key];
-      const rk = key + ':' + this.grid;
-      if (!RIGS[rk]) RIGS[rk] = buildRig(key, this.mesh.geometry.getAttribute('aUV').buffer.data.slice());
-      this.rig = RIGS[rk];
+      if (this.rig) this.box.removeChild(this.rig.view);
+      if (!this.rigs[key]) this.rigs[key] = new LZRig(PX, window.GV_RIGS[key], T[key], { grid: this.grid, seed: this.idx * 7919 + 13 });
+      this.rig = this.rigs[key];
+      this.box.addChildAt(this.rig.view, 0);
       this.glow.texture = T[key].glow;
       if (this.rays) this.rays.tint = d.ray;
       const bt = BURST()[d.burst];
@@ -242,12 +219,22 @@
       this.box.scale.set(this.cs);
       this.box.y = (this.def.anchor[1] - 0.5) * S;
     }
+    // A tile opened: pop in, celebrate for celebrateMs, settle into the idle life.
     start(k, celebrateMs) {
-      this.t0 = wall; this.b0 = wall; this.k = k; this.hop0 = -1e9;
+      this.t0 = wall; this.b0 = wall; this.k = k; this.hop0 = this.hopSeen = -1e9; this.last = wall;
       this.winEnd = 250 + clamp(celebrateMs * 1.4, 500, 1200);
+      this.begin(0);
       this.reseed();
     }
-    celebrate(k) { this.t0 = wall - 200 / k; this.k = k; this.b0 = -1e9; this.winEnd = 1250; }
+    // Celebrate again (the round's win): the end of the pop, then the pump.
+    celebrate(k) { this.t0 = wall - 200 / k; this.k = k; this.b0 = -1e9; this.winEnd = 1250; this.last = wall; this.begin(0.2); }
+    begin(from) {
+      const r = this.rig;
+      r.timeScale = this.k; this.phase = 0; this.idle0 = -1;
+      r.stop(0, 0); r.stop(2, 0); r.stop(3, 0);
+      r.play('appear', { track: 1, mix: 0, start: from });
+      r.update(0);
+    }
     reseed() {
       const r = rng(Math.floor(wall) * 7 + this.idx * 104729 + 17), S = this.S;
       const kinds = {
@@ -261,62 +248,32 @@
     }
     pt(u, v) { const [ax, ay] = this.def.anchor; return [(u - ax) * this.S, this.box.y + (v - ay) * this.S]; }
 
-    // Linear blend skinning: bones rotate/scale about their pivots, the body bulges and the flame waves,
-    // then the whole character squashes, stretches and leans about its anchor.
-    skin(pose, o, t) {
-      const r = this.rig[pose], d = this.posBuf.data;
-      const bs = [];
-      for (const b of r.bones) { const q = o.b[b.name]; if (!q) continue; const rot = q.rot || 0, sc = q.sc || 1; if (rot || sc !== 1) bs.push([b, Math.cos(rot) * sc, Math.sin(rot) * sc]); }
-      const ce = Math.cos(o.lean), se = Math.sin(o.lean), bulge = o.bulge, wave = o.wave, ph = t / 140;
-      const bx = r.bc[0], by = r.bc[1], ty = o.ty * TEX_PX;
-      for (let i = 0, n = r.rx.length; i < n; i++) {
-        let x = r.rx[i], y = r.ry[i];
-        for (let j = 0; j < bs.length; j++) {
-          const b = bs[j][0], w = b.w[i]; if (w <= 0) continue;
-          const c = bs[j][1], s = bs[j][2], dx = x - b.p[0], dy = y - b.p[1];
-          x += (b.p[0] + dx * c - dy * s - x) * w; y += (b.p[1] + dx * s + dy * c - y) * w;
-        }
-        const wb = r.B[i]; if (wb > 0 && bulge) { x += (x - bx) * bulge * wb; y += (y - by) * bulge * wb; }
-        const wv = r.Wv[i]; if (wv > 0 && wave) { x += Math.sin(r.ry[i] * 0.05 + ph) * wave * wv; y += Math.sin(r.rx[i] * 0.06 + ph * 1.3) * wave * 0.4 * wv; }
-        x *= o.sx; y *= o.sy;
-        d[2 * i] = x * ce - y * se;
-        d[2 * i + 1] = x * se + y * ce + ty;
-      }
-      this.posBuf.update();
-      if (this.shineBox) { this.shineBox.scale.set(o.sx, o.sy); this.shineBox.rotation = o.lean; this.shineBox.y = ty; }
-    }
-
     update() {
-      const d = this.def, S = this.S, k = this.k, ct = (wall - this.t0) * k, W = this.winEnd;
-      const o = { b: {}, sx: 1, sy: 1, ty: 0, lean: 0, bulge: 0, wave: 0, beat: 0 };
-      let pose = 'win', x = -1;
-      const y0 = d.launch ? 0.5 : 0.18;     // the rocket launches in from further below
-      if (ct < 130) { const e = outCubic(clamp(ct / 130)); o.sx = lerp(0.15, 0.78, e); o.sy = lerp(0.15, 1.28, e); o.ty = lerp(y0, -0.16, e); }
-      else if (ct < 250) { const e = inQuad((ct - 130) / 120); o.sx = lerp(0.78, 1.22, e); o.sy = lerp(1.28, 0.8, e); o.ty = lerp(-0.16, 0, e); }
-      else { const q = ct - 250, dd = Math.exp(-q / 150), c = Math.cos(q / 52); o.sx = 1 + 0.22 * dd * c; o.sy = 1 - 0.2 * dd * c; }
-      if (ct >= 250 && ct < W) {             // celebration: arms pump, body bounces with them
-        const q = ct - 250, env = Math.min(1, q / 120) * Math.min(1, (W - ct) / 200);
-        const pump = Math.sin(q / 1000 * 2 * Math.PI * 3.2) * env;
-        d.win(q, pump, o);
-        o.ty -= 0.03 * Math.max(0, pump); o.sy *= 1 + 0.035 * pump; o.sx *= 1 - 0.02 * pump;
+      const d = this.def, S = this.S, k = this.k, ct = (wall - this.t0) * k, W = this.winEnd, r = this.rig;
+      const dt = Math.max(0, Math.min(0.1, (wall - this.last) / 1000)); this.last = wall;
+      // The timeline: celebrate from 250 ms, settle (a squash) at the end, then the idle life.
+      // The win drawing (arms up) and the base drawing crossfade over 70 ms centred on the squash peak (W+80),
+      // so the arms change while the body is squashed instead of popping in one frame. Longer fades read as ghosting
+      // (checked frame by frame with tools/motion-compare.mjs: 120 ms showed a double image for 7 frames).
+      if (this.phase === 0 && ct >= 250) { this.phase = 1; r.play('win', { track: 0, mix: 0 }); }
+      if (this.phase === 1 && ct >= W) { this.phase = 2; r.play('settle', { track: 1, mix: 0 }); }
+      if (this.phase === 2 && ct >= W + 45) {
+        this.phase = 3; this.idle0 = wall; r.timeScale = 1;
+        r.play('idle', { track: 0, mix: 0.1, fadeSwap: 0.07, start: ((this.idx * 0.377) % 1) * r.anim('idle').duration });   // board characters do not breathe in step
       }
-      if (ct >= W && ct < W + 80) { const e = inQuad((ct - W) / 80); o.sx *= 1 + 0.08 * e; o.sy *= 1 - 0.1 * e; }
-      if (ct >= W + 80) {                    // the pose change hides inside a squash, then idle life in real time
-        pose = 'base';
-        const q = ct - W - 80, dd = Math.exp(-q / 120), c = Math.cos(q / 42);
-        o.sx *= 1 + 0.08 * dd * c; o.sy *= 1 - 0.1 * dd * c;
-        x = (wall - this.t0) - (W + 80) / k;
-        o.sy *= 1 + 0.012 * Math.sin(wall / 820 + this.idx); o.sx *= 1 - 0.008 * Math.sin(wall / 820 + this.idx);
-        d.idle(x, wall, this.idx, o);
-        const bp = 2700 + (this.idx % 3) * 600, bt = (x + this.idx * 450) % bp;
-        if (bt > bp - 130) pose = 'blink';
+      if (this.hop0 > this.hopSeen) { this.hopSeen = this.hop0; r.play('hop', { track: 3, mix: 0 }); }
+      r.update(dt);
+      const shrink = this.endAt ? Math.max(0, 1 - inBack(clamp((wall - (this.endAt - 240)) / 240))) : 1;
+      this.box.scale.set(this.cs * shrink);
+
+      const pop = r.bone('pop'), body = r.bone('body');
+      const o = { sx: body.scaleX * shrink, sy: body.scaleY * shrink, ty: pop.y / TEX_PX, lean: body.rotation * Math.PI / 180, beat: r.value('glow') };
+      const x = this.phase === 3 ? wall - this.idle0 : -1;
+      if (this.shineBox) {
+        const tex = T[this.key][r.slotState[0].attachment] || T[this.key].win;
+        if (this.shineMask.texture !== tex) this.shineMask.texture = tex;
+        this.shineBox.scale.set(body.scaleX, body.scaleY); this.shineBox.rotation = o.lean; this.shineBox.y = pop.y;
       }
-      const h = (wall - this.hop0) / 320;     // a neighbour landed: hop
-      if (h >= 0 && h < 1) { o.ty -= 0.09 * Math.sin(Math.PI * h); o.sy *= 1 + 0.06 * Math.sin(2 * Math.PI * h); o.sx *= 1 - 0.04 * Math.sin(2 * Math.PI * h); }
-      if (this.endAt) { const e = inBack(clamp((wall - (this.endAt - 240)) / 240)); o.sx *= 1 - e; o.sy *= 1 - e; }
-      const tex = T[this.key][pose];
-      if (tex !== this.meshTex) { this.mesh.texture = tex; this.meshTex = tex; if (this.shineMask) this.shineMask.texture = tex; }
-      this.skin(pose, o, wall);
 
       let glowA = ct < 150 ? ct / 150 * 0.9 : lerp(0.9, 0.3, clamp((ct - 150) / 750));
       glowA += o.beat * 0.25;
@@ -404,7 +361,8 @@
         }
       }
     }
-    destroy() { this.root.destroy({ children: true }); }
+    // Free every rig this cell built (the ones for other characters are not in the scene, so the root does not own them).
+    destroy() { for (const r of Object.values(this.rigs)) if (r !== this.rig) r.destroy(); this.rigs = {}; this.root.destroy({ children: true }); }
   }
 
   /* ---------- tile impact: the moment a tile opens ----------
@@ -487,7 +445,7 @@
 
   M.init = async ({ grid, speed }) => {
     try {
-      if (!window.PIXI || !grid) return false;
+      if (!window.PIXI || !window.LZRig || !window.GV_RIGS || !grid) return false;
       // WebGL only: without it (old devices, blocked GPU) the game keeps its still images.
       const probe = document.createElement('canvas');
       if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) return false;
@@ -551,6 +509,6 @@
   };
   M.clear = () => { try { chars.forEach(c => c.destroy()); if (hero) hero.destroy(); impacts.forEach(m => m.root.destroy({ children: true })); } catch (e) { fail(e); } chars.clear(); hero = null; impacts.length = 0; };
   // QA only: stop the clock and step it by hand, so frame captures do not depend on how fast the machine is.
-  M.qa = { stop: () => app.ticker.stop(), go: () => app.ticker.start(), step: ms => { step({ deltaMS: ms }); app.render(); } };
+  M.qa = { stop: () => app.ticker.stop(), go: () => app.ticker.start(), step: ms => { step({ deltaMS: ms }); app.render(); }, stage: () => app.stage };
   window.GVMotion = M;
 })();

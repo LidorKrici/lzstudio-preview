@@ -106,6 +106,7 @@
       </dl>
     </div>
     <div class="deck">
+      <button type="button" class="rbtn" id="handBtn" aria-pressed="false" aria-label="Scratch the tiles yourself"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="hbG" cx="38%" cy="28%" r="78%"><stop offset="0" stop-color="#ff86c8"/><stop offset=".55" stop-color="#d0237a"/><stop offset="1" stop-color="#5e0b3c"/></radialGradient></defs><circle cx="32" cy="32" r="28.5" fill="url(#hbG)" stroke="#fff" stroke-width="3"/><path d="M28 47V21.5a3.8 3.8 0 0 1 7.6 0V33l7.6 2a4.4 4.4 0 0 1 3.2 4.9L45.2 47.5Q44.8 50 42 50H31.5Q29 50 28 47z" fill="#fff"/><path d="M13.5 21.5l7.5-3M12.5 29.5l7.5-.8M14 37.5l7 1.4" stroke="#ffd23f" stroke-width="3.2" stroke-linecap="round"/></svg><span>MANUAL</span></button>
       <button type="button" class="rbtn" id="fastBtn" aria-pressed="false" aria-label="Turbo"><img src="assets/icon-turbo.webp" alt=""><span>TURBO</span></button>
       <button class="action" id="action" type="button"><span class="action-lbl" id="actionLabel">PLAY</span><small id="actionSub">&nbsp;</small></button>
       <button type="button" class="rbtn" id="autoBtn" aria-label="Autoplay"><img src="assets/icon-auto.webp" alt=""><span id="autoLbl">AUTO</span></button>
@@ -311,6 +312,7 @@
       <li><b>− / +</b> and the amount itself change the play amount.</li>
       <li><b>CHILL / TRENDING / VIRAL</b> choose the risk mode for the next rounds. They cannot be changed while a round plays.</li>
       <li><b>TURBO</b> (the lightning button left of PLAY) speeds up the animations.</li>
+      <li><b>MANUAL</b> (the hand button) lets you scratch the tiles yourself: pick any covered tile and drag across it, or tap it to scratch it at once. The space bar scratches a tile for you. The round's result is decided when it starts, so which tile you pick never changes what you win. Autoplay always scratches on its own.</li>
       <li><b>AUTO</b> (the button right of PLAY) opens the autoplay panel. Choose how many plays, and optionally stop when a single win reaches a size you pick, when your balance falls by a set amount, or when a LIVE STREAM starts. Nothing starts until you press Start autoplay. Autoplay uses the selected risk mode and play amount. Press STOP (or the space bar) at any time; the current round finishes first. Autoplay also stops if your balance is too low for the next play.</li>
       <li><b>GO LIVE</b> opens the bonus panel: pick GO LIVE or SUPER LIVE; each shows its price. Confirm to start the round.</li>
       <li>The <b>speaker</b> button turns sound and music on or off. The <b>ⓘ</b> button opens these rules.</li>
@@ -326,6 +328,8 @@
 </div>
 <div class="toast" id="toast" role="alert" hidden></div>
 <script src="vendor/pixi-gv.min.js"></script>
+<script src="vendor/lz-rig.js"></script>
+<script src="rigs.js"></script>
 <script src="motion.js"></script>
 <script src="game.js"></script>
 </body>

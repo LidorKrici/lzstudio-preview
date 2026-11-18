@@ -123,7 +123,8 @@
     sessionStart: Date.now(), net: 0, minRoundMs: 0, replayData: null,
     mode: MODE, roundMode: MODE, buyPick: 'live',
     costs: Object.fromEntries(R.MODES.map(m => [m.name, modeOf(m.name).cost])),
-    auto: null, stats: { rounds: 0, bestX: 0, bestUnits: 0, lives: 0 }
+    auto: null, stats: { rounds: 0, bestX: 0, bestUnits: 0, lives: 0 },
+    manual: (() => { try { return localStorage.getItem('gv-manual') === '1'; } catch (_) { return false; } })()
   };
   const speed = () => (S.fast ? 0.45 : 1);
   const sleep = ms => new Promise(r => setTimeout(r, Math.round(ms * speed())));
@@ -255,53 +256,88 @@
     src.buffer = buf; fl.type = type; fl.frequency.value = freq; g.gain.value = gain;
     src.connect(fl); fl.connect(g); g.connect(a.destination); src.start();
   }
-  const SFX_FILES = {
-    scratch: 'assets/sfx-scratch.mp3', pop: 'assets/sfx-pop.mp3', cash: 'assets/sfx-cash.mp3', bust: 'assets/sfx-bust.mp3',
-    tick: 'assets/sfx-tick.mp3', hype: 'assets/sfx-hype.mp3', bigwin: 'assets/sfx-bigwin.mp3'
-  };
-  const buffers = {};
+  // 2026-11-18: every event has a pool of sounds (assets/sfx/<event>-<n>.mp3): Kenney.nl packs (CC0, commercial use,
+  // no credit needed), trimmed and leveled to the same loudness. The earlier Higgsfield pool is in art-archive/. Each time the event fires, one is picked at random, never the same one twice in a row,
+  // so the game does not sound repetitive. Purely cosmetic randomness: it never depends on the round's outcome.
+  const SFX_POOL = { scratch: 3, pop: 3, thump: 3, lock: 3, shield: 3, bust: 3, hype: 3, cash: 3, tick: 3, beep: 3, live: 3 };
+  const sfxUrl = (name, k) => `assets/sfx/${name}-${k + 1}.mp3`;
+  const buffers = {}, lastPick = {};
+  function pickSfx(name) {
+    const n = SFX_POOL[name];
+    let k = Math.floor(Math.random() * n);
+    if (n > 1 && k === lastPick[name]) k = (k + 1 + Math.floor(Math.random() * (n - 1))) % n;
+    lastPick[name] = k;
+    return k;
+  }
   let samplesRequested = false;
   function loadSamples() {
     const a = audio();
     if (!a || samplesRequested || location.protocol === 'file:') return;
     samplesRequested = true;
-    Object.entries(SFX_FILES).forEach(([name, url]) => {
-      fetch(url).then(r => r.arrayBuffer()).then(b => a.decodeAudioData(b)).then(buf => { buffers[name] = buf; }).catch(() => {});
+    Object.entries(SFX_POOL).forEach(([name, n]) => {
+      buffers[name] = [];
+      for (let k = 0; k < n; k++) {
+        fetch(sfxUrl(name, k)).then(r => r.arrayBuffer()).then(b => a.decodeAudioData(b)).then(buf => { buffers[name][k] = buf; }).catch(() => {});
+      }
     });
   }
   function sample(name, gain, rate = 1) {
-    const a = audio(), buf = buffers[name];
-    if (a && buf) {
+    const a = audio(), list = buffers[name];
+    if (!a || !SFX_POOL[name]) return false;
+    if (list && list.some(Boolean)) {
+      let k = pickSfx(name);
+      if (!list[k]) k = list.findIndex(Boolean);
       const src = a.createBufferSource(), g = a.createGain();
-      src.buffer = buf; src.playbackRate.value = rate; g.gain.value = gain;
+      src.buffer = list[k]; src.playbackRate.value = rate; g.gain.value = gain;
       src.connect(g); g.connect(a.destination); src.start();
       return true;
     }
-    if (a && location.protocol === 'file:' && SFX_FILES[name]) {
-      const el = new Audio(SFX_FILES[name]);
+    if (location.protocol === 'file:') {
+      const el = new Audio(sfxUrl(name, pickSfx(name)));
       el.volume = Math.min(1, gain); el.playbackRate = rate;
       el.play().catch(() => {});
       return true;
     }
     return false;
   }
+  // 2026-11-18 mix: the music file is mastered loud (about -13 dB average) while the effects average -20 to -28 dB,
+  // so at 0.22 it buried them. It now sits well under the effects, and "ducks" (dips, then comes back smoothly)
+  // under the moments that must be heard: cancel, win, HYPE, lock, shield, going live, big win.
+  const MUSIC_VOL = 0.08, MUSIC_DUCK = 0.025;
+  let duckUntil = 0, musicFade = 0;
+  const musicTarget = () => (document.body.classList.contains('bigwin-on') || performance.now() < duckUntil) ? MUSIC_DUCK : MUSIC_VOL;
+  function fadeMusic() {
+    const mu = $('music');
+    clearInterval(musicFade);
+    musicFade = setInterval(() => {
+      const t = musicTarget(), v = mu.volume + (t - mu.volume) * 0.2;
+      mu.volume = Math.abs(t - v) < 0.002 ? t : v;
+      if (mu.volume === t && performance.now() >= duckUntil) clearInterval(musicFade);
+    }, 40);
+  }
+  function duck(ms) { duckUntil = Math.max(duckUntil, performance.now() + ms); fadeMusic(); }
   function syncMusic() {
     const mu = $('music');
-    mu.volume = document.body.classList.contains('bigwin-on') ? 0.08 : 0.22;
+    fadeMusic();
     if (S.sound && S.interacted) { const p = mu.play(); if (p && p.catch) p.catch(() => {}); } else mu.pause();
   }
   const sfx = {
-    scratch: () => { if (!sample('scratch', 0.32)) noise(0.22, 0.06, 3200); },
-    pop: i => { if (!sample('pop', 0.7, 1 + Math.min(i, 30) * 0.015)) tone(520 * Math.pow(1.045, Math.min(i, 30)), 0.14, 'triangle', 0.16); },
-    cash: () => { if (!sample('cash', 0.8)) [784, 988, 1175, 1568].forEach((f, k) => tone(f, 0.22, 'triangle', 0.13, k * 0.065)); },
-    bust: () => { if (!sample('bust', 0.7)) { tone(233, 0.3, 'triangle', 0.12); tone(156, 0.6, 'triangle', 0.12, 0.34); tone(62, 0.7, 'sine', 0.3); } },
-    tick: () => { if (!sample('tick', 0.5)) tone(1250, 0.05, 'square', 0.035); },
-    thump: () => { tone(58, 0.16, 'sine', 0.32); tone(52, 0.2, 'sine', 0.26, 0.19); },
-    lock: () => { tone(880, 0.08, 'square', 0.06); tone(1320, 0.12, 'triangle', 0.08, 0.07); },
-    shield: () => { [660, 990, 1320].forEach((f, k) => tone(f, 0.25, 'sine', 0.09, k * 0.05)); },
-    hype: () => { if (!sample('hype', 0.75)) [523, 659, 784, 1047].forEach((f, k) => tone(f, 0.16, 'square', 0.05, k * 0.05)); },
+    // Each sample() call picks one of the event's sounds at random; the tone() after it is only the fallback
+    // for the moment before the files have loaded.
+    scratch: () => { if (!sample('scratch', 0.35)) tone(640, 0.12, 'sine', 0.05); },
+    pop: i => { if (!sample('pop', 0.5, 1 + Math.min(i, 30) * 0.012)) tone(520 * Math.pow(1.045, Math.min(i, 30)), 0.14, 'triangle', 0.16); },
+    cash: () => { duck(1300); if (!sample('cash', 0.65)) [784, 988, 1175, 1568].forEach((f, k) => tone(f, 0.22, 'triangle', 0.13, k * 0.065)); },
+    bust: () => { duck(1600); if (!sample('bust', 0.7)) { tone(233, 0.3, 'triangle', 0.12); tone(156, 0.6, 'triangle', 0.12, 0.34); tone(62, 0.7, 'sine', 0.3); } },
+    tick: () => { if (!sample('tick', 0.3)) tone(1250, 0.05, 'square', 0.035); },
+    thump: () => { if (!sample('thump', 0.5)) { tone(58, 0.16, 'sine', 0.32); tone(52, 0.2, 'sine', 0.26, 0.19); } },
+    lock: () => { duck(800); if (!sample('lock', 0.55)) { tone(880, 0.08, 'square', 0.06); tone(1320, 0.12, 'triangle', 0.08, 0.07); } },
+    shield: () => { duck(1000); if (!sample('shield', 0.6)) [660, 990, 1320].forEach((f, k) => tone(f, 0.25, 'sine', 0.09, k * 0.05)); },
+    hype: () => { duck(1300); if (!sample('hype', 0.65)) [523, 659, 784, 1047].forEach((f, k) => tone(f, 0.16, 'square', 0.05, k * 0.05)); },
+    beep: i => { duck(700); if (!sample('beep', 0.5, 1 + i * 0.12)) tone(660 + i * 220, 0.12, 'square', 0.05); },
+    live: () => { duck(2200); if (!sample('live', 0.75)) tone(1320, 0.35, 'triangle', 0.08, 0.05); },
     count: p => tone(560 + p * 900, 0.045, 'triangle', 0.045),
-    bigwin: () => { if (!sample('bigwin', 0.9)) [523, 659, 784, 1047, 1319, 1568, 2093].forEach((f, k) => tone(f, 0.3, 'triangle', 0.12, k * 0.08)); }
+    // 2026-11-17: the user removed the BIG WIN sound entirely. Kept as a no-op so every call site stays valid.
+    bigwin: () => {}
   };
   // v2: the old video overlays are gone (they weighed 2.5MB). Big moments are drawn in code instead.
   function playFx(id) {
@@ -410,6 +446,120 @@
       requestAnimationFrame(frame);
     });
   }
+  /* ---------- MANUAL scratch ----------
+   * The player picks the tile and scratches it. The round's outcome is already fixed by the RGS, so the choice is
+   * only where it shows: the event moves to the chosen tile, and a later event that named that tile takes the old one.
+   * Drag to scratch (the tile opens once about half of it is scratched); a quick tap scratches the tile for the player.
+   * Space scratches a random tile. Autoplay and replays always scratch on their own. */
+  const manualNow = () => S.manual && !S.auto && !P.replay;
+  function retile(events, from, e, to) {
+    const old = e.tile;
+    if (to === old) return;
+    for (let j = from + 1; j < events.length; j++) if (events[j].tile === to) events[j].tile = old;
+    e.tile = to;
+  }
+  const COVER_N = 10, BRUSH = 0.16;   // coverage is tracked on a 10 x 10 grid of points, so no pixel reads (file:// taints the canvas)
+  let pickJob = null;
+  function manualScratch(onPick) {
+    return new Promise(res => {
+      const grid = $('grid'), lbl = $('roundLabel');
+      cells.forEach(c => c.el.classList.toggle('can', !c.open));
+      grid.classList.add('pick');
+      pickJob = { onPick, res, c: null, down: false, auto: false, last: null, start: null, dist: 0, hit: new Uint8Array(COVER_N * COVER_N), chips: 0, label: lbl.textContent };
+      lbl.textContent = 'Scratch a tile!';
+    });
+  }
+  function cellAt(x, y) {
+    for (const c of cells) { const r = c.el.getBoundingClientRect(); if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return c; }
+    return null;
+  }
+  function claimTile(c) {
+    const j = pickJob;
+    j.c = c;
+    cells.forEach(o => o.el.classList.remove('can'));
+    $('grid').classList.remove('pick');
+    c.el.classList.add('scratching');
+    $('roundLabel').textContent = j.label;
+    j.onPick(c);
+    sfx.scratch();
+  }
+  function coverage(j) { let n = 0; for (const v of j.hit) n += v; return n / j.hit.length; }
+  // Erases a stroke on the tile's cover, from the last point to (u, v) in tile units (0..1).
+  function stroke(j, u, v) {
+    const c = j.c, x = c.cv.getContext('2d'), w = c.cv.width, h = c.cv.height, a = j.last || [u, v];
+    x.globalCompositeOperation = 'destination-out';
+    x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = w * BRUSH * 2;
+    x.beginPath(); x.moveTo(a[0] * w, a[1] * h); x.lineTo(u * w + 0.01, v * h); x.stroke();
+    const dx = u - a[0], dy = v - a[1], len2 = dx * dx + dy * dy;
+    for (let k = 0; k < j.hit.length; k++) {
+      if (j.hit[k]) continue;
+      const px = (k % COVER_N + 0.5) / COVER_N, py = (Math.floor(k / COVER_N) + 0.5) / COVER_N;
+      const t = len2 ? Math.max(0, Math.min(1, ((px - a[0]) * dx + (py - a[1]) * dy) / len2)) : 0;
+      const qx = a[0] + dx * t - px, qy = a[1] + dy * t - py;
+      if (qx * qx + qy * qy <= BRUSH * BRUSH) j.hit[k] = 1;
+    }
+    j.last = [u, v];
+  }
+  function moveCoin(j, cx, cy) {
+    const coin = $('scratcher'), br = board.getBoundingClientRect(), cw = j.c.el.getBoundingClientRect().width;
+    const size = Math.round(cw * 0.62);
+    coin.style.width = coin.style.height = size + 'px'; coin.hidden = false;
+    const bx = cx - br.left, by = cy - br.top;
+    coin.style.transform = `translate(${(bx - size * 0.3).toFixed(1)}px, ${(by - size * 0.3).toFixed(1)}px) rotate(${Math.round(-25 + 50 * Math.sin(j.dist / 18))}deg)`;
+    if (j.chips < 40 && Math.random() < 0.6) { foilChip(bx, by); j.chips++; }
+  }
+  function endPick(j) {
+    if (pickJob !== j) return;
+    pickJob = null;
+    $('scratcher').hidden = true;
+    j.c.el.classList.remove('scratching');
+    j.c.cv.style.opacity = '0';
+    setTimeout(() => j.res(j.c), 100);
+  }
+  // A tap, the space bar, or turning MANUAL off mid-round: the tile scratches itself.
+  function autoFinish(j, c) {
+    if (j.auto) return;
+    j.auto = true; j.down = false;
+    if (!j.c) claimTile(c || (() => { const closed = cells.filter(o => !o.open); return closed[Math.floor(Math.random() * closed.length)]; })());
+    scratch(j.c, 420).then(() => endPick(j));
+  }
+  function bindManual() {
+    const grid = $('grid');
+    grid.addEventListener('pointerdown', ev => {
+      const j = pickJob;
+      if (!j || j.auto || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+      const c = cellAt(ev.clientX, ev.clientY);
+      if (!j.c) { if (!c || c.open) return; claimTile(c); }
+      else if (c !== j.c) return;
+      ev.preventDefault();
+      try { grid.setPointerCapture(ev.pointerId); } catch (_) { /* not capturable */ }
+      j.down = true; j.start = [ev.clientX, ev.clientY]; j.last = null; j.moved = 0;
+      const r = j.c.el.getBoundingClientRect();
+      stroke(j, (ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height);
+      moveCoin(j, ev.clientX, ev.clientY);
+    });
+    grid.addEventListener('pointermove', ev => {
+      const j = pickJob;
+      if (!j || !j.down || j.auto) return;
+      const r = j.c.el.getBoundingClientRect(), u = (ev.clientX - r.left) / r.width, v = (ev.clientY - r.top) / r.height;
+      const step = j.last ? Math.hypot((u - j.last[0]) * r.width, (v - j.last[1]) * r.height) : 0;
+      j.dist += step; j.moved += step;
+      stroke(j, u, v);
+      moveCoin(j, ev.clientX, ev.clientY);
+      if (j.moved > 40 && Math.random() < 0.08) sfx.scratch();
+      if (coverage(j) >= 0.55) endPick(j);
+    });
+    const up = () => {
+      const j = pickJob;
+      if (!j || !j.down || j.auto) return;
+      j.down = false;
+      $('scratcher').hidden = true;
+      if (j.moved < 10 && coverage(j) < 0.2) autoFinish(j);   // a tap
+      else if (coverage(j) >= 0.4) endPick(j);
+    };
+    grid.addEventListener('pointerup', up);
+    grid.addEventListener('pointercancel', up);
+  }
   function markLatest(c) { cells.forEach(o => o.el.classList.remove('latest')); if (c) c.el.classList.add('latest'); }
   function resetBoard() {
     if (MOTION && MOTION.ready) MOTION.clear();
@@ -496,29 +646,6 @@
     const c = open[Math.floor(Math.random() * open.length)], p = POSE[c.sym];
     c.img.src = p.blink;
     setTimeout(() => { if (c.sym && POSE[c.sym] === p) c.img.src = p.base; }, 140);
-  }
-  // Live reactions: hearts and flames float up the frame's edge, faster while a post is running and when it heats up.
-  const REACT_SRC = [IMG.heart, IMG.heart, IMG.fire, IMG.heart, IMG.rocket, IMG.fire, IMG.crown];
-  let reactT = 0;
-  function floatReact() {
-    const box = $('framebox');
-    if (!reduced && !document.hidden && box && box.offsetParent) {
-      const heat = Number(getComputedStyle(board).getPropertyValue('--heat')) || 0;
-      const n = S.busy ? 1 + (heat > 0.5 ? 1 : 0) : 1;
-      for (let k = 0; k < n; k++) {
-        const im = document.createElement('img');
-        im.className = 'freact'; im.alt = '';
-        im.src = REACT_SRC[Math.floor(Math.random() * (S.busy ? REACT_SRC.length : 3))];
-        im.style.setProperty('--fd', (2.2 + Math.random() * 1.2).toFixed(2) + 's');
-        im.style.setProperty('--sw', Math.round(8 + Math.random() * 22) + '%');
-        im.style.right = (1 + Math.random() * 4).toFixed(1) + '%';
-        im.style.animationDelay = (k * 0.15) + 's';
-        box.append(im);
-        setTimeout(() => im.remove(), 4000);
-      }
-    }
-    const heat = Number(getComputedStyle(board).getPropertyValue('--heat')) || 0;
-    reactT = setTimeout(floatReact, document.body.classList.contains('onair') ? 220 : S.busy ? Math.round(520 - heat * 300) : 1600);
   }
   // Neighbouring characters hop when a new one lands next to them.
   function hopNeighbors(c) {
@@ -1068,11 +1195,11 @@
       if (card.skipped()) break;
       cnt.textContent = String(n);
       cnt.classList.remove('tick'); void cnt.offsetWidth; cnt.classList.add('tick');
-      sfx.thump(); tone(660 + (3 - n) * 220, 0.12, 'square', 0.05);
+      sfx.beep(3 - n);
       await cineWait(460, card.skipped);
     }
     card.el.classList.add('on');
-    sfx.hype(); tone(1320, 0.35, 'triangle', 0.08, 0.05);
+    sfx.live();
     countTo($('glViewers'), viewers, 900, v => compact(v));
     await cineWait(1500, card.skipped);
     if (card.skipped()) { $('glViewers').textContent = compact(viewers); await sleep(250); }
@@ -1109,23 +1236,33 @@
     await sleep(500);
     let finalPay = 0, ending = 'cancel', bustCell = null;
     const bc = { on: false, hits: 0, best: 0, peak: 0 };
-    for (const e of events) {
+    events = events.map(e => ({ ...e }));    // MANUAL moves events between tiles; the RGS result itself stays untouched
+    const manual = manualNow();
+    for (let ei = 0; ei < events.length; ei++) {
+      const e = events[ei];
       if (e.type === 'reveal' || e.type === 'cancel') {
-        const c = cells[e.tile];
-        if (!c) continue;
         const isCancel = e.type === 'cancel';
-        c.img.src = isCancel ? IMG.cancelled : POSE[e.reaction].win;
-        c.el.classList.add('peek');
-        if (isCancel) c.el.classList.add('bustprep');
-        // The hold before a reveal depends only on how far the post has run, never on what is under the tile.
-        const suspense = state.revealed >= 6 ? Math.min(600, 100 + (state.revealed - 6) * 30) : 0;
-        if (!reduced && !document.hidden) {
-          c.el.classList.add('target');
-          if (suspense) { c.el.classList.add('tense'); $('grid').classList.add('spot'); sfx.thump(); }
-          await sleep(260 + suspense);
+        const prep = c => {
+          c.img.src = isCancel ? IMG.cancelled : POSE[e.reaction].win;
+          c.el.classList.add('peek');
+          if (isCancel) c.el.classList.add('bustprep');
+        };
+        let c;
+        if (manual) c = await manualScratch(t => { retile(events, ei, e, t.i); prep(t); });
+        else {
+          c = cells[e.tile];
+          if (!c) continue;
+          prep(c);
+          // The hold before a reveal depends only on how far the post has run, never on what is under the tile.
+          const suspense = state.revealed >= 6 ? Math.min(600, 100 + (state.revealed - 6) * 30) : 0;
+          if (!reduced && !document.hidden) {
+            c.el.classList.add('target');
+            if (suspense) { c.el.classList.add('tense'); $('grid').classList.add('spot'); sfx.thump(); }
+            await sleep(260 + suspense);
+          }
+          sfx.scratch();
+          await scratch(c, 640);
         }
-        sfx.scratch();
-        await scratch(c, 640);
         c.open = true;
         if (e.type === 'reveal') {
           state.revealed++;
@@ -1171,11 +1308,16 @@
         }
       } else if (e.type === 'live') {
         // The post goes live: a LIVE tile, then the stream.
-        const c = cells[e.tile];
+        const prep = t => { t.img.src = IMG.live; t.el.classList.add('peek'); };
+        let c;
+        if (manual && !e.bought) c = await manualScratch(t => { retile(events, ei, e, t.i); prep(t); });
+        else {
+          c = cells[e.tile];
+          if (c) prep(c);
+          if (c && !e.bought && !reduced && !document.hidden) { c.el.classList.add('target', 'tense'); $('grid').classList.add('spot'); sfx.thump(); await sleep(500); }
+          if (c && !e.bought) { sfx.scratch(); await scratch(c, 640); }
+        }
         if (c) {
-          c.img.src = IMG.live; c.el.classList.add('peek');
-          if (!e.bought && !reduced && !document.hidden) { c.el.classList.add('target', 'tense'); $('grid').classList.add('spot'); sfx.thump(); await sleep(500); }
-          if (!e.bought) { sfx.scratch(); await scratch(c, 640); }
           c.open = true; c.el.classList.remove('peek'); c.el.classList.add('on', 'livetile');
           c.tg.textContent = 'LIVE'; markLatest(c);
           c.cv.style.opacity = '0';
@@ -1200,12 +1342,17 @@
         startChat();
         await sleep(cine ? 1000 : 1700);
       } else if (e.type === 'stream') {
-        const c = cells[e.tile];
-        if (!c) continue;
-        c.img.src = streamImg(e.x); c.el.classList.add('peek');
-        if (!reduced && !document.hidden) { c.el.classList.add('target'); await sleep(200); }
-        sfx.scratch();
-        await scratch(c, 420);
+        const prep = t => { t.img.src = streamImg(e.x); t.el.classList.add('peek'); };
+        let c;
+        if (manual) c = await manualScratch(t => { retile(events, ei, e, t.i); prep(t); });
+        else {
+          c = cells[e.tile];
+          if (!c) continue;
+          prep(c);
+          if (!reduced && !document.hidden) { c.el.classList.add('target'); await sleep(200); }
+          sfx.scratch();
+          await scratch(c, 420);
+        }
         c.open = true; c.el.classList.remove('peek'); c.el.classList.add('on', 'streamt');
         if (e.x >= 3) c.el.classList.add('big');
         c.tg.textContent = '×' + e.x;
@@ -1442,6 +1589,9 @@
     $('autoLbl').textContent = auto ? S.auto.left + ' LEFT' : 'AUTO';
     btn.setAttribute('aria-label', auto ? 'Stop autoplay' : S.busy ? 'Round in play' : 'Play ' + (S.amount ? money(S.amount) : ''));
     $('autoBtn').disabled = !S.ready || (S.busy && !auto);
+    $('handBtn').disabled = S.busy || auto;
+    $('handBtn').setAttribute('aria-pressed', String(S.manual));
+    document.body.classList.toggle('manual', S.manual && !auto);
     $('actionSub').textContent = S.amount ? money(S.amount) : ' ';
     $('buyBtn').disabled = S.busy || !S.ready || auto;
     $('buyPrice').textContent = S.amount ? 'from ' + money(S.amount * Math.min(...BUY_MODES.map(m => S.costs[m]))) : '';
@@ -1654,6 +1804,14 @@
     $('amtMinus').addEventListener('click', () => stepAmount(-1));
     $('amtPlus').addEventListener('click', () => stepAmount(1));
     $('amtSelect').addEventListener('change', e => setAmount(Number(e.target.value)));
+    $('handBtn').addEventListener('click', () => {
+      if (S.busy || S.auto) return;
+      S.manual = !S.manual;
+      try { localStorage.setItem('gv-manual', S.manual ? '1' : '0'); } catch (_) { /* storage blocked: the choice lasts this visit */ }
+      toast(S.manual ? 'MANUAL: you scratch the tiles yourself. Drag across a tile, or tap it.' : 'The tiles scratch themselves again.', 2600);
+      renderAction();
+    });
+    bindManual();
     $('fastBtn').addEventListener('click', () => {
       S.fast = !S.fast; $('fastBtn').setAttribute('aria-pressed', String(S.fast));
       document.documentElement.style.setProperty('--spd', S.fast ? '0.6' : '1');
@@ -1678,12 +1836,12 @@
       const tag = document.activeElement && document.activeElement.tagName;
       if (tag === 'SELECT' || tag === 'INPUT') return;
       e.preventDefault();
+      if (pickJob) { autoFinish(pickJob); return; }   // MANUAL: space scratches a tile for the player
       if (S.auto) stopAuto('Autoplay stopped.'); else onPlay();
     });
     window.addEventListener('resize', fitAll);
     setInterval(jiggleOne, 700);
     setInterval(blinkOne, 650);
-    floatReact();
     setInterval(() => {
       if (!S.jur.displaySessionTimer) return;
       const s = Math.floor((Date.now() - S.sessionStart) / 1000);
@@ -1692,10 +1850,16 @@
   }
 
   /* ---------- Start ---------- */
+  // v2.9.2: only what the first screen and the first round need holds the loading bar. The celebration art (win
+  // banners, hype captions, blink and celebration poses) streams in right after, while the player reads the intro.
+  const LATER = () => Object.values(POSE).flatMap(p => [p.blink, p.win]).concat([IMG.bigwin, IMG.megawin, IMG.epicwin, IMG.liveTxt],
+    Object.values(HYPE_ART).map(n => 'assets/' + n + '.webp'));
+  function preloadLater() { for (const src of new Set(LATER())) { const i = new Image(); i.decoding = 'async'; i.src = src; } }
   function preload() {
-    const poses = Object.values(POSE).flatMap(p => [p.base, p.blink, p.win]);
+    const later = new Set(LATER());
+    const poses = Object.values(POSE).map(p => p.base);
     const srcs = Array.from(new Set(Object.values(IMG).concat(poses, ['assets/logo.webp', 'assets/coin.webp', 'assets/hype-check.webp', 'assets/tile-open.webp', 'assets/board-frame-slim.webp',
-      'assets/icon-lock.webp', 'assets/icon-shield.webp', 'assets/icon-x2.webp', 'assets/icon-x5.webp', 'assets/btn-golive.webp'])));
+      'assets/icon-lock.webp', 'assets/icon-shield.webp', 'assets/icon-x2.webp', 'assets/icon-x5.webp', 'assets/btn-golive.webp']))).filter(s => !later.has(s));
     let done = 0;
     return new Promise(res => {
       const bar = $('introBar');
@@ -1749,6 +1913,7 @@
     $('app').inert = true;
     const motion = MOTION && !reduced ? MOTION.init({ grid: $('grid'), speed }) : Promise.resolve(false);
     const [, err] = await Promise.all([preload(), connect().then(() => null, e => e), motion]);
+    preloadLater();
     $('introBar').style.transform = 'scaleX(1)';
     if (err) {
       fatal(P.replay ? 'This replay could not be loaded.' : errText(err.code === 'NETWORK' || err.status === 0 ? { code: 'NETWORK' } : err));
