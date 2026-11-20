@@ -282,8 +282,12 @@
     scene = new T.Scene();
     scene.background = null;
     const pm = new T.PMREMGenerator(R);
-    scene.environment = pm.fromScene(new T.RoomEnvironment(), 0.04).texture;
+    const envTex = pm.fromScene(new T.RoomEnvironment(), 0.04).texture;
+    scene.environment = envTex;
     scene.environmentIntensity = 0.7;
+    // three.js r163+ applies a material's envMapIntensity only when the material has its own envMap (otherwise the
+    // scene-wide 0.7 wins, which turned the black lacquer grey-teal). Materials with their own strength get envTex directly.
+    const env = o => Object.assign(o, { envMap: envTex });
     cam = new T.PerspectiveCamera(30, 1, 0.1, 200);
 
     const key = new T.DirectionalLight(0xfff1dc, 1.6); key.position.set(-3, 9, 12); key.castShadow = true;
@@ -298,7 +302,8 @@
     const f = drawField();
     const map = new T.CanvasTexture(f.c); map.colorSpace = T.SRGBColorSpace; map.anisotropy = 8;
     const glow = new T.CanvasTexture(f.gc); glow.colorSpace = T.SRGBColorSpace;
-    boardMat = new T.MeshStandardMaterial({ map, emissiveMap: glow, emissive: 0xffffff, emissiveIntensity: 1.4, roughness: 0.55, metalness: 0.05, envMapIntensity: 0.12 });
+    // the playfield keeps the scene-wide light: at its own 0.12 it went dull and flat (compared side by side)
+    boardMat = new T.MeshStandardMaterial({ map, emissiveMap: glow, emissive: 0xffffff, emissiveIntensity: 1.4, roughness: 0.55, metalness: 0.05 });
     const board = new T.Mesh(new T.PlaneGeometry(10, 14.1), boardMat); board.receiveShadow = true; scene.add(board);
 
     // cabinet: black lacquer body with a gold lip round the window
@@ -307,11 +312,11 @@
     outer.lineTo(-OW + OR, OH); outer.quadraticCurveTo(-OW, OH, -OW, OH - OR); outer.lineTo(-OW, -OH + OR); outer.quadraticCurveTo(-OW, -OH, -OW + OR, -OH);
     const hole = new T.Path(); hole.moveTo(-5.05, -7.1); hole.lineTo(5.05, -7.1); hole.lineTo(5.05, H2(46)); hole.absarc(0, H2(46), 5.05, 0, Math.PI, false); hole.lineTo(-5.05, -7.1);
     outer.holes.push(hole);
-    MAT.lacquer = new T.MeshStandardMaterial({ color: 0x07040f, roughness: 0.38, metalness: 0.2, envMapIntensity: 0.35 });
+    MAT.lacquer = new T.MeshStandardMaterial(env({ color: 0x07040f, roughness: 0.38, metalness: 0.2, envMapIntensity: 0.35 }));
     MAT.gold = new T.MeshStandardMaterial({ color: 0xe9b850, roughness: 0.24, metalness: 1 });
     MAT.brass = new T.MeshStandardMaterial({ color: 0xd8a24a, roughness: 0.3, metalness: 1 });
-    MAT.chrome = new T.MeshStandardMaterial({ color: 0xe8ebf2, roughness: 0.12, metalness: 1, envMapIntensity: 0.8 });
-    MAT.rail = new T.MeshStandardMaterial({ color: 0x9aa0b4, roughness: 0.32, metalness: 1, envMapIntensity: 0.35 });
+    MAT.chrome = new T.MeshStandardMaterial(env({ color: 0xe8ebf2, roughness: 0.12, metalness: 1, envMapIntensity: 0.8 }));
+    MAT.rail = new T.MeshStandardMaterial(env({ color: 0x9aa0b4, roughness: 0.32, metalness: 1, envMapIntensity: 0.35 }));
     MAT.goldBall = new T.MeshStandardMaterial({ color: 0xffc54a, roughness: 0.1, metalness: 1, emissive: 0x3a2200, emissiveIntensity: 0.6 });
     const cab = new T.Mesh(new T.ExtrudeGeometry(outer, { depth: 0.55, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.06, bevelSegments: 2, curveSegments: 48 }), MAT.lacquer);
     cab.position.z = -0.05; cab.receiveShadow = true; scene.add(cab);

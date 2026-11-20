@@ -1,5 +1,9 @@
 /* The explorer, as an LZ Rig (format: _shared/rig/README.md). One 512 x 512 drawing per pose, all on the same
- * canvas and scale (feet at y = 479). Bones are in px relative to their parent; the origin is the feet. */
+ * canvas and scale (feet at y = 479). Bones are in px relative to their parent; the origin is the feet.
+ * Explorer v2, the adult (2026-11-20): bones and weights fitted to his drawings (smaller head, pack behind the
+ * shoulder, lantern held low). v1, the child, is kept in art/prod/raw-explorer-v1-child with its own copy of this file. */
+// Where the beanie pops off when a tile gives way (world px from his feet; game.js falls back to v1's 6, -140).
+window.LS_EXPLORER = { beanie: { x: -5, y: -122 } };
 window.LS_RIG = {
   lzrig: 1, name: 'explorer',
   size: [512, 512], origin: [0.49, 0.935],
@@ -7,18 +11,19 @@ window.LS_RIG = {
   bones: [
     { name: 'root', length: 30 },
     { name: 'body', parent: 'root', y: -150, length: 60 },
-    { name: 'head', parent: 'body', x: 11, y: -129, length: 60 },        // neck, under the beanie
-    { name: 'pack', parent: 'body', x: -51, y: -159, length: 60 },       // top of the backpack straps
-    { name: 'lantern', parent: 'body', x: 107, y: -44, length: 40 },     // the hand that holds the lantern
+    { name: 'head', parent: 'body', x: 15, y: -217, length: 60 },        // neck, under the beard
+    { name: 'pack', parent: 'body', x: -11, y: -191, length: 60 },       // where the straps go over the shoulder
+    { name: 'lantern', parent: 'body', x: 91, y: -56, length: 40 },      // the fist that holds the lantern ring
   ],
   slots: [{ name: 'explorer', bone: 'body', attachment: 'idle' }],
   attachments: {
     idle: {
       type: 'skin', image: 'idle', root: 'body', grid: 22,
       weights: [
-        { bone: 'head', circle: [0.52, 0.245, 0.15], soft: 0.05 },
-        { bone: 'pack', box: [0.2, 0.4, 0.27, 0.68], soft: 0.04 },
-        { bone: 'lantern', box: [0.64, 0.79, 0.545, 0.79], soft: 0.03 },
+        { bone: 'head', circle: [0.504, 0.129, 0.105], soft: 0.03 },          // beanie, pompom, face and beard
+        { bone: 'pack', box: [0.273, 0.404, 0.27, 0.566], soft: 0.025 },      // the pack below the shoulder, left of the arm
+        { bone: 'pack', box: [0.3, 0.47, 0.125, 0.27], soft: 0.025 },         // bedroll and scrolls, above the shoulder
+        { bone: 'lantern', box: [0.621, 0.719, 0.5625, 0.715], soft: 0.02 },  // the lantern under the fist
       ],
     },
     blink: { like: 'idle', image: 'blink' },

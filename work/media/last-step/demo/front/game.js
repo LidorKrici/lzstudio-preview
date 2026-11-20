@@ -239,13 +239,15 @@ const homeCam = () => {
 
   /* ---------------- moves ---------------- */
   const standY = () => TOP;
-  async function hopTo(x, y, { height = 70, ms = 300 } = {}) {
-    rig.play('crouch', { mix: 0.05 }); await wait(110);
+  // scared: the leap back after a trap keeps the fright drawing (bare head), because his beanie is still flying away;
+  // the hop and idle drawings wear it, so swapping to them here showed two beanies at once
+  async function hopTo(x, y, { height = 70, ms = 300, scared = false } = {}) {
+    if (!scared) { rig.play('crouch', { mix: 0.05 }); await wait(110); }
     sfx('hop');
-    rig.play('hop', { mix: 0.04, fadeSwap: 0.05 });
+    if (!scared) rig.play('hop', { mix: 0.04, fadeSwap: 0.05 });
     const x0 = explorer.x, y0 = explorer.y, o = { t: 0 };
     await tween(o, { t: 1 }, ms, 'lin', k => { explorer.x = x0 + (x - x0) * k; explorer.y = y0 + (y - y0) * k - Math.sin(k * Math.PI) * height; });
-    rig.play('land', { mix: 0.03, fadeSwap: 0.05, then: 'idle', thenMix: 0.2 });
+    if (!scared) rig.play('land', { mix: 0.03, fadeSwap: 0.05, then: 'idle', thenMix: 0.2 });
   }
   function popText(t, color) {
     t.setColor(color); t.scale.set(0.5);
@@ -255,11 +257,13 @@ const homeCam = () => {
 
   async function trapAt(i, kind) {
     const t = tiles[i - 1]; if (!t) return;
+    const trapT0 = performance.now();
     t.sprite.texture = tex['tile-cracked'];
     sfx('crack'); shake(0.85);
     rig.play('fright', { mix: 0.02, fadeSwap: 0.04 });
-    // the beanie flies off backwards
-    beanie.visible = true; beanie.x = explorer.x + 6; beanie.y = explorer.y - 140; beanie.rotation = 0; beanie.alpha = 1;
+    // the beanie flies off backwards, from where his head is in the fright drawing (explorer-rig.js; v1 numbers otherwise)
+    const pop = (window.LS_EXPLORER && window.LS_EXPLORER.beanie) || { x: 6, y: -140 };
+    beanie.visible = true; beanie.x = explorer.x + pop.x; beanie.y = explorer.y + pop.y; beanie.rotation = 0; beanie.alpha = 1;
     const b = { t: 0 }, bx = beanie.x, by = beanie.y;
     tween(b, { t: 1 }, 900, 'lin', k => { beanie.x = bx - 140 * k; beanie.y = by - 120 * Math.sin(k * Math.PI) + 260 * k * k; beanie.rotation = -4 * k; beanie.alpha = 1 - Math.max(0, k - 0.75) * 4; });
     // the tile wobbles, cracks and drops into the chasm with a puff of dust
@@ -271,9 +275,9 @@ const homeCam = () => {
     t.label_.alpha = 0.3;
     // he scrambles back to safety
     const back = i - 1 >= 1 ? tileX(i - 1) : START_X;
-    await hopTo(back, standY(), { height: 40, ms: 280 });
-    rig.play('fright', { mix: 0.05 });
-    await wait(500);
+    await hopTo(back, standY(), { height: 40, ms: 280, scared: true });
+    // the flying beanie is gone after 900 ms; the idle drawing (beanie on) only comes back after that
+    await wait(Math.max(500, 940 - (performance.now() - trapT0)));
     rig.play('idle', { loop: true, mix: 0.25 });
   }
 
