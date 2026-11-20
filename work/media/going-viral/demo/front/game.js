@@ -126,7 +126,9 @@
     auto: null, stats: { rounds: 0, bestX: 0, bestUnits: 0, lives: 0 },
     manual: (() => { try { return localStorage.getItem('gv-manual') === '1'; } catch (_) { return false; } })()
   };
-  const speed = () => (S.fast ? 0.45 : 1);
+  // S.skip: the player pressed the square (stop/skip) on PLAY, or space, during a round: the rest of the round's
+  // animation runs at high speed. Presentation only; the result and the minimum round duration are unchanged.
+  const speed = () => (S.skip ? 0.12 : S.fast ? 0.45 : 1);
   const sleep = ms => new Promise(r => setTimeout(r, Math.round(ms * speed())));
 
   /* ---------- RGS ---------- */
@@ -385,6 +387,8 @@
     const x = c.cv.getContext('2d');
     x.globalCompositeOperation = 'source-over';
     x.clearRect(0, 0, w, h);
+    // v3: with the 3D layer on, scene3d.js draws the tile itself and this canvas only carries the scratch marks.
+    if (g3()) { MOTION.close(c.i); return; }
     // v2: the illustrated tile back (same art on every tile). The scratch erases it to show the reaction.
     if (foil.complete && foil.naturalWidth) x.drawImage(foil, 0, 0, w, h);
     else {
@@ -420,7 +424,7 @@
       const done = () => {
         if (finished) return;
         finished = true; coin.hidden = true; c.el.classList.remove('target', 'tense'); $('grid').classList.remove('spot');
-        c.cv.style.opacity = '0'; setTimeout(res, fast ? 0 : 100);
+        c.cv.style.opacity = '0'; if (g3()) MOTION.open(c.i, fast); setTimeout(res, fast ? 0 : 100);
       };
       if (fast) { done(); return; }
       setTimeout(done, dur + 60);
@@ -430,8 +434,10 @@
       const coinSize = Math.round(cw * 0.62);
       coin.style.width = coinSize + 'px'; coin.style.height = coinSize + 'px';
       coin.hidden = false;
-      x.globalCompositeOperation = 'destination-out';
-      x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = w * 0.3;
+      const marks = g3();                 // 3D: light scuff marks on the tile instead of erasing a flat picture
+      x.globalCompositeOperation = marks ? 'source-over' : 'destination-out';
+      x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = w * (marks ? 0.09 : 0.3);
+      if (marks) x.strokeStyle = 'rgba(255,255,255,.55)';
       const t0 = performance.now();
       let last = pathPoint(0), chips = 0;
       const frame = now => {
@@ -439,6 +445,7 @@
         const t = Math.max(0, Math.min(1, (now - t0) / dur)), pt = pathPoint(t);
         x.beginPath(); x.moveTo(last[0] * w, last[1] * h); x.lineTo(pt[0] * w, pt[1] * h); x.stroke();
         last = pt;
+        if (marks) MOTION.scratch(c.i);
         const cx = ox + pt[0] * cw, cy = oy + pt[1] * ch;
         coin.style.transform = `translate(${(cx - coinSize * 0.3).toFixed(1)}px, ${(cy - coinSize * 0.3).toFixed(1)}px) rotate(${Math.round(-25 + 50 * Math.sin(t * 18))}deg)`;
         if (chips < 30) { foilChip(cx, cy); chips++; }
@@ -452,7 +459,7 @@
    * only where it shows: the event moves to the chosen tile, and a later event that named that tile takes the old one.
    * Drag to scratch (the tile opens once about half of it is scratched); a quick tap scratches the tile for the player.
    * Space scratches a random tile. Autoplay and replays always scratch on their own. */
-  const manualNow = () => S.manual && !S.auto && !P.replay;
+  const manualNow = () => S.manual && !S.auto && !P.replay && !S.skip;
   function retile(events, from, e, to) {
     const old = e.tile;
     if (to === old) return;
@@ -488,8 +495,10 @@
   // Erases a stroke on the tile's cover, from the last point to (u, v) in tile units (0..1).
   function stroke(j, u, v) {
     const c = j.c, x = c.cv.getContext('2d'), w = c.cv.width, h = c.cv.height, a = j.last || [u, v];
-    x.globalCompositeOperation = 'destination-out';
-    x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = w * BRUSH * 2;
+    const marks = g3();
+    x.globalCompositeOperation = marks ? 'source-over' : 'destination-out';
+    x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = w * (marks ? 0.09 : BRUSH * 2);
+    if (marks) { x.strokeStyle = 'rgba(255,255,255,.55)'; MOTION.scratch(c.i); }
     x.beginPath(); x.moveTo(a[0] * w, a[1] * h); x.lineTo(u * w + 0.01, v * h); x.stroke();
     const dx = u - a[0], dy = v - a[1], len2 = dx * dx + dy * dy;
     for (let k = 0; k < j.hit.length; k++) {
@@ -514,7 +523,7 @@
     pickJob = null;
     $('scratcher').hidden = true;
     j.c.el.classList.remove('scratching');
-    j.c.cv.style.opacity = '0';
+    j.c.cv.style.opacity = '0'; if (g3()) MOTION.open(j.c.i);
     setTimeout(() => j.res(j.c), 100);
   }
   // A tap, the space bar, or turning MANUAL off mid-round: the tile scratches itself.
@@ -579,6 +588,7 @@
   // A new post: the fresh tiles flip in as a diagonal wave from the top-left corner.
   function dealIn() {
     if (!boardMotion()) return;
+    if (g3()) { MOTION.dealIn(); return; }
     const sp = speed();
     cells.forEach(c => {
       const [x, y] = cxy(c);
@@ -593,6 +603,7 @@
   // and the board takes a small hit that grows with the tier.
   function ripple(c, tier) {
     if (!boardMotion()) return;
+    if (g3()) MOTION.ripple(c.i, tier);
     const sp = speed(), [ox, oy] = cxy(c), amp = 2.5 + tier * 1.6;
     cells.forEach(o => {
       if (o === c || o.open || o.el.classList.contains('target')) return;
@@ -627,6 +638,8 @@
   // reduced motion, hidden tab).
   const MOTION = window.GVMotion;
   const motionOn = () => !!(MOTION && MOTION.ready) && !reduced && !document.hidden;
+  // v3: true when the 3D layer (scene3d.js) draws the tiles, the frame and the room. Off = the 2D look, unchanged.
+  const g3 = () => !!(MOTION && MOTION.ready && MOTION.tiles3d);
   // Shows a character on a tile: it celebrates, then rests on its still pose.
   function showSym(c, key, color, celebrateMs = 650) {
     const p = POSE[key];
@@ -678,6 +691,7 @@
   // Cancel: the closed tiles collapse in a wave that spreads out from the cancelled tile.
   function collapseFrom(c) {
     if (reduced || document.hidden || !c) return;
+    if (g3()) MOTION.collapse(c.i);
     const cx = c.i % COLS, cy = Math.floor(c.i / COLS);
     cells.forEach(o => {
       if (o.open) return;
@@ -942,26 +956,53 @@
     try {
       if (!over()) return;
       let size = parseFloat(getComputedStyle(el).fontSize);
-      while (size > 9 && over()) { size -= 1; el.style.fontSize = size + 'px'; }
+      // down to 7px: the longest currencies (999,999.99 USDT, 6-decimal BTC) must fit even the 400x225 popout
+      while (size > 7 && over()) { size -= 0.5; el.style.fontSize = size + 'px'; }
     } finally { scope.classList.remove('fitm'); }
   }
   const hudOf = el => el.closest('.hud');
-  const APART = () => [[$('lockPill'), $('views')], [$('lockPill'), document.querySelector('.side')]];
+  const APART = () => [[$('lockPill'), $('views')], [$('lockPill'), $('bar')], [$('lockPill'), $('liveDock')]];
   function fitAll() {
     fitText($('mult'), hudOf($('mult')), APART()); fitText($('lockText'), hudOf($('lockText')));
-    fitText($('winAmt'), $('winAmt').closest('.winbox')); fitText($('amtText')); fitText($('buyPrice'), $('buyBtn').closest('.side'));
+    fitText($('winAmt'), $('bar')); fitText($('balance'), $('bar')); fitText($('amtText')); fitText($('buyPrice'), $('liveDock'));
+    layoutVars(); fitHint();
   }
-  let winShown = 0, winTimer = 0;
+  // Layout numbers CSS cannot know by itself: how tall the logo block is (the meter column starts under it) and where
+  // the PLAY button sits in the bar (with the 3D scene up, the bar's fill has a round socket cut out for it).
+  function layoutVars() {
+    const app = $('app'), bar = $('bar'), act = $('action'), top = document.querySelector('.topbar'), stage = document.querySelector('.stage');
+    if (!app || !bar || !act) return;
+    const tb = top.getBoundingClientRect(), st = stage.getBoundingClientRect();
+    if (getComputedStyle(top).position === 'absolute') app.style.setProperty('--toph', Math.max(0, Math.round(tb.bottom - st.top + 6)) + 'px');
+    const b = bar.getBoundingClientRect(), a = act.getBoundingClientRect();
+    if (a.width > 2) {
+      bar.style.setProperty('--hx', (a.left + a.width / 2 - b.left).toFixed(1) + 'px');
+      bar.style.setProperty('--hy', (a.top + a.height / 2 - b.top).toFixed(1) + 'px');
+      bar.style.setProperty('--hr', (a.width / 2 + Math.max(3, a.width * 0.05)).toFixed(1) + 'px');
+    }
+  }
+  let winShown = 0, winTimer = 0, winSeq = 0, lastWinT = 0;
+  // LAST WIN (8.5): a new round keeps the last win in the bar for 1.5s under a 'Last win' label, then the bar counts this round
+  function lastWinHold() {
+    if (winShown <= 0) { setWin(0); return; }
+    const seq = ++winSeq, box = $('winBox');
+    box.classList.remove('last'); void box.offsetWidth; box.classList.add('last'); $('winLbl').textContent = 'Last win';
+    clearTimeout(lastWinT);
+    lastWinT = setTimeout(() => { if (winSeq === seq) setWin(0); }, 1500);
+  }
   function setWin(units, animate) {
-    const el = $('winAmt'), from = winShown, t0 = performance.now(), d = animate && !reduced ? 600 : 0;
-    winShown = units;
+    const box = $('winBox'), wasLast = box.classList.contains('last');
+    const el = $('winAmt'), from = wasLast ? 0 : winShown, t0 = performance.now(), d = animate && !reduced ? 600 : 0;
+    winShown = units; winSeq++;
+    if (wasLast) { box.classList.remove('last'); $('winLbl').textContent = 'Win'; }
     clearTimeout(winTimer);
+    $('winBox').classList.toggle('has', units > 0);
     // The count-up uses the final win's decimals, so a sub-cent win never flashes as 0.00 on the way.
     const dec = Math.max(winDec(units), winDec(from));
     const step = () => {
       const t = d ? Math.min(1, (performance.now() - t0) / d) : 1;
       el.textContent = t >= 1 ? winMoney(units) : winMoney(Math.round(from + (units - from) * t), dec);
-      if (t >= 1 || !el.style.fontSize) fitText(el, el.closest('.winbox'));
+      if (t >= 1 || !el.style.fontSize) fitText(el, $('bar'));
       if (t < 1) winTimer = setTimeout(step, 30);
     };
     step();
@@ -970,6 +1011,7 @@
     S.balance = units;
     const el = $('balance');
     el.textContent = money(units);
+    fitText(el, $('bar'));
     if (animate && !reduced) { const w = $('wallet'); w.classList.remove('up'); void w.offsetWidth; w.classList.add('up'); }
   }
   // v2.4 big win: a full-screen takeover like the leading games. The amount counts up and the banner
@@ -1081,7 +1123,7 @@
     const steps = 8 + target;
     for (let k = 0; k <= steps; k++) {
       opts.forEach((o, j) => o.classList.toggle('lit', j === k % 4));
-      sfx.tick();
+      if (!S.skip) sfx.tick();
       await sleep(95);
     }
     opts.forEach(o => o.classList.remove('lit'));
@@ -1131,6 +1173,9 @@
   function setOnAir(x, left) {
     $('viewers').textContent = compact(viewersAt(x));
     $('streamLeft').textContent = left > 0 ? left + ' live tile' + (left === 1 ? '' : 's') + ' left' : 'Stream ending';
+    // the bar in bonus mode (7.3, 8.2): the live tiles left take the play amount's place, and the sign counts them too
+    $('liveLeftN').textContent = String(Math.max(0, left));
+    $('buyOnLeft').textContent = left > 0 ? left + ' LEFT' : '';
   }
   const streamImg = x => (x >= 10 ? IMG.crown : x >= 3 ? IMG.rocket : x >= 2 ? IMG.fire : IMG.heart);
 
@@ -1173,11 +1218,13 @@
   function cineCard(kind) {
     const el = $('golive');
     el.className = 'golive ' + kind; el.hidden = false;
+    document.body.classList.add('cine-card');
     let skip = false;
     const onSkip = () => { skip = true; el.classList.add('skipped'); };
     el.addEventListener('pointerdown', onSkip);
     const close = () => new Promise(res => {
       el.classList.add('out');
+      document.body.classList.remove('cine-card');
       setTimeout(() => { el.hidden = true; el.className = 'golive'; el.removeEventListener('pointerdown', onSkip); res(); }, 320);
     });
     return { el, skipped: () => skip, close };
@@ -1229,7 +1276,7 @@
   async function playRound(events, amount) {
     const state = { mult: 0, locked: 0, amount, revealed: 0 };
     resetBoard();
-    setMult(0); setLocked(0); setShield(false); setWin(0); setHeat(0);
+    setMult(0); setLocked(0); setShield(false); lastWinHold(); setHeat(0);
     hmReset();
     $('result').hidden = true; $('hype').hidden = true;
     setChip('live', 'LIVE');
@@ -1290,6 +1337,7 @@
         } else if (e.saved) {
           // The shield blocks this cancel: the tile is stamped and the post keeps going.
           c.el.classList.remove('bustprep', 'peek'); c.el.classList.add('saved', 'on');
+          if (g3()) MOTION.show(c.i, 'cancel', c.el, c.img, 600);
           c.tg.textContent = 'BLOCKED';
           markLatest(null);
           setShield(false);
@@ -1301,6 +1349,7 @@
         } else {
           c.el.classList.remove('bustprep'); c.el.classList.add('dead', 'on');
           c.img.src = IMG.cancelDrama;
+          if (g3()) MOTION.show(c.i, 'cancel', c.el, c.img, 900);
           c.tg.textContent = '';
           markLatest(null);
           bustCell = c;
@@ -1487,7 +1536,7 @@
   }
   // A new round: the meter starts empty.
   function hmReset() {
-    HM.lv = 0; $('hmLog').replaceChildren(); $('hmBoom').hidden = true;
+    HM.lv = 0; HM.round = (HM.round || 0) + 1; $('hmLog').replaceChildren(); $('hmBoom').hidden = true;
     $('hm').classList.remove('full', 'charged');
     hmRender(false);
   }
@@ -1498,11 +1547,16 @@
     HM.lv = lv;
     if (text) hmLog((gain > 0 ? '+' + Math.round(gain * 100) + '% ' : '') + text, cls, img);
     if (gain >= 0.1) hmSparks(Math.round(10 + gain * 50));
+    if (gain > 0 && g3() && MOTION.meterFx) MOTION.meterFx('gain', gain);
     hmRender(gain > 0);
   }
   function hmDrain(text) {
     hmLog(text, 'bad', IMG.cancelled);
     if (!reduced) { const t = $('hmTube'); t.classList.remove('drain'); void t.offsetWidth; t.classList.add('drain'); }
+    if (g3() && MOTION.meterFx) MOTION.meterFx('drain');
+    // the progress is lost: the meter empties a beat after the cancel (it never carries over)
+    const no = HM.round;
+    setTimeout(() => { if (HM.round === no) { HM.lv = 0; hmRender(false); } }, Math.round(650 * speed()));
   }
   // The meter hits 100%: it bursts and the post goes live.
   function hmGoLive(bought) {
@@ -1510,7 +1564,8 @@
     hmLog(bought ? modeOf(S.roundMode).label + ' · stream starts at ' + fmtX(modeOf(S.roundMode).start / 100) : 'METER FULL · going LIVE', 'live', IMG.live);
     const el = $('hm'), boom = $('hmBoom');
     el.classList.remove('hm-flashing'); void el.offsetWidth; el.classList.add('hm-flashing');
-    if (!reduced) { const s = document.querySelector('.side'); s.classList.remove('boom'); void s.offsetWidth; s.classList.add('boom'); }
+    if (!reduced) { const s = $('hmMini'); s.classList.remove('boom'); void s.offsetWidth; s.classList.add('boom'); }
+    if (g3() && MOTION.meterFx) MOTION.meterFx('full');
     boom.hidden = false; boom.style.animation = 'none'; void boom.offsetWidth; boom.style.animation = '';
     setTimeout(() => { boom.hidden = true; }, 1600);
     hmSparks(46);
@@ -1539,7 +1594,13 @@
     if (!S.levels.includes(v)) v = S.levels.reduce((best, l) => Math.abs(l - v) < Math.abs(best - v) ? l : best, S.levels[0]);
     S.amount = v; showMsg(''); fillLevels(); renderAction();
   }
-  function stepAmount(dir) { const i = S.levels.indexOf(S.amount); const n = S.levels[i + dir]; if (n !== undefined) setAmount(n); }
+  // − / +: a short tick whose pitch climbs with the level, up to an octave at the top amount (the house standard's bet button)
+  function stepAmount(dir) {
+    const i = S.levels.indexOf(S.amount), n = S.levels[i + dir];
+    if (n === undefined) return;
+    setAmount(n);
+    tone(620 * Math.pow(2, (i + dir) / Math.max(1, S.levels.length - 1)), 0.06, 'triangle', 0.05);
+  }
   function buildLevels(cfg) {
     let levels = Array.isArray(cfg.betLevels) ? cfg.betLevels.filter(v => Number.isFinite(v) && v > 0) : [];
     const min = cfg.minBet, max = cfg.maxBet, step = cfg.stepBet;
@@ -1572,34 +1633,64 @@
   }
 
   /* ---------- Actions ---------- */
+  // The bar's states (8.2): ready = PLAY lit; in a round PLAY is a square (stop/skip), − and + step back and the docks dim
+  // (on phones they leave); autoplay = PLAY stops it and AUTO counts down. The body classes drive the CSS and the 3D button.
   function renderAction() {
-    const btn = $('action');
+    const btn = $('action'), body = document.body;
+    body.classList.toggle('in-round', S.busy);
+    btn.classList.toggle('skipping', !!S.skip);
+    $('menuTurbo').setAttribute('aria-pressed', String(S.fast));
+    $('menuSound').setAttribute('aria-pressed', String(S.sound));
     if (P.replay) {
-      btn.disabled = S.busy || !S.replayData;
+      btn.disabled = !S.replayData;
       btn.classList.toggle('busy', S.busy);
-      $('actionLabel').textContent = S.busy ? 'REPLAYING' : S.replayed ? 'PLAY AGAIN' : 'PLAY REPLAY';
+      $('actionLabel').textContent = S.busy ? 'SKIP' : S.replayed ? 'PLAY AGAIN' : 'PLAY REPLAY';
+      btn.setAttribute('aria-label', S.busy ? 'Speed up the replay' : S.replayed ? 'Play the replay again' : 'Play the replay');
       $('actionSub').textContent = ' ';
       return;
     }
     const auto = !!S.auto;
-    btn.disabled = auto ? false : (S.busy || !S.ready);
+    body.classList.toggle('auto-on', auto);
+    btn.disabled = !S.ready;
     btn.classList.toggle('busy', S.busy && !auto);
     btn.classList.toggle('auto', auto);
-    $('actionLabel').textContent = auto ? 'STOP' : S.busy ? '' : 'PLAY';
+    $('actionLabel').textContent = auto ? 'STOP' : S.busy ? 'SKIP' : 'PLAY';
     $('autoBtn').classList.toggle('on', auto);
-    $('autoLbl').textContent = auto ? S.auto.left + ' LEFT' : 'AUTO';
-    btn.setAttribute('aria-label', auto ? 'Stop autoplay' : S.busy ? 'Round in play' : 'Play ' + (S.amount ? money(S.amount) : ''));
+    $('autoLbl').textContent = auto ? String(S.auto.left) : '';
+    btn.setAttribute('aria-label', auto ? 'Stop autoplay' : S.busy ? 'Speed up this round' : 'Play ' + (S.amount ? money(S.amount) : ''));
+    $('autoBtn').setAttribute('aria-label', auto ? 'Stop autoplay (' + S.auto.left + ' plays left)' : 'Autoplay');
     $('autoBtn').disabled = !S.ready || (S.busy && !auto);
     $('handBtn').disabled = S.busy || auto;
     $('handBtn').setAttribute('aria-pressed', String(S.manual));
-    document.body.classList.toggle('manual', S.manual && !auto);
+    body.classList.toggle('manual', S.manual && !auto);
     $('actionSub').textContent = S.amount ? money(S.amount) : ' ';
     $('buyBtn').disabled = S.busy || !S.ready || auto;
-    $('buyPrice').textContent = S.amount ? 'from ' + money(S.amount * Math.min(...BUY_MODES.map(m => S.costs[m]))) : '';
-    fitText($('buyPrice'), $('buyBtn').closest('.side'));
+    // the plate reads "from <cheapest bonus price>"; the word "from" is drawn by CSS so the narrowest phones can drop it
+    $('buyPrice').textContent = S.amount ? money(S.amount * Math.min(...BUY_MODES.map(m => S.costs[m]))) : '';
+    fitText($('buyPrice'), $('liveDock'));
     document.querySelectorAll('#risk button').forEach(b => { b.disabled = S.busy || !S.ready || auto; b.setAttribute('aria-pressed', String(b.dataset.mode === S.mode)); });
-    fillLevels();
+    if (!S.jur.disabledSpacebar) $('hint').textContent = auto ? 'Space = stop autoplay' : S.busy ? (manualNow() ? 'Space = scratch for me' : 'Space = skip') : 'Space = play · ⓘ = rules';
+    fillLevels(); fitHint();
   }
+  // The hint line in the bar's middle is a nicety: when long amounts leave it too little room it steps out, never cut.
+  function fitHint() {
+    const h = $('hint'); if (!h) return;
+    h.style.visibility = '';
+    if (h.clientWidth > 0 && h.scrollWidth > h.clientWidth + 1) h.style.visibility = 'hidden';
+  }
+  // Stop/skip: the rest of this round plays at high speed (a tile being scratched by hand finishes by itself).
+  function skipRound() {
+    if (!S.busy || S.skip) return;
+    S.skip = true;
+    document.documentElement.style.setProperty('--spd', '0.3');
+    if (pickJob) autoFinish(pickJob);
+    renderAction();
+  }
+  function endSkip() {
+    S.skip = false;
+    document.documentElement.style.setProperty('--spd', S.fast ? '0.6' : '1');
+  }
+
   // Go Live costs more than 2x, so it always asks first and states the price.
   function onBuy() {
     S.interacted = true;
@@ -1624,10 +1715,15 @@
     $('buyTitle').textContent = modeOf(S.buyPick).label + '?';
     $('buyText').textContent = 'Start the LIVE STREAM bonus right away for ' + money(cost) + ' (' + S.costs[S.buyPick] + '× your play amount of ' + money(S.amount) + ').';
     $('buyYes').textContent = 'Confirm ' + money(cost);
+    // the play amount inside the window (8.4): − and + change it here too, and every price follows
+    $('boAmt').textContent = money(S.amount);
+    const i = S.levels.indexOf(S.amount);
+    $('boMinus').disabled = i <= 0; $('boPlus').disabled = i >= S.levels.length - 1;
   }
   function closeBuy() { $('buyConfirm').hidden = true; }
   function setRisk(m) {
     if (S.busy || S.auto || !RISK_MODES.includes(m)) return;
+    if (S.mode !== m) tone(m === 'chill' ? 560 : m === 'viral' ? 940 : 740, 0.08, 'triangle', 0.05);
     S.mode = m; renderAction(); renderPaytable();
   }
   // The win table under the controls follows the chosen risk mode.
@@ -1643,6 +1739,7 @@
     const cost = S.amount * S.costs[mode];
     if (cost > S.balance) { showMsg('Your balance is too low for this play amount.'); return; }
     showMsg('');
+    endSkip(); closeMenu();
     S.busy = true; S.roundMode = mode; renderAction();
     const t0 = Date.now();
     let res;
@@ -1675,7 +1772,7 @@
     $('netTag').textContent = 'Net ' + (S.net >= 0 ? '+' : '') + money(S.net);
     const left = S.minRoundMs - (Date.now() - t0);
     if (left > 0) await new Promise(r => setTimeout(r, left));
-    S.busy = false;
+    S.busy = false; endSkip();
     $('multWrap').classList.remove('beat');
     renderAction(); fitAll();
   }
@@ -1757,7 +1854,7 @@
     if (S.busy || !S.replayData) return;
     S.busy = true; renderAction();
     try { await playRound(eventsOf(S.replayData.state), S.amount); } catch (e) { toast('This replay could not be shown.'); }
-    S.busy = false; S.replayed = true; renderAction(); fitAll();
+    S.busy = false; S.replayed = true; endSkip(); renderAction(); fitAll();
   }
 
   /* ---------- Rules, sound, keys ---------- */
@@ -1779,13 +1876,29 @@
     $('rLiveStart').textContent = fmtX(R.BUYS.live.start / 100); $('rLiveCost').textContent = String(S.costs.live);
     $('rSuperStart').textContent = fmtX(R.BUYS.superlive.start / 100); $('rSuperCost').textContent = String(S.costs.superlive);
   }
-  function openRules() { $('rules').hidden = false; $('rulesClose').focus({ preventScroll: true }); }
+  function openRules() { closeMenu(); $('rules').hidden = false; $('rulesClose').focus({ preventScroll: true }); }
+  // The menu (left of the bar): MANUAL, turbo and sound as switches, the rules, and this session's results.
+  function openMenu() { $('menu').hidden = false; $('menuBtn').setAttribute('aria-expanded', 'true'); renderAction(); }
+  function closeMenu() { const m = $('menu'); if (!m || m.hidden) return; m.hidden = true; $('menuBtn').setAttribute('aria-expanded', 'false'); }
+  function setTurbo(on) {
+    S.fast = on; $('fastBtn').setAttribute('aria-pressed', String(S.fast));
+    if (!S.skip) document.documentElement.style.setProperty('--spd', S.fast ? '0.6' : '1');
+    renderAction();
+  }
+  function setSound(on) {
+    S.sound = on;
+    $('icoOn').hidden = !S.sound; $('icoOff').hidden = S.sound;
+    $('soundBtn').setAttribute('aria-label', S.sound ? 'Sound off' : 'Sound on');
+    $('soundBtn').setAttribute('aria-pressed', String(!S.sound));
+    if (S.sound) loadSamples();
+    syncMusic(); renderAction();
+  }
   function closeRules() { $('rules').hidden = true; $('infoBtn').focus({ preventScroll: true }); }
   function bind() {
     const mark = () => { if (S.interacted) return; S.interacted = true; loadSamples(); syncMusic(); };
     document.addEventListener('pointerdown', mark, { passive: true });
     document.addEventListener('keydown', mark);
-    $('action').addEventListener('click', () => { if (S.auto) stopAuto('Autoplay stopped.'); else onPlay(S.mode); });
+    $('action').addEventListener('click', () => { if (S.auto) stopAuto('Autoplay stopped.'); else if (S.busy) skipRound(); else onPlay(S.mode); });
     $('autoBtn').addEventListener('click', openAuto);
     $('apCancel').addEventListener('click', closeAuto);
     $('apStart').addEventListener('click', startAuto);
@@ -1799,6 +1912,8 @@
     $('buyBtn').addEventListener('click', onBuy);
     $('buyNo').addEventListener('click', closeBuy);
     $('buyYes').addEventListener('click', () => { closeBuy(); onPlay(S.buyPick); });
+    $('boMinus').addEventListener('click', () => { stepAmount(-1); renderBuy(); });
+    $('boPlus').addEventListener('click', () => { stepAmount(1); renderBuy(); });
     $('buyOpts').addEventListener('click', e => { const b = e.target.closest('.bo'); if (!b || b.disabled) return; S.buyPick = b.dataset.mode; renderBuy(); });
     $('risk').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setRisk(b.dataset.mode); });
     $('buyConfirm').addEventListener('click', e => { if (e.target === $('buyConfirm')) closeBuy(); });
@@ -1813,22 +1928,18 @@
       renderAction();
     });
     bindManual();
-    $('fastBtn').addEventListener('click', () => {
-      S.fast = !S.fast; $('fastBtn').setAttribute('aria-pressed', String(S.fast));
-      document.documentElement.style.setProperty('--spd', S.fast ? '0.6' : '1');
-    });
+    $('fastBtn').addEventListener('click', () => setTurbo(!S.fast));
+    $('menuTurbo').addEventListener('click', () => setTurbo(!S.fast));
+    $('menuSound').addEventListener('click', () => setSound(!S.sound));
+    $('menuRules').addEventListener('click', openRules);
+    $('menuBtn').addEventListener('click', () => { if ($('menu').hidden) openMenu(); else closeMenu(); });
+    document.addEventListener('pointerdown', e => { if (!$('menu').hidden && !e.target.closest('#menu, #menuBtn')) closeMenu(); });
     $('infoBtn').addEventListener('click', openRules);
     $('rulesClose').addEventListener('click', closeRules);
     $('rules').addEventListener('click', e => { if (e.target === $('rules')) closeRules(); });
-    $('soundBtn').addEventListener('click', () => {
-      S.sound = !S.sound;
-      $('icoOn').hidden = !S.sound; $('icoOff').hidden = S.sound;
-      $('soundBtn').setAttribute('aria-label', S.sound ? 'Sound off' : 'Sound on');
-      $('soundBtn').setAttribute('aria-pressed', String(!S.sound));
-      if (S.sound) loadSamples();
-      syncMusic();
-    });
+    $('soundBtn').addEventListener('click', () => setSound(!S.sound));
     document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !$('menu').hidden) { closeMenu(); $('menuBtn').focus({ preventScroll: true }); return; }
       if (e.key === 'Escape' && !$('autoPanel').hidden) { closeAuto(); return; }
       if (e.key === 'Escape' && !$('buyConfirm').hidden) { closeBuy(); return; }
       if (e.key === 'Escape' && !$('rules').hidden) { closeRules(); return; }
@@ -1838,9 +1949,11 @@
       if (tag === 'SELECT' || tag === 'INPUT') return;
       e.preventDefault();
       if (pickJob) { autoFinish(pickJob); return; }   // MANUAL: space scratches a tile for the player
-      if (S.auto) stopAuto('Autoplay stopped.'); else onPlay();
+      if (S.auto) stopAuto('Autoplay stopped.'); else if (S.busy) skipRound(); else onPlay();
     });
     window.addEventListener('resize', fitAll);
+    if ('ResizeObserver' in window) { const ro = new ResizeObserver(() => layoutVars()); ro.observe($('bar')); ro.observe(document.querySelector('.topbar')); }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
     setInterval(jiggleOne, 700);
     setInterval(blinkOne, 650);
     setInterval(() => {
@@ -1886,13 +1999,13 @@
     // The Go Live price comes from the RGS config when it lists the mode.
     // Bonus prices come from the RGS config when it lists the mode.
     (cfg.gameModes || []).forEach(g => { const k = String(g.mode).toLowerCase(); if (k in S.costs && Number(g.costMultiplier) > 0) S.costs[k] = Number(g.costMultiplier); });
-    $('buyBtn').hidden = !!S.jur.disabledBuyFeature;
+    $('buyBtn').hidden = !!S.jur.disabledBuyFeature; $('liveDock').hidden = !!S.jur.disabledBuyFeature;
     buildLevels(cfg);
     if (!S.levels.length) throw new RgsError(0, 'CONFIG', 'No play amounts available');
     S.amount = S.levels.includes(cfg.defaultBetLevel) ? cfg.defaultBetLevel : S.levels[0];
     const mrd = Number(S.jur.minimumRoundDuration) || 0;
     S.minRoundMs = mrd > 0 && mrd < 100 ? mrd * 1000 : mrd;
-    $('fastBtn').hidden = !!S.jur.disabledTurbo;
+    $('fastBtn').hidden = !!S.jur.disabledTurbo; $('menuTurbo').hidden = !!S.jur.disabledTurbo;
     $('autoBtn').hidden = !!S.jur.disabledAutoplay;
     $('rtpTag').hidden = !S.jur.displayRTP;
     $('timerTag').hidden = !S.jur.displaySessionTimer;
@@ -1915,6 +2028,7 @@
     const motion = MOTION && !reduced ? MOTION.init({ grid: $('grid'), speed }) : Promise.resolve(false);
     const [, err] = await Promise.all([preload(), connect().then(() => null, e => e), motion]);
     preloadLater();
+    if (g3()) repaintClosed();
     $('introBar').style.transform = 'scaleX(1)';
     if (err) {
       fatal(P.replay ? 'This replay could not be loaded.' : errText(err.code === 'NETWORK' || err.status === 0 ? { code: 'NETWORK' } : err));
@@ -1924,10 +2038,10 @@
     renderRules();
     // Late art loads in the background once the game is up (it is not needed for the first reveal).
     setTimeout(() => [...Object.keys(HYPE_ART).map(hypeSrc), IMG.megawin, IMG.epicwin].forEach(src => { const i = new Image(); i.src = src; }), 300);
-    if (P.replay) { renderAction(); setWin(0); }
+    if (P.replay) { renderAction(); setWin(0); fitAll(); }
     else {
       if (S.resume && S.resume.amount && S.levels.includes(S.resume.amount)) S.amount = S.resume.amount;
-      renderAction(); setWin(0);
+      renderAction(); setWin(0); fitAll();
     }
     const btn = $('introPlay');
     btn.disabled = false; btn.textContent = S.resume ? 'Resume' : 'Play'; btn.focus({ preventScroll: true });

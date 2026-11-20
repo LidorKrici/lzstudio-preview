@@ -32,16 +32,6 @@
       <span class="tag" id="timerTag" hidden>0:00</span>
       <span class="tag" id="netTag" hidden>Net 0.00</span>
     </div>
-    <div class="top-right">
-      <div class="wallet" id="wallet"><img class="coin" src="assets/coin.webp" alt="" width="20" height="20"><span class="lbl">Balance</span><b id="balance">–</b></div>
-      <button class="icon-btn" id="infoBtn" type="button" aria-label="Game rules">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/></svg>
-      </button>
-      <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound off" aria-pressed="false">
-        <svg id="icoOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
-        <svg id="icoOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
-      </button>
-    </div>
   </header>
 
   <section class="stage" aria-label="Game">
@@ -62,7 +52,7 @@
       </div>
       <div class="views"><b id="views">0</b><span>views</span></div>
     </div>
-    <div class="hm-mini" id="hmMini" aria-hidden="true"><span class="hm-mini-t">HYPE</span><div class="hm-mini-bar"><i id="hmMiniFill"></i></div><b id="hmMiniPct">0%</b></div>
+    <div class="hm-mini" id="hmMini" aria-hidden="true"><span class="hm-mini-t">HYPE</span><div class="hm-mini-bar" id="hmMiniBar"><i id="hmMiniFill"></i></div><b id="hmMiniPct">0%</b></div>
     <div class="meter-wrap" aria-hidden="true"><div class="meter"><i id="meter"></i></div><div class="marks" id="marks"></div></div>
     <div class="board-wrap">
       <div class="framebox" id="framebox">
@@ -93,68 +83,15 @@
       </div>
       </div>
     </div>
-  </section>
 
-  <aside class="side" aria-label="Controls">
-    <div class="winbox"><span id="winLbl">Win</span><b id="winAmt">0.00</b></div>
-    <div class="replay-bar" id="replayBar" hidden>
-      <dl class="facts">
-        <dt>Mode</dt><dd id="rpMode">BASE</dd>
-        <dt>Amount</dt><dd id="rpAmount">–</dd>
-        <dt>Real cost</dt><dd id="rpCost">–</dd>
-        <dt>Multiplier</dt><dd id="rpMult">–</dd>
-      </dl>
-    </div>
-    <div class="deck">
-      <button type="button" class="rbtn" id="handBtn" aria-pressed="false" aria-label="Scratch the tiles yourself"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="hbG" cx="38%" cy="28%" r="78%"><stop offset="0" stop-color="#ff86c8"/><stop offset=".55" stop-color="#d0237a"/><stop offset="1" stop-color="#5e0b3c"/></radialGradient></defs><circle cx="32" cy="32" r="28.5" fill="url(#hbG)" stroke="#fff" stroke-width="3"/><path d="M28 47V21.5a3.8 3.8 0 0 1 7.6 0V33l7.6 2a4.4 4.4 0 0 1 3.2 4.9L45.2 47.5Q44.8 50 42 50H31.5Q29 50 28 47z" fill="#fff"/><path d="M13.5 21.5l7.5-3M12.5 29.5l7.5-.8M14 37.5l7 1.4" stroke="#ffd23f" stroke-width="3.2" stroke-linecap="round"/></svg><span>MANUAL</span></button>
-      <button type="button" class="rbtn" id="fastBtn" aria-pressed="false" aria-label="Turbo"><img src="assets/icon-turbo.webp" alt=""><span>TURBO</span></button>
-      <button class="action" id="action" type="button"><span class="action-lbl" id="actionLabel">PLAY</span><small id="actionSub">&nbsp;</small></button>
-      <button type="button" class="rbtn" id="autoBtn" aria-label="Autoplay"><img src="assets/icon-auto.webp" alt=""><span id="autoLbl">AUTO</span></button>
-    </div>
-    <div class="field">
-      <span class="lbl">Play amount</span>
-      <div class="stepper">
-        <button type="button" id="amtMinus" aria-label="Lower play amount">−</button>
-        <div class="amount"><b id="amtText">–</b><select id="amtSelect" aria-label="Play amount"></select></div>
-        <button type="button" id="amtPlus" aria-label="Raise play amount">+</button>
-      </div>
-    </div>
-    <div class="row risk" id="risk" role="group" aria-label="Risk">
-      <button type="button" data-mode="chill" aria-pressed="false">CHILL</button>
-      <button type="button" data-mode="base" aria-pressed="true">TRENDING</button>
-      <button type="button" data-mode="viral" aria-pressed="false">VIRAL</button>
-      <small class="risk-info" id="riskInfo"></small>
-    </div>
-    <p class="msg" id="msg" role="alert" hidden></p>
-    <button class="buy" id="buyBtn" type="button" aria-label="Start a LIVE STREAM bonus"><img src="assets/btn-golive.webp" alt="" width="520" height="152"><small id="buyPrice"></small></button>
-    <div class="history" id="history" aria-label="Your recent posts"></div>
-    <div class="pt" id="paytable" aria-label="Win table">
-      <div class="pt-row">
-        <span class="pt-chip"><img src="assets/heart.webp" alt="Heart"><span data-r="heart"></span></span>
-        <span class="pt-chip"><img src="assets/fire.webp" alt="Fire"><span data-r="fire"></span></span>
-        <span class="pt-chip"><img src="assets/rocket.webp" alt="Rocket"><span data-r="rocket"></span></span>
-        <span class="pt-chip"><img src="assets/crown.webp" alt="Crown"><span data-r="crown"></span></span>
-      </div>
-      <div class="pt-row">
-        <span class="pt-chip k-lock"><img src="assets/icon-lock.webp" alt="">Lock</span>
-        <span class="pt-chip k-shield"><img src="assets/icon-shield.webp" alt="">Shield</span>
-        <span class="pt-chip k-boost"><img src="assets/icon-x2.webp" alt="">Boost</span>
-        <span class="pt-chip k-repost"><img src="assets/icon-x5.webp" alt="">Repost</span>
-        <span class="pt-chip k-live"><img src="assets/live.webp" alt="LIVE">100% = LIVE</span>
-      </div>
-    </div>
-    <div class="st" id="stats" aria-label="This session">
-      <div><span>Rounds</span><b id="stRounds">0</b></div>
-      <div><span>Best win</span><b id="stBest">–</b><small id="stBestAmt"></small></div>
-      <div><span>LIVE streams</span><b id="stLive">0</b></div>
-    </div>
+    <!-- The Hype Meter: a glass tube on the stage (drawn in 3D when the scene is up; this DOM carries its text and the 2D look) -->
     <div class="hm" id="hm" aria-label="Hype meter: fill it to go LIVE">
-      <div class="hm-head"><span class="hm-title">HYPE METER</span><span class="hm-now"><span class="hm-lvl" id="hmLvl">Warming up</span><b class="hm-pct" id="hmPct">0%</b></span></div>
+      <div class="hm-head"><span class="hm-title">HYPE</span><b class="hm-pct" id="hmPct">0%</b><span class="hm-lvl" id="hmLvl">Warming up</span></div>
       <div class="hm-body">
         <div class="hm-tube" id="hmTube">
           <div class="hm-fill" id="hmFill"><i class="hm-wave"></i><i class="hm-bubbles"></i></div>
-          <div class="hm-ticks" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-          <img class="hm-icon" id="hmIcon" src="assets/fire.webp" alt="">
+          <div class="hm-ticks" aria-hidden="true"><span></span><span></span><span></span></div>
+          <img class="hm-icon" id="hmIcon" src="assets/heart.webp" alt="">
         </div>
         <div class="hm-side">
           <div class="hm-log" id="hmLog" aria-live="polite"></div>
@@ -163,8 +100,75 @@
       </div>
       <div class="hm-boom" id="hmBoom" hidden>GOING<br>LIVE!</div>
     </div>
+
+    <!-- Risk: three modes docked on the stage (in the tall layout a ladder under the meter, hottest on top) -->
+    <div class="dock dock-risk" id="riskDock">
+      <div class="risk" id="risk" role="group" aria-label="Risk">
+        <button type="button" data-mode="chill" aria-pressed="false"><img src="assets/heart.webp" alt=""><span>CHILL</span></button>
+        <button type="button" data-mode="base" aria-pressed="true"><img src="assets/fire.webp" alt=""><span>TRENDING</span></button>
+        <button type="button" data-mode="viral" aria-pressed="false"><img src="assets/rocket.webp" alt=""><span>VIRAL</span></button>
+      </div>
+      <small class="risk-info" id="riskInfo"></small>
+    </div>
+
+    <!-- The bonus: the illustrated GO LIVE sign beside the board, outside the bar -->
+    <div class="dock dock-live" id="liveDock">
+      <button class="buy" id="buyBtn" type="button" aria-label="Start a LIVE STREAM bonus"><img src="assets/btn-golive.webp" alt="" width="520" height="152"><small id="buyPrice"></small><span class="buy-on" id="buyOn" aria-hidden="true"><span class="rec"></span>ON AIR<b id="buyOnLeft"></b></span></button>
+    </div>
+  </section>
+
+  <!-- The bar: menu, sound and info; balance and win; the play amount; turbo, PLAY and autoplay -->
+  <footer class="bar" id="bar" aria-label="Controls">
+    <div class="bar-icons">
+      <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+      <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound off" aria-pressed="false">
+        <svg id="icoOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+        <svg id="icoOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
+      </button>
+      <button class="icon-btn" id="infoBtn" type="button" aria-label="Game rules">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/></svg>
+      </button>
+    </div>
+    <div class="bar-info">
+      <div class="wallet" id="wallet"><span class="lbl">Balance</span><b id="balance">–</b></div>
+      <div class="winbox" id="winBox"><span class="lbl" id="winLbl">Win</span><b id="winAmt">0.00</b></div>
+      <dl class="facts replay-bar" id="replayBar" hidden>
+        <div><dt>Mode</dt><dd id="rpMode">BASE</dd></div>
+        <div><dt>Amount</dt><dd id="rpAmount">–</dd></div>
+        <div><dt>Real cost</dt><dd id="rpCost">–</dd></div>
+        <div><dt>Multiplier</dt><dd id="rpMult">–</dd></div>
+      </dl>
+    </div>
     <p class="hint" id="hint">Space = Play · ⓘ = rules</p>
-  </aside>
+    <div class="field" id="field">
+      <button type="button" class="step" id="amtMinus" aria-label="Lower play amount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+      <div class="amount"><b id="amtText">–</b><select id="amtSelect" aria-label="Play amount"></select></div>
+      <button type="button" class="step" id="amtPlus" aria-label="Raise play amount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
+    </div>
+    <div class="live-left" id="liveLeft" aria-live="polite"><span class="lbl">Live tiles left</span><b id="liveLeftN">6</b></div>
+    <div class="deck">
+      <button type="button" class="rbtn" id="fastBtn" aria-pressed="false" aria-label="Turbo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.6 2.5 5.2 13.4h6.1l-1.2 8.1 8.7-11.2h-6.2z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg></button>
+      <button class="action" id="action" type="button"><span class="action-lbl" id="actionLabel">PLAY</span><small id="actionSub">&nbsp;</small><i class="glyph" aria-hidden="true"></i></button>
+      <button type="button" class="rbtn" id="autoBtn" aria-label="Autoplay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.6 4.2v3.6H16"/><path d="M10.2 9.2v5.6l4.6-2.8z" fill="currentColor"/></svg><span class="auto-n" id="autoLbl"></span></button>
+    </div>
+    <p class="msg" id="msg" role="alert" hidden></p>
+  </footer>
+
+  <!-- The menu: settings and this session -->
+  <div class="menu" id="menu" role="dialog" aria-label="Menu" hidden>
+    <button type="button" class="mi" id="handBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21v-9.5a1.6 1.6 0 0 1 3.2 0V15l3.6.9a2 2 0 0 1 1.5 2.3L16.8 21"/><path d="M3.6 8.4 6.3 7M3.2 12.4l2.9-.3"/></svg><span>MANUAL<small>Scratch the tiles yourself</small></span><i class="sw" aria-hidden="true"></i></button>
+    <button type="button" class="mi" id="menuTurbo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.6 2.5 5.2 13.4h6.1l-1.2 8.1 8.7-11.2h-6.2z" fill="currentColor"/></svg><span>Turbo<small>Faster animations</small></span><i class="sw" aria-hidden="true"></i></button>
+    <button type="button" class="mi" id="menuSound" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><span>Sound<small>Effects and music</small></span><i class="sw" aria-hidden="true"></i></button>
+    <button type="button" class="mi" id="menuRules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/></svg><span>Game rules<small>How to play, modes, controls</small></span></button>
+    <div class="st" id="stats" aria-label="This session">
+      <div><span>Posts</span><b id="stRounds">0</b></div>
+      <div><span>Best win</span><b id="stBest">–</b><small id="stBestAmt"></small></div>
+      <div><span>LIVE streams</span><b id="stLive">0</b></div>
+    </div>
+    <div class="history" id="history" aria-label="Your recent posts"></div>
+  </div>
 </div>
 
 <div class="bcast" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -195,12 +199,12 @@
 
 <div class="modal" id="buyConfirm" role="dialog" aria-modal="true" aria-labelledby="buyTitle" hidden>
   <div class="sheet confirm">
-    <img class="confirm-art" src="assets/live.webp" alt="">
     <h2 id="buyTitle">Go Live?</h2>
     <div class="bopts" id="buyOpts">
-      <button type="button" class="bo" data-mode="live" aria-pressed="true"><b class="bo-name">GO LIVE</b><span class="bo-start"></span><b class="bo-price"></b><small class="bo-x"></small></button>
-      <button type="button" class="bo bo-super" data-mode="superlive" aria-pressed="false"><b class="bo-name">SUPER LIVE</b><span class="bo-start"></span><b class="bo-price"></b><small class="bo-x"></small></button>
+      <button type="button" class="bo" data-mode="live" aria-pressed="true"><img class="bo-art" src="assets/live.webp" alt=""><b class="bo-name">GO LIVE</b><span class="bo-start"></span><b class="bo-price"></b><small class="bo-x"></small></button>
+      <button type="button" class="bo bo-super" data-mode="superlive" aria-pressed="false"><img class="bo-art" src="assets/live-win.webp" alt=""><b class="bo-name">SUPER LIVE</b><span class="bo-start"></span><b class="bo-price"></b><small class="bo-x"></small></button>
     </div>
+    <div class="bo-amt"><button type="button" class="step" id="boMinus" aria-label="Lower play amount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><span><small>Play amount</small><b id="boAmt">–</b></span><button type="button" class="step" id="boPlus" aria-label="Raise play amount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button></div>
     <p id="buyText"></p>
     <div class="confirm-btns">
       <button type="button" class="ghost" id="buyNo">Not now</button>
@@ -308,18 +312,20 @@
 
     <h3>Controls</h3>
     <ul>
-      <li>The big round <b>PLAY</b> button starts a round with the selected play amount and risk mode. The space bar does the same. While a round plays, the button spins and waits.</li>
-      <li><b>− / +</b> and the amount itself change the play amount.</li>
-      <li><b>CHILL / TRENDING / VIRAL</b> choose the risk mode for the next rounds. They cannot be changed while a round plays.</li>
-      <li><b>TURBO</b> (the lightning button left of PLAY) speeds up the animations.</li>
-      <li><b>MANUAL</b> (the hand button) lets you scratch the tiles yourself: pick any covered tile and drag across it, or tap it to scratch it at once. The space bar scratches a tile for you. The round's result is decided when it starts, so which tile you pick never changes what you win. Autoplay always scratches on its own.</li>
-      <li><b>AUTO</b> (the button right of PLAY) opens the autoplay panel. Choose how many plays, and optionally stop when a single win reaches a size you pick, when your balance falls by a set amount, or when a LIVE STREAM starts. Nothing starts until you press Start autoplay. Autoplay uses the selected risk mode and play amount. Press STOP (or the space bar) at any time; the current round finishes first. Autoplay also stops if your balance is too low for the next play.</li>
-      <li><b>GO LIVE</b> opens the bonus panel: pick GO LIVE or SUPER LIVE; each shows its price. Confirm to start the round.</li>
+      <li>The big round <b>PLAY</b> button (at the right of the bar) starts a round with the selected play amount and risk mode. The space bar does the same.</li>
+      <li>While a round plays, <b>PLAY</b> shows a square: press it (or the space bar) to skip, and the rest of the round plays at high speed. The result is already decided, so skipping never changes what you win.</li>
+      <li><b>− / +</b> beside the amount, or the amount itself, change the play amount. They rest while a round plays.</li>
+      <li><b>Balance</b> shows your balance. <b>Win</b> shows what the round has secured so far, and the final win at the end. When the next round starts it keeps showing that win for a moment, labelled <b>Last win</b>.</li>
+      <li><b>CHILL / TRENDING / VIRAL</b>, beside the board, choose the risk mode for the next rounds. They cannot be changed while a round plays.</li>
+      <li><b>TURBO</b> (the lightning button left of PLAY) speeds up the animations. Press it again to turn it off.</li>
+      <li><b>AUTO</b> (the button right of PLAY) opens the autoplay panel. Choose how many plays, and optionally stop when a single win reaches a size you pick, when your balance falls by a set amount, or when a LIVE STREAM starts. Nothing starts until you press Start autoplay. Autoplay uses the selected risk mode and play amount, and AUTO counts the plays left. Press PLAY (or the space bar) at any time to stop; the current round finishes first. Autoplay also stops if your balance is too low for the next play.</li>
+      <li>The <b>GO LIVE</b> sign beside the board opens the bonus panel: pick GO LIVE or SUPER LIVE; each shows its price. The panel also has the play amount with − and +, and both prices follow it. Confirm to start the round. While a stream is on air, the sign and the bar count the live tiles left.</li>
+      <li>The <b>menu</b> button (three lines, at the left of the bar) opens the menu: <b>MANUAL</b>, <b>Turbo</b> and <b>Sound</b> switches, these rules, and your results this session (posts, best win, LIVE streams and your recent posts).</li>
+      <li><b>MANUAL</b> (in the menu) lets you scratch the tiles yourself: pick any covered tile and drag across it, or tap it to scratch it at once. The space bar scratches a tile for you. The round's result is decided when it starts, so which tile you pick never changes what you win. Autoplay always scratches on its own. A dot on the menu button shows that MANUAL is on.</li>
       <li>The <b>speaker</b> button turns sound and music on or off. The <b>ⓘ</b> button opens these rules.</li>
-      <li><b>Win</b> shows what the round has secured so far, and the final win at the end.</li>
-      <li>A big win plays a short celebration; tap or click anywhere on it to skip to the result. Going live (a 3, 2, 1 countdown) and the end of a stream (a recap of the stream) play short scenes too, skipped the same way.</li>
+      <li>A big win plays a short celebration; tap or click anywhere on it to skip to the result. Going live (a 3, 2, 1 countdown) and the end of a stream (a recap of the stream) play short scenes too, skipped the same way. During these scenes the bar steps aside and comes back after.</li>
       <li>The <b>Play</b> button on the opening screen enters the game. If a round was left unfinished (for example after a disconnection), it reads <b>Resume</b> and finishes that round first, at its original play amount.</li>
-      <li>The <b>Hype Meter</b> shows this round's progress toward the LIVE STREAM, with a log of what filled it. The streak label counts rounds in a row that won at least the play amount; it is a label only.</li>
+      <li>The <b>Hype Meter</b> (the tube beside the board) shows this round's progress toward the LIVE STREAM. It fills with each reaction and Hype Check, empties when a CANCELLED tile ends the round, and bursts into the LIVE STREAM when it is full.</li>
     </ul>
 
     <h3>Disclaimer</h3>
@@ -327,10 +333,8 @@
   </div>
 </div>
 <div class="toast" id="toast" role="alert" hidden></div>
-<script src="vendor/pixi-gv.min.js"></script>
-<script src="vendor/lz-rig.js"></script>
-<script src="rigs.js"></script>
-<script src="motion.js"></script>
+<script src="vendor/three-gv.min.js"></script>
+<script src="scene3d.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
