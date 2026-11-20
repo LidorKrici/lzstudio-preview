@@ -999,3 +999,24 @@ body.manual .grid{touch-action:none}
   .buy{width:clamp(128px,14vw,170px)}
   .buy img{width:100%;height:auto}
 }
+/* v2.9.4: from 1280px up the three mode pills also stay on one line (at exactly 1280x720 VIRAL dropped to a second row) */
+@media (min-aspect-ratio:6/5) and (min-height:521px) and (min-width:1280px){
+  .side .risk{display:grid;grid-template-columns:repeat(3,auto);justify-content:center;min-width:240px;gap:5px}
+  .side .risk button{padding:5px clamp(6px,.6vw,12px);font-size:clamp(10px,.85vw,12px)}
+  .side .risk .risk-info{grid-column:1/-1}
+}
+/* the Hype Meter tube is a pill: its title sits low enough and narrow enough to clear the rounded top */
+@media (min-aspect-ratio:6/5) and (min-height:521px){
+  .hm{padding-top:clamp(20px,3.4vh,34px)}
+  .hm-title{letter-spacing:.06em;max-width:80%;line-height:1.15}
+}
+/* v2.9.5 portrait phones: with MANUAL the deck holds four buttons, and beside it the play amount and WIN were squeezed
+   ("$100.00" cut at 360px). Now WIN and the amount share their own row, and the deck shares the last row with GO LIVE. */
+@media (max-aspect-ratio:1/1) and (min-height:521px),(max-width:620px) and (min-height:521px){
+  .side{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.1fr);grid-template-areas:"risk risk risk risk" "win win amt amt" "deck deck deck buy";column-gap:8px}
+  /* the labels (MANUAL is the widest) are wider than their round buttons: the gap keeps them apart */
+  .deck{justify-self:center;gap:clamp(13px,4.4vw,18px)}
+  .rbtn span{font-size:8.5px;letter-spacing:0}
+  .buy{justify-self:center;max-width:100%}
+  .buy img{max-width:100%;height:auto;max-height:clamp(38px,6.4vh,54px)}
+}

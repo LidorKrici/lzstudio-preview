@@ -256,10 +256,11 @@
     src.buffer = buf; fl.type = type; fl.frequency.value = freq; g.gain.value = gain;
     src.connect(fl); fl.connect(g); g.connect(a.destination); src.start();
   }
-  // 2026-11-18: every event has a pool of sounds (assets/sfx/<event>-<n>.mp3): Kenney.nl packs (CC0, commercial use,
-  // no credit needed), trimmed and leveled to the same loudness. The earlier Higgsfield pool is in art-archive/. Each time the event fires, one is picked at random, never the same one twice in a row,
-  // so the game does not sound repetitive. Purely cosmetic randomness: it never depends on the round's outcome.
-  const SFX_POOL = { scratch: 3, pop: 3, thump: 3, lock: 3, shield: 3, bust: 3, hype: 3, cash: 3, tick: 3, beep: 3, live: 3 };
+  // 2026-11-19: back to the game's original v2.9 sounds (one file per event, assets/sfx/<event>-1.mp3); events not
+  // listed here (thump, lock, shield, beep, live) use their original synth tone. The pool system stays: give an event
+  // more files and raise its count to get random variety again (pick is cosmetic, never tied to the outcome).
+  // Tried and archived in art-archive/: Higgsfield, Kenney and Shapeforms pools.
+  const SFX_POOL = { scratch: 1, pop: 1, bust: 1, hype: 1, cash: 1, tick: 1 };
   const sfxUrl = (name, k) => `assets/sfx/${name}-${k + 1}.mp3`;
   const buffers = {}, lastPick = {};
   function pickSfx(name) {
