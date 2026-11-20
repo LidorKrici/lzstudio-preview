@@ -10,7 +10,7 @@
     giants: { label: 'GIANTS', note: 'Stones grow ×2' }
   };
   const WORLD_NAMES = ['', 'THE TABLE', 'THE ROOM', 'THE STREET', 'THE CITY', 'ABOVE THE CLOUDS'];
-  let api, sc, el = {}, shown = null, busy = false, track = 'base', lastAmount = null, lastLevel = -1;
+  let api, sc, el = {}, shown = null, busy = false, track = 'base', lastAmount = null, lastLevel = -1, dealer = null, stageEl = null;
 
   // ---------- small helpers ----------
   const fmtV = v => { const x = v / 100; return (x >= 100 ? Math.round(x) : x >= 10 ? Math.round(x * 10) / 10 : Math.round(x * 100) / 100).toString(); };
@@ -30,7 +30,7 @@
   // ---------- sound: recorded samples, pitched by the size of the stone; one loop for music and one for room tone ----------
   // The one music track in use. Only it is loaded; the other candidates in sounds.json stay out of the game and the upload
   // (tools/build.mjs and tools/build-offline-snd.mjs read this line).
-  const MUSIC = 'music_casino_2';
+  const MUSIC = 'music_casino_1';
   const Snd = (function () {
     let man = null, list = {}, bufs = {}, lastAt = {}, want = {}, live = {}, exc = 0.15;
     const fmt = (() => { try { return document.createElement('audio').canPlayType('audio/webm; codecs="opus"') ? 0 : 1; } catch (e) { return 0; } })();
@@ -100,7 +100,7 @@
     let shownTier = -1;
     const setTier = (i, quiet) => { if (i === shownTier) return; shownTier = i; lab.innerHTML = lettersOf(i >= TIERS.length ? 'MAX WIN' : tiers[i].label); box.dataset.tier = String(i); if (!quiet) { Snd.play('mult_' + Math.min(5, i + 1), { vol: 0.85, jitter: 0 }); box.classList.remove('up'); void box.offsetWidth; box.classList.add('up'); } };
     box.hidden = false; box.classList.remove('pulse', 'slam', 'up'); box.style.setProperty('--grow', '1'); setTier(0, true); amt.textContent = api.money(0);
-    sc.celebrate({ big: true, dur }); Snd.hold(0.08); Snd.play('bonus_in', { vol: 0.55, jitter: 0 });
+    sc.celebrate({ big: true, dur }); act('big'); Snd.hold(0.08); Snd.play('bonus_in', { vol: 0.55, jitter: 0 });
     const stop = Snd.climb('count_tick_loop', 0.5, CENTS[idx], dur);
     let tap = 0; const onTap = () => { tap++; }; box.style.pointerEvents = 'auto'; box.addEventListener('pointerdown', onTap);
     const t0 = performance.now();
@@ -145,17 +145,62 @@
     el.banner = h('div', { class: 'tp-banner', hidden: true }, h('small'), h('b'));
     el.fly = h('div', { class: 'tp-fly', 'aria-hidden': 'true' });
     el.note = h('div', { class: 'tp-note', hidden: true });
-    stage.append(el.canvas, h('div', { class: 'tp-hud' }, h('div', { class: 'tp-top' }, el.world, el.strip), el.pot, el.side, el.fly, el.banner, el.note));
+    el.logo = h('img', { class: 'tp-logo-img', src: 'assets/ui/logo.webp', alt: 'Topple', draggable: 'false' });
+    stage.append(el.canvas, h('div', { class: 'tp-hud' }, el.logo, h('div', { class: 'tp-top' }, el.world, el.strip), el.pot, el.side, el.fly, el.banner, el.note));
     arrangeBar(stage);
-    const fit = () => { const r = stage.getBoundingClientRect(); stage.style.setProperty('--u', (r.height > r.width ? r.width / 58 : Math.min(r.width, r.height * 1.7) / 100) + 'px'); if (sc) sc.resize(); };
+    stageEl = stage;
+    const fit = () => { const r = stage.getBoundingClientRect(); stage.style.setProperty('--u', (r.height > r.width ? r.width / 58 : Math.min(r.width, r.height * 1.7) / 100) + 'px'); if (sc) { sc.resize(); placeDealer(); } };
     if ('ResizeObserver' in window) new ResizeObserver(fit).observe(stage); else addEventListener('resize', fit);
     fit();
   }
+  // ---------- the dealer: a tall young man in black with a wristwatch and a monocle, beside the table ----------
+  // He stands in his own corner (a velvet curtain and a spotlight, drawn by the scene), soles on the bottom edge of the
+  // stage, under the logo. Landscape: the left side, about 4/5 of the stage tall. Portrait: the right side, about 2/5.
+  // His box is 2.48 m of world tall with his soles 0.03 m above its bottom; his head is at 0.8 of it.
+  function placeDealer() {
+    if (!sc || !dealer || !stageEl) return;
+    const r = stageEl.getBoundingClientRect(), port = r.height > r.width * 1.05, u = port ? r.width / 58 : Math.min(r.width, r.height * 1.7) / 100;
+    const dock = stageEl.querySelector('.tp-dock'), dockTop = dock ? dock.offsetTop : r.height;          // offsetTop ignores the dock's slide-away transform
+    const bottom = port ? Math.min(r.height, dockTop + u * 0.6) : r.height + u * 0.4;
+    // landscape: the track and feature buttons sit to the right of his stage (its right edge is at PL x his box height).
+    // Their real width is measured; when the stage is too narrow for both, he gets smaller, and on a very narrow stage
+    // the buttons go back to the left edge, over his stage.
+    const PL = 0.594; let h = port ? Math.min(r.height * 0.46, r.width * 0.8) : r.height * 1.02, dl = 0;
+    if (!port && dock) {
+      stageEl.style.setProperty('--tp-dl', '0px');
+      const [modes, feats] = dock.children, fs = feats ? getComputedStyle(feats) : null;
+      const need = (modes ? modes.scrollWidth : 0) + (feats ? feats.scrollWidth + (parseFloat(fs.marginRight) || 0) : 0) + u * 2.6;
+      const room = r.width - u * 1.6 - need;
+      if (h * PL > room) h = room / PL;
+      if (h < r.height * 0.62) h = r.height * 0.74; else dl = Math.round(h * PL + u * 0.6);
+    }
+    const w = h * 0.66, x = port ? r.width - w * 0.94 : -w * 0.02;
+    sc.setDealerBox({ x, y: bottom - h, w, h });
+    stageEl.style.setProperty('--tp-dl', dl + 'px');
+  }
+  async function loadDealer(reduced) {
+    try {
+      if (!window.ToppleDealer || !THREE.GLTFLoader) return;
+      if (location.protocol === 'file:' && !window.TOPPLE_DEALER) await inject('../offline/dealer-inline.js');
+      const buf = window.TOPPLE_DEALER ? Uint8Array.from(atob(window.TOPPLE_DEALER), c => c.charCodeAt(0)).buffer : await fetch('assets/char/dealer.glb').then(r => (r.ok ? r.arrayBuffer() : null));
+      if (!buf) return;
+      const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
+      const g = await new Promise((res, rej) => L.parse(buf, '', res, rej));
+      dealer = window.ToppleDealer(THREE, g.scene, { reduced }, g.animations); sc.setDealer(dealer); placeDealer();
+      // now and then, while nothing is being played, he checks his watch
+      (function idle() { setTimeout(() => { if (!busy && dealer.clip === 'idle') dealer.play('pace'); idle(); }, 9000 + Math.random() * 7000); })();
+    } catch (e) { dealer = null; /* the game plays the same without him */ }
+  }
+  const act = name => { if (dealer) dealer.play(name); };
+  const lookAt = (x, y) => { if (dealer) dealer.look(x, y); };
+
   // House bar layout: icons, balance and win on the left; amount, speed and the round main button on the right.
   // The shell's own elements are moved, not rebuilt, so every id, listener and state it manages keeps working.
   function arrangeBar(stage) {
     const $ = api.$, h = api.h, panel = $('lzPanel'), field = $('lzField'), step = field.querySelector('.lz-stepper');
-    panel.prepend(h('div', { class: 'tp-b-left' }, $('lzInfo'), $('lzSound')), $('lzWallet'));
+    // balance and win share a wrapper that is invisible to layout (display: contents) except in the small pop-out, where
+    // they stack so long amounts never run into each other
+    panel.prepend(h('div', { class: 'tp-b-left' }, $('lzInfo'), $('lzSound')), h('div', { class: 'tp-money' }, $('lzWallet'), $('lzWinBox')));
     const min = $('lzMin'), max = $('lzMax'); min.classList.add('tp-edge'); max.classList.add('tp-edge'); step.prepend(min); step.append(max);
     const dock = h('div', { class: 'tp-dock' }); if ($('lzModes')) dock.append($('lzModes')); else dock.append(h('span'));
     if ($('lzFeats')) dock.append($('lzFeats'));
@@ -205,7 +250,7 @@
 
   // ---------- one round ----------
   async function play(events, ctx) {
-    busy = true; el.note.hidden = true; Snd.sync(); Snd.excite(0.3);
+    busy = true; el.note.hidden = true; Snd.sync(); Snd.excite(0.3); if (dealer) dealer.base('rub', true); lookAt(0.75, -0.25);
     const speed = () => (ctx.fast() ? 2.3 : 1);
     let cur = null, basePot = 0, pot = 0, hadBonus = false, golds = 0, fell = 0, deepest = 1;
     const total = () => basePot + pot, show = bump => { const u = ctx.units(total()); setPot(u, total() / 100, bump); ctx.setWin(u, true); };
@@ -215,7 +260,7 @@
       if (!list) return;
       for (const e of list) {
         if (e.type === 'fall') { pot += e.v; fell++; deepest = Math.max(deepest, st.world); fly('+' + fmtV(e.v), st.slot, st.lane); show('bump'); Snd.excite(0.3 + fell / 16); }
-        else if (e.type === 'mult') { pot = e.pot; fly('×' + e.x, st.slot, st.lane, 'big'); show('mult'); Snd.play('mult_' + (e.x >= 20 ? 5 : e.x >= 10 ? 4 : e.x >= 5 ? 3 : e.x >= 3 ? 2 : 1), { vol: 0.9, jitter: 0, duck: 0.45 }); }
+        else if (e.type === 'mult') { pot = e.pot; fly('×' + e.x, st.slot, st.lane, 'big'); show('mult'); if (e.x >= 5) act('win'); Snd.play('mult_' + (e.x >= 20 ? 5 : e.x >= 10 ? 4 : e.x >= 5 ? 3 : e.x >= 3 ? 2 : 1), { vol: 0.9, jitter: 0, duck: 0.45 }); }
         else if (e.type === 'gold') { golds = e.n; tokens(el.gold, golds, 3, 'star'); Snd.play('gold_' + Math.min(3, golds), { vol: 0.9, jitter: 0, duck: 0.45 }); }
         else if (e.type === 'bank') { cur.pushes = e.n; tokens(el.push, e.n, Math.max(3, e.n), 'ball'); fly('+1 push', st.slot, st.lane, 'tok'); Snd.play('bank_ting', { vol: 0.7 }); }
         else if (e.type === 'split') { Snd.play('split', { vol: 0.8, jitter: 0 }); }
@@ -224,7 +269,12 @@
     const flush = async () => {
       if (!cur) return;
       sc.setRate(speed());
-      if (cur.strike) { const s = cur.strike; cur.strike = null; Snd.play('ball_swing', { vol: 0.5 }); await sc.strike(s.slot, s.lane); }
+      if (cur.strike) {
+        // the dealer throws the ball (TURBO and reduced motion keep the quicker pendulum)
+        const s = cur.strike, thrown = dealer && !ctx.fast() && !api.reduced; cur.strike = null;
+        if (!thrown) Snd.play('ball_swing', { vol: 0.5 });
+        await (thrown ? sc.throwStrike(s.slot, s.lane) : sc.strike(s.slot, s.lane));
+      }
       const stops = cur.stops; cur.stops = [];
       await sc.run(stops, onCollect);
       for (const s of stops) { const c = cell(s.slot); if (c) c.classList.add('stand'); cur.standing.push(s); }
@@ -241,7 +291,7 @@
       else if (e.type === 'bonus') {
         await flush(); hadBonus = true; basePot += pot; pot = 0;
         const title = e.kind === 'skyline' ? 'SKYLINE' : 'GOLDEN RUN';
-        Snd.play('bonus_in', { vol: 1, jitter: 0, duck: 0.25 }); banner(e.pushes + ' pushes', title, 2000 / speed()); await ctx.sleep(1500);
+        Snd.play('bonus_in', { vol: 1, jitter: 0, duck: 0.25 }); act('bow'); banner(e.pushes + ' pushes', title, 2000 / speed()); await ctx.sleep(1500);
         await begin({ growth: e.growth, bonus: true, title, pushes: e.pushes, betScale: 1, slots: slotsFrom(e.d, title === 'SKYLINE' ? 'SKY' : 'GOLD', true) }, null);
         el.push.dataset.keep = '1'; tokens(el.push, e.pushes, Math.max(3, e.pushes), 'ball');
       }
@@ -263,8 +313,10 @@
     await flush(); sc.setRate(1); el.push.dataset.keep = '';
     const x = total() / 100;
     const tier = TIERS.filter(t => x / Math.pow(ctx.cost, 0.588) >= t.x).pop();
+    lookAt(0, 0); if (dealer) dealer.base('idle');
+    if (x < ctx.cost) act('lose');
     if (x > 0 && x < ctx.cost) Snd.play('lose_soft', { vol: 0.35 });
-    else if (x >= ctx.cost && !tier && !ctx.capped) { const sp = speed(); sc.celebrate({ big: false, dur: 1.0 / sp }); const stop = Snd.climb('count_tick_loop', 0.35, 400, 0.9 / sp); await ctx.sleep(900); stop(); Snd.play('win_end_low', { vol: 0.7, jitter: 0 }); sc.release(); }
+    else if (x >= ctx.cost && !tier && !ctx.capped) { act('win'); const sp = speed(); sc.celebrate({ big: false, dur: 1.0 / sp }); const stop = Snd.climb('count_tick_loop', 0.35, 400, 0.9 / sp); await ctx.sleep(900); stop(); Snd.play('win_end_low', { vol: 0.7, jitter: 0 }); sc.release(); }
     el.note.textContent = fell + (fell === 1 ? ' stone fell' : ' stones fell') + ' · ' + (hadBonus ? 'bonus played' : WORLD_NAMES[deepest].toLowerCase()); el.note.hidden = false;
     await ctx.sleep(x >= ctx.cost ? 500 : 280);
     if (x >= ctx.cost && (tier || ctx.capped)) await bigWin(ctx, '', ctx.capped ? TIERS.length : TIERS.indexOf(tier), ctx.units(total()), x, ctx.capped);
@@ -334,6 +386,7 @@
       try { await document.fonts.load('800 60px Cinzel'); } catch (e) { /* falls back to a serif */ }
       sc = window.ToppleScene(el.canvas, Object.assign({ reduced: a.reduced, font: 'Cinzel, Georgia, serif' }, lists));
       sc.onWorld = w => { setWorld(w, busy && !(shown && shown.bonus)); if (busy) Snd.play('world_up', { vol: 0.6 }); }; 
+      sc.onThrow = () => Snd.play('ball_swing', { vol: 0.55 });
       sc.onHit = h => {
         const n = shown ? shown.slots.length : 20, rate = 1.25 * Math.pow(0.36, h.slot / n), fam = h.mat === 'ivory' || h.mat === 'pearl' ? 'clack_ivory' : h.mat === 'diamond' ? 'clack_glass' : h.mat === 'black' || /^m/.test(h.mat) ? 'clack_stone' : 'clack_metal';
         if (h.kind === 'hit') { Snd.play(fam, { rate, vol: 0.55 + 0.1 * h.world, gap: 0.03 }); if (h.world >= 3) Snd.play('thud_big', { rate: Math.max(0.5, rate * 1.4), vol: 0.5, gap: 0.05 }); }
@@ -341,7 +394,7 @@
         else if (h.kind === 'wobble') Snd.play('wobble', { rate: Math.max(0.5, rate * 1.2), vol: 0.8 });
         else if (h.kind === 'strike') Snd.play('ball_hit', { rate: Math.max(0.55, rate), vol: 0.9 });
       };
-      await sc.ready; sc.resize(); sc.start();
+      await sc.ready; sc.resize(); sc.start(); loadDealer(a.reduced);
       Snd.load(); Snd.loop('music', MUSIC, 0.3);
       try { attract(); sc.warm(); } catch (e) { /* warm-up is an optimisation only */ }
       document.addEventListener('pointerdown', e => { if (e.target.closest && e.target.closest('button')) { Snd.sync(); Snd.play('ui_click', { vol: 0.5 }); } }, true);
@@ -349,7 +402,7 @@
       setInterval(() => { if (!busy && shown && shown.attract && (api.amount !== lastAmount || levelFrac() !== lastLevel)) { attract(); Snd.play('bet_tick', { rate: 0.8 + 0.6 * lastLevel, vol: 0.5, jitter: 0 }); } }, 200);
     },
     play,
-    reset() { busy = false; if (sc) { sc.setRate(1); sc.fadeIn(); attract(); } },
+    reset() { busy = false; lookAt(0, 0); if (dealer) dealer.base('idle'); if (sc) { sc.setRate(1); sc.fadeIn(); attract(); } },
     idle() { busy = false; },
     onSound() { Snd.sync(); }, onStart() { Snd.sync(); },
     onMode(name) { if (TR[name]) { track = name; if (!busy && sc) attract(); } }

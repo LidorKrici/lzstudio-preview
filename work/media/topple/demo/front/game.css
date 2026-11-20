@@ -17,11 +17,14 @@ body{background:var(--lz-bg)}
 .tp-hud .tp-plate,.tp-pot,.tp-strip,.tp-tok,.tp-note,.tp-world{background:rgba(18,11,6,.78);border:1px solid rgba(201,162,83,.45);border-radius:calc(var(--u)*.7)}
 .tp-lbl{display:block;font-size:calc(var(--u)*1.25);letter-spacing:.24em;text-transform:uppercase;color:var(--tp-brass);font-weight:600}
 
-.tp-top{position:absolute;left:calc(var(--u)*1.6);top:calc(var(--u)*1.6);display:flex;flex-direction:column;gap:calc(var(--u)*.8);align-items:flex-start;max-width:66%}
+/* the logo stands over the dealer in the top left corner (as in the slot games he is modelled on); the world name and
+   the strip sit to its right */
+.tp-logo-img{position:absolute;left:calc(var(--u)*1.1);top:calc(var(--u)*.9);height:calc(var(--u)*10);width:auto;filter:drop-shadow(0 calc(var(--u)*.4) calc(var(--u)*.8) rgba(0,0,0,.55));user-select:none}
+.tp-top{position:absolute;left:calc(var(--u)*28.6);top:calc(var(--u)*1.6);display:flex;flex-direction:column;gap:calc(var(--u)*.8);align-items:flex-start;max-width:66%}
 .tp-world{padding:calc(var(--u)*.45) calc(var(--u)*1.1)}
 .tp-world b{font:700 calc(var(--u)*1.7)/1.2 "Cinzel",Georgia,serif;letter-spacing:.22em;white-space:nowrap}
-.tp-strip{display:flex;gap:calc(var(--u)*.3);align-items:flex-end;padding:calc(var(--u)*.6) calc(var(--u)*.7);max-width:100%}
-.tp-strip i{flex:none;width:calc(var(--u)*1.4);height:calc(var(--u)*2.7);border-radius:calc(var(--u)*.22);background:#f1e7d0;color:var(--tp-ink);display:grid;place-items:center;
+.tp-strip{display:flex;gap:calc(var(--u)*.25);align-items:flex-end;padding:calc(var(--u)*.6) calc(var(--u)*.7);max-width:100%}
+.tp-strip i{flex:none;width:calc(var(--u)*1.15);height:calc(var(--u)*2.7);border-radius:calc(var(--u)*.22);background:#f1e7d0;color:var(--tp-ink);display:grid;place-items:center;
   font:700 calc(var(--u)*1.05)/1 "Jost",sans-serif;font-style:normal;transform-origin:50% 100%;transition:transform .22s cubic-bezier(.3,1.4,.5,1),opacity .22s}
 .tp-strip i svg{width:78%;height:auto;fill:currentColor;display:block}
 .tp-strip i.w2{background:#b4703a}.tp-strip i.w3{background:#d9dde2}.tp-strip i.w4{background:#ffc35a}.tp-strip i.w5{background:#cfe6ff}
@@ -59,7 +62,7 @@ body{background:var(--lz-bg)}
 .tp-banner small{display:block;font:600 calc(var(--u)*1.6)/1.4 "Jost",sans-serif;letter-spacing:.34em;text-transform:uppercase;color:var(--tp-brass);-webkit-text-stroke:calc(var(--u)*.4) var(--tp-walnut);paint-order:stroke fill}
 .tp-banner b{display:block;font:800 calc(var(--u)*4.6)/1.1 "Cinzel",Georgia,serif;letter-spacing:.12em;color:var(--tp-ivory);-webkit-text-stroke:calc(var(--u)*.7) var(--tp-walnut);paint-order:stroke fill}
 @keyframes tp-banner{0%{opacity:0;transform:translate(-50%,-50%) scale(.15)}40%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{transform:translate(-50%,-50%) scale(1)}}
-.tp-note{position:absolute;left:50%;top:calc(var(--u)*1.6);transform:translateX(-50%);padding:calc(var(--u)*.45) calc(var(--u)*1.3);font:500 calc(var(--u)*1.45)/1.3 "Jost",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--lz-muted);white-space:nowrap}
+.tp-note{position:absolute;left:calc(var(--u)*28.6);top:calc(var(--u)*11.2);padding:calc(var(--u)*.45) calc(var(--u)*1.3);font:500 calc(var(--u)*1.45)/1.3 "Jost",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--lz-muted);white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.tp-pop,.tp-banner,.tp-pot.bump,.tp-pot.mult,.tp-strip i.stand{animation:none}}
 
 /* ---------- intro: logo, three photographed cards, one button ---------- */
@@ -122,6 +125,7 @@ body{background:var(--lz-bg)}
 #lzApp .lz-wallet,#lzApp .lz-win{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;padding:0;background:none;border:0;box-shadow:none;border-radius:0;flex:0 1 auto;min-width:0}
 #lzApp .lz-wallet b,#lzApp .lz-win b{font:600 clamp(12px,2.9vh,20px)/1.15 "Jost",sans-serif;color:var(--tp-ivory);white-space:nowrap}
 #lzApp .lz-win.has b{color:var(--tp-gold)}
+.tp-money{display:contents}
 #lzApp .lz-lbl{font-size:clamp(7px,1.5vh,10px);letter-spacing:.2em;color:var(--tp-brass);font-weight:600}
 #lzApp .lz-field{flex:none;margin-left:auto;display:block}
 #lzApp .lz-field .lz-lbl{display:none}
@@ -149,7 +153,7 @@ body{background:var(--lz-bg)}
 .lz-is-replay #lzApp .lz-action span{font-size:calc(var(--tp-d)*.13);line-height:1.15}
 
 /* tracks and features live on the stage, next to the stones, and step aside while a round plays */
-.tp-dock{position:absolute;left:calc(var(--u)*1.6);right:calc(var(--u)*1.6);bottom:calc(var(--u)*1.4);display:flex;justify-content:space-between;align-items:flex-end;gap:calc(var(--u));pointer-events:none;transition:opacity .25s,transform .25s cubic-bezier(.2,.9,.3,1)}
+.tp-dock{position:absolute;left:max(calc(var(--u)*1.6),var(--tp-dl,0px));right:calc(var(--u)*1.6);bottom:calc(var(--u)*1.4);display:flex;justify-content:space-between;align-items:flex-end;gap:calc(var(--u));pointer-events:none;transition:opacity .25s,transform .25s cubic-bezier(.2,.9,.3,1)}
 .tp-dock>*{pointer-events:auto}
 #lzApp.busy .tp-dock{opacity:0;transform:translateY(calc(var(--u)*2))}
 #lzApp.busy .tp-dock>*{pointer-events:none}
@@ -184,20 +188,24 @@ body{background:var(--lz-bg)}
   #lzApp .lz-modes small,#lzApp .lz-feat small{font-size:max(9px,calc(var(--u)*1.55))}
   #lzApp .lz-modes button,#lzApp .lz-feat{padding:calc(var(--u)*1.1) calc(var(--u)*1.5)}
   /* phone: the row strip gets a line of its own under the pot */
-  .tp-top{right:calc(var(--u)*1.6);max-width:none}
-  .tp-strip{margin-top:calc(var(--u)*6.8)}
+  .tp-logo-img{height:calc(var(--u)*7);left:calc(var(--u)*1.2);top:calc(var(--u)*1.4)}
+  .tp-top{left:calc(var(--u)*1.6);right:calc(var(--u)*1.6);max-width:none}
+  .tp-world{display:none}
+  .tp-strip{margin-top:calc(var(--u)*7.6)}
   .tp-strip i{width:calc(var(--u)*1.12)}
-  .tp-note{top:calc(var(--u)*19)}
+  .tp-note{left:50%;transform:translateX(-50%);top:calc(var(--u)*19)}
 }
 /* the small pop-out window: keep every control, drop the decoration */
 @media (min-aspect-ratio:1/1) and (max-height:330px){
   .tp-b-left{position:fixed;top:3px;right:6px;z-index:4}
   #lzApp .lz-lbl,#lzApp .lz-stepper>button.tp-edge,#lzApp .lz-modes small,#lzApp .lz-feat small{display:none}
   #lzApp .lz-wallet b,#lzApp .lz-win b{font-size:11px}
+  .tp-money{display:flex;flex-direction:column;align-items:flex-start;gap:1px;flex:none}#lzApp .tp-money .lz-win{align-items:flex-start}
   #lzApp .lz-wallet b::before{content:"BAL ";font-size:7px;letter-spacing:.14em;color:var(--tp-brass)}#lzApp .lz-win b::before{content:"WIN ";font-size:7px;letter-spacing:.14em;color:var(--tp-brass)}
   #lzApp .lz-modes b,#lzApp .lz-feat span{font-size:8px;letter-spacing:.05em}
   #lzApp .lz-modes,#lzApp .lz-feats{gap:3px}.tp-dock{left:4px;right:4px;bottom:3px}
   #lzPanel{gap:6px;padding:3px 8px}
   #lzApp .lz-modes button,#lzApp .lz-feat{padding:3px 6px}
   .tp-world,.tp-note{display:none}
+  .tp-logo-img{display:none}.tp-top{left:calc(var(--u)*1.6)}
 }

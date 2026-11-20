@@ -288,7 +288,7 @@
       }
     }
     const link = (a, b) => { a.nexts.push(b); b.prevs.push(a); };
-    function setRow(desc) { const t0 = performance.now(); setRowInner(desc); mark('setRow', t0); }
+    function setRow(desc) { tossed = null; if (!strikeJob) ball.visible = false; const t0 = performance.now(); setRowInner(desc); mark('setRow', t0); }
     function setRowInner(desc) {
       for (const d of disposables) d.dispose(); disposables = []; bodyUse = {};
       while (rowGroup.children.length) rowGroup.remove(rowGroup.children[0]);
@@ -421,6 +421,7 @@
       let F = 0, wob = null;
       for (const s of stones) { if (s.state === 0) continue; if (s.stopper && s.state === 1) { wob = s; continue; } if (s.state === 2) continue; F = Math.max(F, s.slot + Math.min(1, s.th / THC)); }
       if (strikeJob && !strikeJob.hit) F = Math.max(F, strikeJob.s.slot);
+      if (fly) F = Math.max(F, fly.s.slot);
       if (wob && wob.slot >= Math.floor(F)) return { F: wob.slot - 0.3, wob };
       return { F: Math.min(slots.length - 1, F), wob: null };
     }
@@ -509,6 +510,7 @@
       const f = front();
       slow += ((f.wob ? 0.4 : 1) - slow) * (1 - Math.exp(-dt / 0.12));
       if (strikeJob) strikeStep(dt);
+      if (tossed) tossStep(dt);
       let left = dt * slow * rate; while (left > 1e-6) { const s = Math.min(left, 1 / 480); step(s); left -= s; }
       for (; seen < events.length; seen++) {
         const e = events[seen], rel = e.s.h / hAt(sF), big = e.s.world >= 3 ? 1 : 0.6;
@@ -547,6 +549,131 @@
       if (opts.hero) { groundGroup.visible = sceneryGroup.visible = motes.pts.visible = false; scene.background = null; scene.fog.density = 0; renderer.setClearColor(0x000000, 0); renderer.render(scene, camera); return; }
       renderer.setRenderTarget(sceneRT); renderer.render(scene, camera); renderer.setRenderTarget(null);
       composer.render();
+      drawDealer(dt);
+      drawFly(dt);
+    }
+    // ---------- the dealer: his own small scene, drawn after the stage into a box at the side of the screen ----------
+    // He is not in the world (the camera rides the chain and the worlds grow a thousandfold), so he has his own camera
+    // and lights, renders into a multisampled target of the box's size and is laid over the stage, tone-mapped there.
+    // Box: setDealerBox({ x, y, w, h }) in CSS px from the canvas's top left; the box is 2.48 m tall, his feet at its bottom.
+    let dl = null;
+    function setDealer(d) {
+      // his camera looks down a few degrees so the floor he stands on is seen, not edge-on
+      const s = new T.Scene(), cam = new T.PerspectiveCamera(14, 0.66, 1, 30);
+      cam.position.set(0, 2.45, 10.0); cam.lookAt(0, 1.12, 0);
+      const keyL = new T.DirectionalLight(0xffe0b4, 2.3); keyL.position.set(-1.4, 3.4, 3.2);
+      const rimL = new T.DirectionalLight(0xffc27a, 2.6); rimL.position.set(2.2, 2.4, -2.4);
+      const rim2 = new T.DirectionalLight(0xc8b8ff, 0.9); rim2.position.set(-2.4, 1.8, -2);
+      s.add(d.root, keyL, rimL, rim2, new T.HemisphereLight(0xfff0dc, 0x2a1a10, 0.55));
+      // his corner of the room: a velvet curtain gathered with a gold rope on the outer side, and a warm spotlight
+      // haze behind him that lifts him off whatever world the chain has reached
+      const side = new T.Group(); s.add(side);
+      // the little stage he stands on: an oval of dark polished wood, 7 cm high, with a gold rim; wide enough for his walk
+      const SH = 0.07, stageG = new T.Group(); s.add(stageG);
+      const deck = new T.Mesh(new T.CylinderGeometry(1, 1, SH, 72), [new T.MeshStandardMaterial({ color: 0x1c0f08, roughness: 0.55, metalness: 0.1 }), new T.MeshStandardMaterial({ color: 0x3a1f10, roughness: 0.28, metalness: 0.05 }), new T.MeshStandardMaterial({ color: 0x1c0f08 })]);
+      deck.scale.set(0.74, 1, 0.38); deck.position.y = SH / 2; stageG.add(deck);
+      const rimM = new T.MeshStandardMaterial({ color: 0xd8a84a, metalness: 1, roughness: 0.25 });
+      const rim = new T.Mesh(new T.TorusGeometry(1, 0.012, 8, 96), rimM); rim.rotation.x = Math.PI / 2; rim.scale.set(0.74, 0.38, 1); rim.position.y = SH; stageG.add(rim);
+      const rimLow = rim.clone(); rimLow.position.y = 0.004; stageG.add(rimLow);
+      d.root.position.y = SH;
+      const CW = 1.0, CH = 2.26, NU = 72, NV = 48, VT = 0.4, cg = new T.PlaneGeometry(1, 1, NU, NV), cp = cg.attributes.position;
+      const sm = k => k * k * (3 - 2 * k), widthAt = v => (v > VT ? 0.26 + 0.74 * Math.pow(sm((v - VT) / (1 - VT)), 0.75) : 0.26 + 0.3 * Math.pow((VT - v) / VT, 1.3));
+      for (let i = 0; i < cp.count; i++) {
+        const u = cp.getX(i) + 0.5, v = cp.getY(i) + 0.5, w = widthAt(v), amp = Math.min(0.075, 0.03 / Math.sqrt(w));
+        cp.setXYZ(i, -0.8 + u * CW * w, v * CH - 0.08, Math.sin(u * Math.PI * 2 * 6.5 + v * 0.6) * amp + Math.sin(u * Math.PI * 2 * 15) * amp * 0.18);
+      }
+      cg.computeVertexNormals();
+      const velvet = new T.MeshPhysicalMaterial({ color: 0x5c0b16, roughness: 0.72, sheen: 1, sheenColor: new T.Color(0xff7a7a), sheenRoughness: 0.35, side: T.DoubleSide });
+      const curtain = new T.Mesh(cg, velvet); curtain.position.z = -0.45; side.add(curtain);
+      const goldM = new T.MeshStandardMaterial({ color: 0xd8a84a, metalness: 1, roughness: 0.28 }), tieY = VT * CH - 0.08, tieX = -0.8 + CW * widthAt(VT) * 0.5;
+      const rope = new T.Mesh(new T.TorusGeometry(0.15, 0.022, 10, 40), goldM); rope.position.set(tieX, tieY, -0.45); rope.scale.set(1, 0.42, 0.55); side.add(rope);
+      const knot = new T.Mesh(new T.SphereGeometry(0.035, 16, 12), goldM); knot.position.set(tieX + 0.14, tieY, -0.38); side.add(knot);
+      const tassel = new T.Mesh(new T.ConeGeometry(0.045, 0.2, 18, 1, true), goldM); tassel.position.set(tieX + 0.15, tieY - 0.13, -0.38); side.add(tassel);
+      // the rod it hangs from ends inside his box, with a finial, so no box edge ever cuts the drape
+      const pel = new T.Mesh(new T.CylinderGeometry(0.026, 0.026, 1.2, 16), goldM); pel.rotation.z = Math.PI / 2; pel.position.set(-0.3, CH - 0.07, -0.42); side.add(pel);
+      const fin = new T.Mesh(new T.SphereGeometry(0.05, 20, 14), goldM); fin.position.set(0.3, CH - 0.07, -0.42); side.add(fin);
+      const gc = document.createElement('canvas'); gc.width = gc.height = 128; { const g = gc.getContext('2d'), r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,200,130,.42)'); r.addColorStop(0.5, 'rgba(255,170,90,.16)'); r.addColorStop(1, 'rgba(255,150,70,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); }
+      const glowT = new T.CanvasTexture(gc); glowT.colorSpace = T.SRGBColorSpace;
+      const glow = new T.Mesh(new T.PlaneGeometry(1.4, 2.3), new T.MeshBasicMaterial({ map: glowT, transparent: true, depthWrite: false, fog: false })); glow.position.set(0, 1.22, -0.7); glow.renderOrder = -2; side.add(glow);
+      const rt = new T.WebGLRenderTarget(4, 4, { type: T.HalfFloatType, samples: Q.msaa });
+      const quad = new T.Mesh(new T.PlaneGeometry(2, 2), new T.ShaderMaterial({
+        uniforms: { tMap: { value: rt.texture } }, transparent: true, depthTest: false, depthWrite: false,
+        blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor,
+        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+        fragmentShader: ['uniform sampler2D tMap; varying vec2 vUv;', 'void main(){ vec4 c = texture2D(tMap, vUv); if (c.a < 0.002) discard;',
+          ' gl_FragColor = vec4(c.rgb / c.a, 1.0);', ' #include <tonemapping_fragment>', ' #include <colorspace_fragment>', ' gl_FragColor = vec4(gl_FragColor.rgb * c.a, c.a); }'].join(String.fromCharCode(10))
+      }));
+      quad.frustumCulled = false; const qs = new T.Scene(); qs.add(quad);
+      dl = { d, s, cam, rt, qs, box: null, side };
+      d.root.rotation.y = 0.32;
+      renderer.compile(s, cam);
+    }
+    function setDealerBox(b) {
+      if (!dl) return; dl.box = b && b.w > 8 && b.h > 8 ? b : null; if (!dl.box) return;
+      const pr = renderer.getPixelRatio(); dl.rt.setSize(Math.round(b.w * pr), Math.round(b.h * pr)); dl.cam.aspect = b.w / b.h; dl.cam.updateProjectionMatrix();
+      const left = b.x + b.w / 2 < vw / 2;
+      dl.d.root.rotation.y = left ? 0.32 : -0.32;                         // turned a little towards the middle of the screen
+      dl.side.scale.x = left ? 1 : -1;                                     // the curtain hangs on the outer side
+      if (dl.d.inner) dl.d.inner(left ? 1 : -1);                           // he paces and throws towards the stage
+    }
+    function drawDealer(dt) {
+      if (!dl) return; dl.d.update(dt); const b = dl.box; if (!b) return;
+      dl.s.environment = scene.environment; dl.s.environmentIntensity = 0.75;
+      const ex = renderer.toneMappingExposure, ac = renderer.autoClear;
+      renderer.setRenderTarget(dl.rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(dl.s, dl.cam); renderer.setRenderTarget(null);
+      renderer.toneMappingExposure = 1.05; renderer.autoClear = false;
+      renderer.setViewport(b.x, vh - b.y - b.h, b.w, b.h); renderer.render(dl.qs, camera); renderer.setViewport(0, 0, vw, vh);
+      renderer.toneMappingExposure = ex; renderer.autoClear = ac;
+    }
+    // ---------- the thrown ball: the dealer throws it; it crosses the screen from his hand into the stone ----------
+    // The dealer lives in his own box, the stones in the world, so the flight is drawn in screen space (an orthographic
+    // pass in pixels, the same brass) and hands over to the world ball at the stone, which then bounces back and rolls.
+    const flyScene = new T.Scene(), flyCam = new T.OrthographicCamera(0, 1, 0, -1, -2000, 2000), flyBall = new T.Mesh(new T.SphereGeometry(1, 28, 18), new T.MeshStandardMaterial({ color: 0xd9a441, metalness: 0.55, roughness: 0.3, emissive: 0x3a2508 }));   // less mirror-like than the world brass: seen flat-on it would read as a ring
+    const flyKey = new T.DirectionalLight(0xffe2b8, 3.2); flyKey.position.set(-0.4, 0.8, 1); flyScene.add(flyBall, flyKey, new T.HemisphereLight(0xfff0dc, 0x2a1a10, 0.6)); flyBall.visible = false;
+    let fly = null, tossed = null;
+    const hp = new T.Vector3(), cp = new T.Vector3(), ep = new T.Vector3();
+    function contactOf(s) { const r = s.h * 0.17, ux = Math.cos(s.psi), uz = Math.sin(s.psi); return { r, ux, uz, p: new T.Vector3(s.cx - (s.t / 2 + r) * ux, s.h * 0.78, s.cz - (s.t / 2 + r) * uz) }; }
+    function toPx(v, cam, b) { const p = v.clone().project(cam); return b ? { x: b.x + (p.x * 0.5 + 0.5) * b.w, y: b.y + (0.5 - p.y * 0.5) * b.h } : { x: (p.x * 0.5 + 0.5) * vw, y: (0.5 - p.y * 0.5) * vh }; }
+    function ballHit(s) { if (s.state !== 1 || s.stopper) { s.state = 1; s.stopper = false; s.om = 1.5 * omCrit(s); stopSet.delete(s); } events.push({ s, kind: 'strike' }); }
+    function throwStrike(slot, lane) {
+      const s = find(slot, lane); if (!s) return Promise.resolve();
+      if (!dl || !dl.box || !dl.d.has || !dl.d.has('throw')) return strike(slot, lane);
+      return new Promise(res => {
+        let done = false;
+        const fallback = setTimeout(() => { if (!done) { done = true; dl.d.onRelease = null; strike(slot, lane).then(res); } }, 2200);   // e.g. the tab was hidden
+        dl.d.onRelease = () => {
+          if (done) return; done = true; clearTimeout(fallback); dl.d.onRelease = null;
+          dl.d.hand().getWorldPosition(hp); const a = toPx(hp, dl.cam, dl.box);
+          fly = { s, res, t: 0, a, ra: 0.05 * dl.box.h / 2.48 };
+          flyBall.visible = true; if (api.onThrow) api.onThrow();
+        };
+        dl.d.play('throw');
+      });
+    }
+    function drawFly(dt) {
+      if (!fly) return;
+      const f = fly, D = 0.42; f.t += dt * Math.max(1, rate * 0.8); const k = Math.min(1, f.t / D);
+      const c = contactOf(f.s), b = toPx(c.p, camera); ep.copy(c.p).addScaledVector(camera.up, c.r); const e = toPx(ep, camera), rb = Math.hypot(e.x - b.x, e.y - b.y);
+      const kk = 1 - (1 - k) * (1 - k * 0.35), x = f.a.x + (b.x - f.a.x) * kk, y = f.a.y + (b.y - f.a.y) * kk - Math.sin(k * Math.PI) * Math.min(vh * 0.16, Math.abs(b.x - f.a.x) * 0.35);
+      const r = f.ra + (rb - f.ra) * k;
+      flyCam.left = 0; flyCam.right = vw; flyCam.top = 0; flyCam.bottom = -vh; flyCam.updateProjectionMatrix();
+      flyBall.position.set(x, -y, 0); flyBall.scale.setScalar(Math.max(1, r)); flyBall.rotation.z -= dt * 14;
+      flyScene.environment = scene.environment;
+      const ac = renderer.autoClear; renderer.autoClear = false; renderer.clearDepth(); renderer.render(flyScene, flyCam); renderer.autoClear = ac;
+      if (k >= 1) {
+        flyBall.visible = false; fly = null; ballHit(f.s); f.res();
+        // the world ball takes over at the contact point and bounces back off the stone
+        tossed = { s: f.s, t: 0, r: c.r, p: c.p.clone(), v: new T.Vector3(-c.ux * f.s.h * 0.9, f.s.h * 0.9, -c.uz * f.s.h * 0.9), g: f.s.h * 9 };
+        ball.visible = true; ballStr.visible = false; ballMesh.scale.setScalar(c.r); ballMesh.position.copy(c.p);
+      }
+    }
+    function tossStep(dt) {
+      const j = tossed; j.t += dt * rate; const h = Math.min(dt * rate, 0.05);
+      j.v.y -= j.g * h; j.p.addScaledVector(j.v, h);
+      if (j.p.y < j.r) { j.p.y = j.r; j.v.y = Math.abs(j.v.y) * 0.32; j.v.x *= 0.7; j.v.z *= 0.7; }
+      const out = Math.max(0, Math.min(1, (j.t - 1.4) / 0.8));
+      ballMesh.position.copy(j.p); ballMesh.scale.setScalar(j.r * (1 - out * out)); ballMesh.rotation.z -= dt * 6;
+      if (out >= 1) { ball.visible = false; tossed = null; }
     }
     function project(slot, lane, up) {
       const s = find(slot, lane); if (!s) return { x: 0, y: 0, scale: 1, visible: false };
@@ -592,7 +719,7 @@
       mark('warm', t0);
     }
     Object.assign(api, {
-      setRow, strike, run, project, resize, warm,
+      setRow, strike, throwStrike, run, project, resize, warm, setDealer, setDealerBox, get dealer() { return dl && dl.d; },
       setRate(r) { rate = r; }, celebrate, finale, release, get celebrating() { return !!cel; }, fadeOut() { fadeTo = 0; }, fadeIn() { fadeTo = 1; },
       start() { if (!opts.manual && !raf) { last = performance.now(); raf = requestAnimationFrame(loop); } },
       tick(dt) { frame(dt); },
