@@ -1,0 +1,203 @@
+/* Topple skin. One world: walnut, ivory and brass. Flat fills and hairlines only; depth and light come from the 3D stage. */
+@font-face{font-family:"Cinzel";src:url("fonts/cinzel.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Jost";src:url("fonts/jost.woff2") format("woff2");font-weight:100 900;font-display:swap}
+:root{
+  --tp-walnut:#120b06;--tp-ivory:#f1e7d0;--tp-brass:#c9a253;--tp-gold:#ffc35a;--tp-ink:#15110c;
+  --lz-bg:#0b0704;--lz-panel:rgba(24,16,9,.94);--lz-panel-solid:#181009;--lz-line:rgba(201,162,83,.3);--lz-text:#f1e7d0;--lz-muted:#b39b78;
+  --lz-accent:#c9a253;--lz-accent-ink:#1a1206;--lz-accent2:#ffc35a;--lz-good:#8fd9a8;--lz-bad:#e2603f;--lz-radius:10px;
+  --lz-font-display:"Cinzel",Georgia,serif;--lz-font-body:"Jost",system-ui,sans-serif;--lz-action-bg:#c9a253;--lz-shadow:none;
+}
+body{background:var(--lz-bg)}
+.tp-logo{font-family:"Cinzel",Georgia,serif;font-weight:800;letter-spacing:.26em;color:var(--tp-ivory);padding-left:.26em}
+
+/* ---------- the stage ---------- */
+.lz-stage{position:relative;overflow:hidden;border-radius:var(--lz-radius);background:var(--tp-walnut)}
+.tp-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.tp-hud{position:absolute;inset:0;pointer-events:none;font-family:"Jost",system-ui,sans-serif;color:var(--tp-ivory);font-variant-numeric:tabular-nums}
+.tp-hud .tp-plate,.tp-pot,.tp-strip,.tp-tok,.tp-note,.tp-world{background:rgba(18,11,6,.78);border:1px solid rgba(201,162,83,.45);border-radius:calc(var(--u)*.7)}
+.tp-lbl{display:block;font-size:calc(var(--u)*1.25);letter-spacing:.24em;text-transform:uppercase;color:var(--tp-brass);font-weight:600}
+
+.tp-top{position:absolute;left:calc(var(--u)*1.6);top:calc(var(--u)*1.6);display:flex;flex-direction:column;gap:calc(var(--u)*.8);align-items:flex-start;max-width:66%}
+.tp-world{padding:calc(var(--u)*.45) calc(var(--u)*1.1)}
+.tp-world b{font:700 calc(var(--u)*1.7)/1.2 "Cinzel",Georgia,serif;letter-spacing:.22em;white-space:nowrap}
+.tp-strip{display:flex;gap:calc(var(--u)*.3);align-items:flex-end;padding:calc(var(--u)*.6) calc(var(--u)*.7);max-width:100%}
+.tp-strip i{flex:none;width:calc(var(--u)*1.4);height:calc(var(--u)*2.7);border-radius:calc(var(--u)*.22);background:#f1e7d0;color:var(--tp-ink);display:grid;place-items:center;
+  font:700 calc(var(--u)*1.05)/1 "Jost",sans-serif;font-style:normal;transform-origin:50% 100%;transition:transform .22s cubic-bezier(.3,1.4,.5,1),opacity .22s}
+.tp-strip i svg{width:78%;height:auto;fill:currentColor;display:block}
+.tp-strip i.w2{background:#b4703a}.tp-strip i.w3{background:#d9dde2}.tp-strip i.w4{background:#ffc35a}.tp-strip i.w5{background:#cfe6ff}
+.tp-strip i.edge{margin-left:calc(var(--u)*.7)}
+.tp-strip i.k-m{color:#fff;height:calc(var(--u)*3.3)}
+.tp-strip i.x2{background:#0a9a5c}.tp-strip i.x3{background:#1c58e0}.tp-strip i.x5{background:#7a2fd6}.tp-strip i.x10{background:#d4183c}.tp-strip i.x20,.tp-strip i.x50{background:#0b0b0d;color:var(--tp-gold)}
+.tp-strip i.k-g{background:#ffc35a;height:calc(var(--u)*3.3)}.tp-strip i.k-p{background:#c9a253;height:calc(var(--u)*3.3)}.tp-strip i.k-s{background:#0b0b0d;color:var(--tp-ivory);height:calc(var(--u)*3.3)}
+.tp-strip i.down{transform:scaleY(.38);opacity:.5}
+.tp-strip i.stand{outline:calc(var(--u)*.22) solid #fff;outline-offset:calc(var(--u)*.12);animation:tp-stand .9s ease-out}
+@keyframes tp-stand{0%{transform:rotate(0)}18%{transform:rotate(16deg)}40%{transform:rotate(-6deg)}62%{transform:rotate(7deg)}80%{transform:rotate(-2deg)}100%{transform:rotate(0)}}
+
+.tp-pot{position:absolute;right:calc(var(--u)*1.6);top:calc(var(--u)*1.6);padding:calc(var(--u)*.7) calc(var(--u)*1.4) calc(var(--u)*.8);text-align:right;min-width:calc(var(--u)*17);transform-origin:100% 0}
+.tp-pot-v{display:block;font:700 calc(var(--u)*4.4)/1.05 "Jost",sans-serif;white-space:nowrap}
+.tp-pot-x{display:block;min-height:calc(var(--u)*2.1);font:600 calc(var(--u)*1.7)/1.2 "Jost",sans-serif;font-style:normal;color:var(--tp-gold)}
+.tp-pot.bump{animation:tp-bump .33s cubic-bezier(.2,.9,.3,1)}
+.tp-pot.mult{animation:tp-mult .3s cubic-bezier(.2,.9,.3,1)}
+@keyframes tp-bump{0%{transform:scale(1)}25%{transform:scale(1.07)}100%{transform:scale(1)}}
+@keyframes tp-mult{0%{transform:scale(1)}30%{transform:scale(1.32)}100%{transform:scale(1)}}
+
+.tp-side{position:absolute;right:calc(var(--u)*1.6);top:calc(var(--u)*13.4);display:flex;flex-direction:column;gap:calc(var(--u)*.7);align-items:flex-end}
+.tp-tok{display:none;gap:calc(var(--u)*.5);padding:calc(var(--u)*.6) calc(var(--u)*.8)}
+.tp-tok.show{display:flex}
+.tp-tok i{width:calc(var(--u)*1.9);height:calc(var(--u)*1.9);background:#3b2c1b;transition:background .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
+.tp-tok i.ball{border-radius:50%}.tp-tok i.ball.on{background:var(--tp-brass);transform:scale(1.08)}
+.tp-tok i.star{clip-path:polygon(50% 2%,62% 36%,98% 38%,69% 59%,80% 95%,50% 74%,20% 95%,31% 59%,2% 38%,38% 36%)}.tp-tok i.star.on{background:var(--tp-gold);transform:scale(1.12)}
+
+.tp-fly{position:absolute;inset:0;overflow:hidden}
+.tp-pop{position:absolute;transform:translate(-50%,-100%);font:700 calc(var(--u)*2.5)/1 "Jost",sans-serif;color:#fff;white-space:nowrap;-webkit-text-stroke:calc(var(--u)*.5) var(--tp-walnut);paint-order:stroke fill;animation:tp-rise .8s cubic-bezier(.4,0,.3,1) forwards}
+.tp-pop.big{font-size:calc(var(--u)*5.2);color:var(--tp-gold);font-family:"Cinzel",Georgia,serif;font-weight:800;animation:tp-stay 1.05s cubic-bezier(.2,.8,.3,1) forwards}
+.tp-pop.tok{font-size:calc(var(--u)*1.9);color:var(--tp-brass);text-transform:uppercase;letter-spacing:.12em;animation:tp-stay 1.05s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes tp-rise{0%{opacity:0;transform:translate(-50%,-60%) scale(.5)}14%{opacity:1;transform:translate(-50%,-115%) scale(1.2)}34%{opacity:1;transform:translate(-50%,-125%) scale(1)}88%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),calc(-50% + var(--dy,-80px))) scale(.5)}}
+@keyframes tp-stay{0%{opacity:0;transform:translate(-50%,-60%) scale(.5)}9%{opacity:1;transform:translate(-50%,-110%) scale(1.15)}30%{transform:translate(-50%,-135%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-240%) scale(.9)}}
+
+.tp-banner{position:absolute;left:50%;top:24%;transform:translate(-50%,-50%);text-align:center;white-space:nowrap;animation:tp-banner .5s cubic-bezier(.2,.9,.3,1)}
+.tp-banner small{display:block;font:600 calc(var(--u)*1.6)/1.4 "Jost",sans-serif;letter-spacing:.34em;text-transform:uppercase;color:var(--tp-brass);-webkit-text-stroke:calc(var(--u)*.4) var(--tp-walnut);paint-order:stroke fill}
+.tp-banner b{display:block;font:800 calc(var(--u)*4.6)/1.1 "Cinzel",Georgia,serif;letter-spacing:.12em;color:var(--tp-ivory);-webkit-text-stroke:calc(var(--u)*.7) var(--tp-walnut);paint-order:stroke fill}
+@keyframes tp-banner{0%{opacity:0;transform:translate(-50%,-50%) scale(.15)}40%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{transform:translate(-50%,-50%) scale(1)}}
+.tp-note{position:absolute;left:50%;top:calc(var(--u)*1.6);transform:translateX(-50%);padding:calc(var(--u)*.45) calc(var(--u)*1.3);font:500 calc(var(--u)*1.45)/1.3 "Jost",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--lz-muted);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.tp-pop,.tp-banner,.tp-pot.bump,.tp-pot.mult,.tp-strip i.stand{animation:none}}
+
+/* ---------- intro: logo, three photographed cards, one button ---------- */
+.lz-intro{background:#0b0704}
+.lz-intro-logo{letter-spacing:.3em;padding-left:.3em;color:var(--tp-ivory)}
+.lz-intro-tag{color:var(--tp-brass);letter-spacing:.06em}
+.lz-intro-card{padding:0 0 clamp(8px,1.4vh,14px);gap:6px;background:#150d07;border:1px solid rgba(201,162,83,.4);border-radius:12px;box-shadow:none;overflow:hidden;animation:tp-card .5s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes tp-card{0%{opacity:0;transform:translateY(18px) scale(.94)}100%{opacity:1;transform:none}}
+.lz-ic-art{height:auto;width:100%;aspect-ratio:4/3;display:block;overflow:hidden}
+.lz-ic-art img{width:100%;height:100%;object-fit:cover;max-width:none;display:block}
+.lz-intro-card b{font:700 clamp(11px,1.9vh,15px)/1.2 "Cinzel",Georgia,serif;letter-spacing:.16em;color:var(--tp-ivory);padding:4px 10px 0}
+.lz-intro-card span{font:400 clamp(11px,1.7vh,13.5px)/1.4 "Jost",sans-serif;color:var(--lz-muted);padding:0 12px}
+.lz-intro-load{background:rgba(201,162,83,.18)}.lz-intro-load i{background:var(--tp-brass)}
+.lz-intro-play{background:#c9a253;color:#1a1206;box-shadow:none;border:2px solid #f1e7d0;font-family:"Cinzel",Georgia,serif;letter-spacing:.2em;transition:transform .12s cubic-bezier(.3,1.5,.5,1)}
+.lz-intro-play:not(:disabled):hover{transform:translateY(-2px)}.lz-intro-play:not(:disabled):active{transform:scale(.96)}
+@media (max-aspect-ratio:1/1){
+  .lz-intro-card{display:grid;grid-template-columns:clamp(84px,30vw,132px) minmax(0,1fr);padding:0;text-align:left;column-gap:12px}
+  .lz-ic-art{grid-row:1/3;height:100%;aspect-ratio:auto;min-height:clamp(58px,10vh,84px)}
+  .lz-intro-card b{padding:8px 8px 0 0}.lz-intro-card span{padding:0 8px 8px 0}
+}
+
+/* ---------- big wins: the name tips in letter by letter like dominoes, the amount grows and pulses, a slam at the end ---------- */
+.lz-bigwin{perspective:600px;background:none!important;animation:none!important;inset:0!important;border-radius:0!important}
+.lz-bigwin::before{content:"";position:absolute;inset:-20%;z-index:-1;background:radial-gradient(ellipse at 50% 46%,rgba(11,7,4,.5),rgba(11,7,4,.12) 45%,rgba(11,7,4,0) 70%);pointer-events:none}
+.tp-l{display:inline-block;transform-origin:50% 100%;animation:tp-tip .5s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--i)*.055s)}
+@keyframes tp-tip{0%{opacity:0;transform:rotateX(-100deg) translateY(-.2em)}55%{opacity:1;transform:rotateX(16deg)}80%{transform:rotateX(-6deg)}100%{transform:none}}
+.lz-bigwin strong{animation:none!important}
+.lz-bigwin.up strong{animation:tp-up .45s cubic-bezier(.2,.9,.3,1)!important}
+@keyframes tp-up{0%{transform:scale(1)}30%{transform:scale(1.25);filter:brightness(1.6)}100%{transform:scale(1)}}
+.lz-bigwin b{display:inline-block;transform:scale(var(--grow,1));transition:transform .2s}
+.lz-bigwin.pulse b{animation:tp-pulse .32s ease-in-out infinite alternate}
+@keyframes tp-pulse{from{transform:scale(var(--grow,1))}to{transform:scale(calc(var(--grow,1)*1.07))}}
+.lz-bigwin.slam b{animation:tp-slam .55s cubic-bezier(.2,.9,.3,1) both;color:var(--tp-gold)}
+@keyframes tp-slam{0%{transform:scale(calc(var(--grow,1)*1.35));filter:brightness(2)}100%{transform:scale(var(--grow,1));filter:none}}
+.lz-bigwin.out{animation:tp-out .38s ease-in forwards}
+@keyframes tp-out{to{opacity:0;transform:scale(.92)}}
+@media (prefers-reduced-motion:reduce){.tp-l,.lz-bigwin.up strong,.lz-bigwin.pulse b,.lz-bigwin.slam b{animation:none!important}}
+@media (max-aspect-ratio:1/1){.lz-bigwin{font-size:clamp(12px,4.5vmin,40px)}}
+/* (earlier style, kept for the colours) */
+.lz-bigwin{background:rgba(11,7,4,.62);font-size:clamp(14px,5.4vmin,46px)}
+.lz-big-rays{display:none}
+.lz-bigwin strong{font-family:"Cinzel",Georgia,serif;font-weight:800;font-size:1.3em;letter-spacing:.14em;color:var(--tp-ivory);text-shadow:none;-webkit-text-stroke:.14em var(--tp-walnut);paint-order:stroke fill;animation:tp-win .6s cubic-bezier(.2,.9,.3,1) both}
+.lz-bigwin[data-tier="1"] strong{font-size:1.45em}.lz-bigwin[data-tier="2"] strong{font-size:1.6em;color:var(--tp-gold)}.lz-bigwin[data-tier="3"] strong,.lz-bigwin[data-tier="4"] strong,.lz-bigwin[data-tier="5"] strong{font-size:1.75em;color:var(--tp-gold)}
+.lz-bigwin b{font-family:"Jost",sans-serif;font-weight:700;font-size:1.25em;color:#fff;text-shadow:none;-webkit-text-stroke:.12em var(--tp-walnut);paint-order:stroke fill}
+@keyframes tp-win{0%{opacity:0;transform:scale(.15)}40%{opacity:1;transform:scale(1.2)}100%{transform:scale(1)}}
+.lz-sheet{background:#181009;border:1px solid rgba(201,162,83,.4);box-shadow:none}
+.lz-sheet h2,.lz-sheet h3{font-family:"Cinzel",Georgia,serif;letter-spacing:.1em}
+.lz-go{background:#c9a253;color:#1a1206;box-shadow:none}.lz-toast{background:#181009;border:1px solid rgba(201,162,83,.4)}
+
+/* ---------- frame and bar: a quiet bar under a loud game ---------- */
+#lzApp{--tp-d:clamp(40px,16.5vh,112px);gap:clamp(4px,1vh,8px);grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"top" "stage" "panel"}
+#lzApp .lz-top{min-height:0}
+#lzApp .lz-brand{height:clamp(16px,4vh,28px);font-size:clamp(12px,2.9vh,20px)}
+#lzApp .lz-tag{background:transparent;border:1px solid rgba(201,162,83,.3);color:var(--lz-muted)}
+#lzPanel{display:flex;flex-direction:row;align-items:center;gap:clamp(6px,1.3vw,18px);padding:clamp(3px,.8vh,7px) clamp(6px,1.2vw,16px);min-height:clamp(32px,8.6vh,58px);
+  background:#150d07;border:1px solid rgba(201,162,83,.34);border-radius:12px;position:relative;overflow:visible;box-shadow:none}
+.tp-b-left{display:flex;gap:clamp(4px,.6vw,8px);flex:none}
+#lzApp .lz-icon{width:clamp(22px,5.2vh,36px);height:clamp(22px,5.2vh,36px);border-radius:50%;background:transparent;box-shadow:none;border:1px solid rgba(201,162,83,.4);color:var(--tp-ivory)}
+#lzApp .lz-icon svg{width:52%;height:52%}
+#lzApp .lz-wallet,#lzApp .lz-win{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;padding:0;background:none;border:0;box-shadow:none;border-radius:0;flex:0 1 auto;min-width:0}
+#lzApp .lz-wallet b,#lzApp .lz-win b{font:600 clamp(12px,2.9vh,20px)/1.15 "Jost",sans-serif;color:var(--tp-ivory);white-space:nowrap}
+#lzApp .lz-win.has b{color:var(--tp-gold)}
+#lzApp .lz-lbl{font-size:clamp(7px,1.5vh,10px);letter-spacing:.2em;color:var(--tp-brass);font-weight:600}
+#lzApp .lz-field{flex:none;margin-left:auto;display:block}
+#lzApp .lz-field .lz-lbl{display:none}
+#lzApp .lz-stepper{display:flex;align-items:center;gap:clamp(3px,.5vw,6px)}
+#lzApp .lz-stepper>button{flex:none;width:clamp(22px,5.2vh,34px);height:clamp(22px,5.2vh,34px);min-height:0;padding:0;border-radius:50%;background:transparent;border:1px solid rgba(201,162,83,.5);color:var(--tp-ivory);font:500 clamp(14px,3vh,20px)/1 "Jost",sans-serif}
+#lzApp .lz-stepper>button.tp-edge{width:auto;padding:0 clamp(5px,.7vw,9px);border-radius:999px;font-size:clamp(7px,1.5vh,10px);letter-spacing:.14em;font-weight:600;color:var(--lz-muted);border-color:rgba(201,162,83,.28)}
+#lzApp .lz-amount{height:clamp(22px,5.2vh,34px);min-height:0;min-width:clamp(56px,9vw,120px);padding:0 10px;border-radius:999px;background:#0b0704;border:1px solid rgba(201,162,83,.28)}
+#lzApp .lz-amount b{font:600 clamp(11px,2.6vh,17px)/1 "Jost",sans-serif}
+#lzApp .lz-quick{display:flex;gap:clamp(4px,.5vw,6px);flex:none}
+#lzApp .lz-quick button{height:clamp(22px,5.2vh,34px);min-height:0;padding:0 clamp(7px,1vw,13px);border-radius:999px;background:transparent;border:1px solid rgba(201,162,83,.4);color:var(--tp-ivory);font:600 clamp(7px,1.6vh,10.5px)/1 "Jost",sans-serif;letter-spacing:.18em}
+#lzApp .lz-quick button[aria-pressed="true"],#lzApp .lz-quick button.on{background:var(--tp-brass);color:var(--tp-ink);border-color:transparent}
+/* the main button is the brass ball that starts the chain: about twice the height of everything else, rising out of the bar */
+#lzApp .lz-action{flex:none;order:9;width:var(--tp-d);height:var(--tp-d);min-height:0;padding:0;margin:calc(var(--tp-d)*-.5) 0 calc(var(--tp-d)*-.06);border-radius:50%;background:#c9a253;border:calc(var(--tp-d)*.035) solid #f1e7d0;outline:1px solid #120b06;outline-offset:calc(var(--tp-d)*-.11);color:#1a1206;box-shadow:none;z-index:3;transition:transform .12s cubic-bezier(.3,1.5,.5,1),background .2s}
+#lzApp .lz-action span{font:800 calc(var(--tp-d)*.2)/1.1 "Cinzel",Georgia,serif;letter-spacing:.1em}
+#lzApp .lz-action small{font:600 calc(var(--tp-d)*.115)/1.2 "Jost",sans-serif;opacity:.8}
+#lzApp .lz-action:not(:disabled):hover{filter:none;transform:translateY(-2px);background:#d8b468}
+#lzApp .lz-action:not(:disabled):active{transform:scale(.94)}
+#lzApp .lz-action.busy{filter:none;background:#6d5a35;border-color:#8c7a58}
+#lzApp .lz-action.busy span,#lzApp .lz-action.auto span{font-size:calc(var(--tp-d)*.135)}
+#lzApp .lz-action.auto{background:#b4472c;color:#fff}
+#lzApp .lz-msg{background:#181009;border-color:#e2603f;color:var(--tp-ivory)}
+
+/* replay: no play controls at all (Stake [171]). The shell hides them with a class rule; the id rules above would win, so repeat it here */
+.lz-is-replay #lzApp :is(.lz-field,.lz-quick,.lz-feats,.lz-modes,.lz-wallet),.lz-is-replay .tp-dock{display:none!important}
+.lz-is-replay #lzApp .lz-action span{font-size:calc(var(--tp-d)*.13);line-height:1.15}
+
+/* tracks and features live on the stage, next to the stones, and step aside while a round plays */
+.tp-dock{position:absolute;left:calc(var(--u)*1.6);right:calc(var(--u)*1.6);bottom:calc(var(--u)*1.4);display:flex;justify-content:space-between;align-items:flex-end;gap:calc(var(--u));pointer-events:none;transition:opacity .25s,transform .25s cubic-bezier(.2,.9,.3,1)}
+.tp-dock>*{pointer-events:auto}
+#lzApp.busy .tp-dock{opacity:0;transform:translateY(calc(var(--u)*2))}
+#lzApp.busy .tp-dock>*{pointer-events:none}
+#lzApp .lz-modes{display:flex;gap:calc(var(--u)*.6);padding:0;background:none;border:0;border-radius:0;flex:none}
+#lzApp .lz-modes button{padding:calc(var(--u)*.7) calc(var(--u)*1.3);border-radius:calc(var(--u)*.7);background:rgba(18,11,6,.82);border:1px solid rgba(201,162,83,.45);color:var(--tp-ivory);align-items:flex-start;transition:transform .12s cubic-bezier(.3,1.5,.5,1)}
+#lzApp .lz-modes button:not([aria-pressed="true"]):hover{transform:translateY(-2px)}
+#lzApp .lz-modes b{font:700 max(9px,calc(var(--u)*1.45))/1.2 "Cinzel",Georgia,serif;letter-spacing:.14em}
+#lzApp .lz-modes small{font:500 max(8px,calc(var(--u)*1.05))/1.3 "Jost",sans-serif;letter-spacing:.06em;color:var(--lz-muted);opacity:1}
+#lzApp .lz-modes button[aria-pressed="true"]{background:var(--tp-ivory);color:var(--tp-ink);border-color:var(--tp-ivory)}
+#lzApp .lz-modes button[aria-pressed="true"] small{color:#5a4a36}
+#lzApp .lz-feats{display:flex;gap:calc(var(--u)*.6);flex:none;margin-right:var(--tp-d)}
+#lzApp .lz-feat{padding:calc(var(--u)*.7) calc(var(--u)*1.3);border-radius:calc(var(--u)*.7);background:#0b0b0d;border:1px solid var(--tp-gold);color:var(--tp-gold);align-items:flex-start;box-shadow:none;transition:transform .12s cubic-bezier(.3,1.5,.5,1)}
+#lzApp .lz-feat:not(:disabled):hover{transform:translateY(-2px)}
+#lzApp .lz-feat span{font:700 max(9px,calc(var(--u)*1.45))/1.2 "Cinzel",Georgia,serif;letter-spacing:.14em}
+#lzApp .lz-feat small{font:600 max(8px,calc(var(--u)*1.15))/1.3 "Jost",sans-serif;color:var(--tp-ivory);opacity:1}
+
+@media (max-aspect-ratio:1/1){
+  #lzApp{--tp-d:clamp(64px,21vw,96px)}
+  #lzPanel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"left wallet win" "field field action" "quick quick action";gap:8px 10px;padding:8px 10px;align-items:center}
+  .tp-b-left{grid-area:left}
+  #lzApp .lz-wallet{grid-area:wallet}#lzApp .lz-win{grid-area:win;align-items:flex-end}
+  #lzApp .lz-field{grid-area:field;margin:0}#lzApp .lz-quick{grid-area:quick}
+  #lzApp .lz-action{grid-area:action;margin:0}
+  #lzApp .lz-wallet b,#lzApp .lz-win b{font-size:17px}#lzApp .lz-lbl{font-size:9px}
+  #lzApp .lz-icon,#lzApp .lz-stepper>button,#lzApp .lz-amount,#lzApp .lz-quick button{height:34px}
+  #lzApp .lz-icon,#lzApp .lz-stepper>button:not(.tp-edge){width:34px}
+  #lzApp .lz-amount{flex:1 1 auto}#lzApp .lz-amount b{font-size:15px}#lzApp .lz-stepper{width:100%}
+  #lzApp .lz-quick button{flex:1 1 0;font-size:10px}
+  .tp-dock{flex-direction:column-reverse;align-items:flex-start;gap:calc(var(--u)*1.2)}
+  #lzApp .lz-feats{margin-right:0}
+  #lzApp .lz-modes b,#lzApp .lz-feat span{font-size:max(10px,calc(var(--u)*2.05))}
+  #lzApp .lz-modes small,#lzApp .lz-feat small{font-size:max(9px,calc(var(--u)*1.55))}
+  #lzApp .lz-modes button,#lzApp .lz-feat{padding:calc(var(--u)*1.1) calc(var(--u)*1.5)}
+  /* phone: the row strip gets a line of its own under the pot */
+  .tp-top{right:calc(var(--u)*1.6);max-width:none}
+  .tp-strip{margin-top:calc(var(--u)*6.8)}
+  .tp-strip i{width:calc(var(--u)*1.12)}
+  .tp-note{top:calc(var(--u)*19)}
+}
+/* the small pop-out window: keep every control, drop the decoration */
+@media (min-aspect-ratio:1/1) and (max-height:330px){
+  .tp-b-left{position:fixed;top:3px;right:6px;z-index:4}
+  #lzApp .lz-lbl,#lzApp .lz-stepper>button.tp-edge,#lzApp .lz-modes small,#lzApp .lz-feat small{display:none}
+  #lzApp .lz-wallet b,#lzApp .lz-win b{font-size:11px}
+  #lzApp .lz-wallet b::before{content:"BAL ";font-size:7px;letter-spacing:.14em;color:var(--tp-brass)}#lzApp .lz-win b::before{content:"WIN ";font-size:7px;letter-spacing:.14em;color:var(--tp-brass)}
+  #lzApp .lz-modes b,#lzApp .lz-feat span{font-size:8px;letter-spacing:.05em}
+  #lzApp .lz-modes,#lzApp .lz-feats{gap:3px}.tp-dock{left:4px;right:4px;bottom:3px}
+  #lzPanel{gap:6px;padding:3px 8px}
+  #lzApp .lz-modes button,#lzApp .lz-feat{padding:3px 6px}
+  .tp-world,.tp-note{display:none}
+}

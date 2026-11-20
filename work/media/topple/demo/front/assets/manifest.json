@@ -1,0 +1,724 @@
+{
+ "about": "Topple world pack. Metres everywhere; props are Y-up, stand on y=0 with the base centre on the origin, and face +Z. Sources and licences: ../../CREDITS.md",
+ "loading": "GLBs use EXT_meshopt_compression + KHR_mesh_quantization + EXT_texture_webp: new THREE.GLTFLoader().setMeshoptDecoder(MeshoptDecoder), with front/meshopt_decoder.js loaded first.",
+ "props": [
+  {
+   "id": "chess_set",
+   "world": "table",
+   "hero": true,
+   "file": "props/chess_set.glb",
+   "bytes": 180912,
+   "triangles": 6162,
+   "size": {
+    "height": 0.112,
+    "width": 0.553,
+    "depth": 0.553
+   },
+   "bbox": {
+    "min": [
+     -0.277,
+     0,
+     -0.277
+    ],
+    "max": [
+     0.277,
+     0.112,
+     0.277
+    ]
+   },
+   "materials": [
+    "chess_set_pieces_white",
+    "chess_set_board",
+    "chess_set_pieces_black"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "board 55 cm square with all 32 pieces set up; white on the -Z side"
+  },
+  {
+   "id": "book_encyclopedia_set_01",
+   "world": "table",
+   "hero": false,
+   "file": "props/book_encyclopedia_set_01.glb",
+   "bytes": 69424,
+   "triangles": 2378,
+   "size": {
+    "height": 0.237,
+    "width": 0.551,
+    "depth": 0.163
+   },
+   "bbox": {
+    "min": [
+     -0.019,
+     0,
+     -0.062
+    ],
+    "max": [
+     0.532,
+     0.237,
+     0.101
+    ]
+   },
+   "materials": [
+    "book_encyclopedia_set_01_cover",
+    "book_encyclopedia_set_01_paper"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "row of 20 leather volumes along X, spines face +Z"
+  },
+  {
+   "id": "mantel_clock_01",
+   "world": "table",
+   "hero": false,
+   "file": "props/mantel_clock_01.glb",
+   "bytes": 81496,
+   "triangles": 3498,
+   "size": {
+    "height": 0.16,
+    "width": 0.342,
+    "depth": 0.126
+   },
+   "bbox": {
+    "min": [
+     -0.171,
+     0,
+     -0.063
+    ],
+    "max": [
+     0.171,
+     0.161,
+     0.063
+    ]
+   },
+   "materials": [
+    "mantel_clock_01",
+    "mantel_clock_01_glass"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": ""
+  },
+  {
+   "id": "brass_vase_03",
+   "world": "table",
+   "hero": false,
+   "file": "props/brass_vase_03.glb",
+   "bytes": 65384,
+   "triangles": 2616,
+   "size": {
+    "height": 0.2,
+    "width": 0.083,
+    "depth": 0.083
+   },
+   "bbox": {
+    "min": [
+     -0.041,
+     0.001,
+     -0.041
+    ],
+    "max": [
+     0.041,
+     0.201,
+     0.041
+    ]
+   },
+   "materials": [
+    "brass_vase_03"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": ""
+  },
+  {
+   "id": "magnifying_glass_01",
+   "world": "table",
+   "hero": false,
+   "file": "props/magnifying_glass_01.glb",
+   "bytes": 23388,
+   "triangles": 1998,
+   "size": {
+    "height": 0.027,
+    "width": 0.132,
+    "depth": 0.272
+   },
+   "bbox": {
+    "min": [
+     -0.066,
+     0,
+     -0.136
+    ],
+    "max": [
+     0.066,
+     0.027,
+     0.136
+    ]
+   },
+   "materials": [
+    "magnifying_glass_01",
+    "magnifying_glass_01_lense"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "laid flat on the table (the source stands upright): lens towards -Z, handle towards +Z; the lens is a plain clear pane, not a refracting one"
+  },
+  {
+   "id": "horse_statue_01",
+   "world": "table",
+   "hero": false,
+   "file": "props/horse_statue_01.glb",
+   "bytes": 87388,
+   "triangles": 4498,
+   "size": {
+    "height": 0.22,
+    "width": 0.163,
+    "depth": 0.108
+   },
+   "bbox": {
+    "min": [
+     -0.085,
+     0,
+     -0.054
+    ],
+    "max": [
+     0.078,
+     0.22,
+     0.054
+    ]
+   },
+   "materials": [
+    "horse_statue_01"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": ""
+  },
+  {
+   "id": "vintage_grandfather_clock_01",
+   "world": "room",
+   "hero": true,
+   "file": "props/vintage_grandfather_clock_01.glb",
+   "bytes": 200496,
+   "triangles": 4995,
+   "size": {
+    "height": 2.191,
+    "width": 0.626,
+    "depth": 0.427
+   },
+   "bbox": {
+    "min": [
+     -0.313,
+     0,
+     -0.188
+    ],
+    "max": [
+     0.313,
+     2.191,
+     0.238
+    ]
+   },
+   "materials": [
+    "vintage_grandfather_clock_01",
+    "vintage_grandfather_clock_01_glass"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "dial faces +Z"
+  },
+  {
+   "id": "mid_century_lounge_chair",
+   "world": "room",
+   "hero": false,
+   "file": "props/mid_century_lounge_chair.glb",
+   "bytes": 86272,
+   "triangles": 4000,
+   "size": {
+    "height": 1.169,
+    "width": 1.009,
+    "depth": 1.19
+   },
+   "bbox": {
+    "min": [
+     -0.504,
+     0,
+     -0.661
+    ],
+    "max": [
+     0.504,
+     1.169,
+     0.529
+    ]
+   },
+   "materials": [
+    "mid_century_lounge_chair"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": ""
+  },
+  {
+   "id": "Sofa_01",
+   "world": "room",
+   "hero": false,
+   "file": "props/Sofa_01.glb",
+   "bytes": 73248,
+   "triangles": 3499,
+   "size": {
+    "height": 0.797,
+    "width": 1.571,
+    "depth": 0.658
+   },
+   "bbox": {
+    "min": [
+     -0.778,
+     -0.001,
+     -0.361
+    ],
+    "max": [
+     0.793,
+     0.796,
+     0.297
+    ]
+   },
+   "materials": [
+    "Sofa_01"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": ""
+  },
+  {
+   "id": "round_wooden_table_01",
+   "world": "room",
+   "hero": false,
+   "file": "props/round_wooden_table_01.glb",
+   "bytes": 58812,
+   "triangles": 2998,
+   "size": {
+    "height": 1.004,
+    "width": 1.399,
+    "depth": 1.398
+   },
+   "bbox": {
+    "min": [
+     -0.7,
+     -0.001,
+     -0.698
+    ],
+    "max": [
+     0.7,
+     1.004,
+     0.7
+    ]
+   },
+   "materials": [
+    "round_wooden_table_01"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": ""
+  },
+  {
+   "id": "potted_plant_01",
+   "world": "room",
+   "hero": false,
+   "file": "props/potted_plant_01.glb",
+   "bytes": 155020,
+   "triangles": 3961,
+   "size": {
+    "height": 1.334,
+    "width": 0.596,
+    "depth": 0.65
+   },
+   "bbox": {
+    "min": [
+     -0.339,
+     0.001,
+     -0.366
+    ],
+    "max": [
+     0.256,
+     1.336,
+     0.285
+    ]
+   },
+   "materials": [
+    "potted_plant_01_pot",
+    "potted_plant_01_leaves"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "leaves are flat cut-out cards (alpha test); 1.4 cm of the pot base sits below y=0"
+  },
+  {
+   "id": "potted_plant_02",
+   "world": "room",
+   "hero": false,
+   "file": "props/potted_plant_02.glb",
+   "bytes": 146904,
+   "triangles": 5798,
+   "size": {
+    "height": 0.841,
+    "width": 0.701,
+    "depth": 0.655
+   },
+   "bbox": {
+    "min": [
+     -0.397,
+     0,
+     -0.42
+    ],
+    "max": [
+     0.304,
+     0.841,
+     0.235
+    ]
+   },
+   "materials": [
+    "potted_plant_02_pot",
+    "potted_plant_02_leaves"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "leaves use alpha test"
+  },
+  {
+   "id": "street_lamp_01",
+   "world": "street",
+   "hero": true,
+   "file": "props/street_lamp_01.glb",
+   "bytes": 95400,
+   "triangles": 5996,
+   "size": {
+    "height": 3.87,
+    "width": 0.703,
+    "depth": 0.386
+   },
+   "bbox": {
+    "min": [
+     -0.351,
+     0,
+     -0.193
+    ],
+    "max": [
+     0.351,
+     3.87,
+     0.193
+    ]
+   },
+   "materials": [
+    "street_lamp_01",
+    "street_lamp_01_glass",
+    "street_lamp_01_bulb"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "the bulb is its own material (street_lamp_01_bulb) with a warm emissive colour: raise emissiveIntensity for a lit lamp; ladder bar along X"
+  },
+  {
+   "id": "modular_street_seating",
+   "world": "street",
+   "hero": false,
+   "file": "props/modular_street_seating.glb",
+   "bytes": 95844,
+   "triangles": 3067,
+   "size": {
+    "height": 0.867,
+    "width": 2.452,
+    "depth": 0.67
+   },
+   "bbox": {
+    "min": [
+     -1.226,
+     0,
+     -0.335
+    ],
+    "max": [
+     1.226,
+     0.867,
+     0.335
+    ]
+   },
+   "materials": [
+    "modular_street_seating_armrests",
+    "modular_street_seating_supports",
+    "modular_street_seating_timber"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "one 2.45 m bench assembled from the modular pack; seat faces +Z"
+  },
+  {
+   "id": "outdoor_table_chair_set_01",
+   "world": "street",
+   "hero": false,
+   "file": "props/outdoor_table_chair_set_01.glb",
+   "bytes": 172560,
+   "triangles": 6706,
+   "size": {
+    "height": 0.858,
+    "width": 0.742,
+    "depth": 1.716
+   },
+   "bbox": {
+    "min": [
+     -0.426,
+     -0.006,
+     -0.81
+    ],
+    "max": [
+     0.316,
+     0.852,
+     0.906
+    ]
+   },
+   "materials": [
+    "outdoor_table_chair_set_01_chair",
+    "outdoor_table_chair_set_01_table"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "folding cafe table with two chairs, set out along Z"
+  },
+  {
+   "id": "fire_hydrant",
+   "world": "street",
+   "hero": false,
+   "file": "props/fire_hydrant.glb",
+   "bytes": 79480,
+   "triangles": 3012,
+   "size": {
+    "height": 0.799,
+    "width": 0.274,
+    "depth": 0.317
+   },
+   "bbox": {
+    "min": [
+     -0.137,
+     0,
+     -0.159
+    ],
+    "max": [
+     0.137,
+     0.799,
+     0.159
+    ]
+   },
+   "materials": [
+    "fire_hydrant"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "the clean red one of the two in the pack, without its chain"
+  },
+  {
+   "id": "covered_car",
+   "world": "street",
+   "hero": false,
+   "file": "props/covered_car.glb",
+   "bytes": 97184,
+   "triangles": 3995,
+   "size": {
+    "height": 1.406,
+    "width": 1.787,
+    "depth": 4.354
+   },
+   "bbox": {
+    "min": [
+     -0.847,
+     0.005,
+     -2.158
+    ],
+    "max": [
+     0.941,
+     1.411,
+     2.196
+    ]
+   },
+   "materials": [
+    "covered_car"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "a car under a cloth cover, 4.35 m long along Z"
+  },
+  {
+   "id": "tree_small_02",
+   "world": "street",
+   "hero": false,
+   "file": "props/tree_small_02.glb",
+   "bytes": 347708,
+   "triangles": 14141,
+   "size": {
+    "height": 4.611,
+    "width": 2.969,
+    "depth": 4.299
+   },
+   "bbox": {
+    "min": [
+     -1.298,
+     -0.024,
+     -1.378
+    ],
+    "max": [
+     1.671,
+     4.587,
+     2.921
+    ]
+   },
+   "materials": [
+    "tree_small_02_branches",
+    "tree_small_02_leaves",
+    "tree_small_02_trunk"
+   ],
+   "up": "+Y",
+   "front": "+Z",
+   "origin": "base centre, on the ground (y=0)",
+   "note": "crown rebuilt as about 5000 leaf cards (alpha test, cutoff 0.3, double sided); meant to be seen whole, not close up"
+  }
+ ],
+ "ground": [
+  {
+   "id": "wood_table_001",
+   "world": "table",
+   "note": "walnut table top (the look test material)",
+   "files": {
+    "diff": "ground/wood_table_001/diff.webp",
+    "nor": "ground/wood_table_001/nor.webp",
+    "arm": "ground/wood_table_001/arm.webp"
+   },
+   "bytes": 214202,
+   "pixels": 1024,
+   "tileMetres": 1.5,
+   "maps": "diff = sRGB colour; nor = OpenGL normal map (linear); arm = ambient occlusion R, roughness G, metalness B (linear)"
+  },
+  {
+   "id": "herringbone_parquet",
+   "world": "room",
+   "note": "warm oak herringbone parquet",
+   "files": {
+    "diff": "ground/herringbone_parquet/diff.webp",
+    "nor": "ground/herringbone_parquet/nor.webp",
+    "arm": "ground/herringbone_parquet/arm.webp"
+   },
+   "bytes": 181878,
+   "pixels": 1024,
+   "tileMetres": 3.4,
+   "maps": "diff = sRGB colour; nor = OpenGL normal map (linear); arm = ambient occlusion R, roughness G, metalness B (linear)"
+  },
+  {
+   "id": "cobblestone_pavement",
+   "world": "street",
+   "note": "warm stone setts in mixed tones",
+   "files": {
+    "diff": "ground/cobblestone_pavement/diff.webp",
+    "nor": "ground/cobblestone_pavement/nor.webp",
+    "arm": "ground/cobblestone_pavement/arm.webp"
+   },
+   "bytes": 215516,
+   "pixels": 1024,
+   "tileMetres": 2.5,
+   "maps": "diff = sRGB colour; nor = OpenGL normal map (linear); arm = ambient occlusion R, roughness G, metalness B (linear)"
+  },
+  {
+   "id": "asphalt_track",
+   "world": "city",
+   "note": "dark clean asphalt",
+   "files": {
+    "diff": "ground/asphalt_track/diff.webp",
+    "nor": "ground/asphalt_track/nor.webp",
+    "arm": "ground/asphalt_track/arm.webp"
+   },
+   "bytes": 219902,
+   "pixels": 1024,
+   "tileMetres": 2,
+   "maps": "diff = sRGB colour; nor = OpenGL normal map (linear); arm = ambient occlusion R, roughness G, metalness B (linear)"
+  }
+ ],
+ "env": [
+  {
+   "id": "lythwood_lounge",
+   "use": "worlds 1-2 (table, room): warm interior",
+   "file": "env/lythwood_lounge.hdr",
+   "bytes": 391824,
+   "width": 512,
+   "height": 256,
+   "format": "Radiance RGBE, run-length encoded, linear",
+   "meanLuminance": 0.9141,
+   "medianLuminance": 0.2905,
+   "peakLuminance": 341
+  },
+  {
+   "id": "neuer_zollhof",
+   "use": "world 3 (street): dusk, blue-violet sky, warm lamp-lit paving",
+   "file": "env/neuer_zollhof.hdr",
+   "bytes": 378335,
+   "width": 512,
+   "height": 256,
+   "format": "Radiance RGBE, run-length encoded, linear",
+   "meanLuminance": 1.3812,
+   "medianLuminance": 0.2685,
+   "peakLuminance": 23047.3
+  },
+  {
+   "id": "shanghai_bund",
+   "use": "world 4 (city): night skyline with neon and street lights",
+   "file": "env/shanghai_bund.hdr",
+   "bytes": 415265,
+   "width": 512,
+   "height": 256,
+   "format": "Radiance RGBE, run-length encoded, linear",
+   "meanLuminance": 0.7962,
+   "medianLuminance": 0.0378,
+   "peakLuminance": 7954.9
+  },
+  {
+   "id": "qwantani_moonrise_puresky",
+   "use": "world 5 (above the clouds): deep blue sky, low moon, no ground objects",
+   "file": "env/qwantani_moonrise_puresky.hdr",
+   "bytes": 328298,
+   "width": 512,
+   "height": 256,
+   "format": "Radiance RGBE, run-length encoded, linear",
+   "meanLuminance": 1.084,
+   "medianLuminance": 0.187,
+   "peakLuminance": 43329.7
+  },
+  {
+   "id": "studio_small_08",
+   "use": "bonus: dark studio with softboxes",
+   "file": "env/studio_small_08.hdr",
+   "bytes": 382517,
+   "width": 512,
+   "height": 256,
+   "format": "Radiance RGBE, run-length encoded, linear",
+   "meanLuminance": 0.8343,
+   "medianLuminance": 0.2532,
+   "peakLuminance": 78.7
+  }
+ ],
+ "moon": {
+  "file": "moon/moon.webp",
+  "bytes": 82084,
+  "width": 1024,
+  "height": 512,
+  "note": "equirectangular colour map, sRGB; longitude 0 (the near side) is at the image centre. The real Moon is 3474.8 km across."
+ }
+}

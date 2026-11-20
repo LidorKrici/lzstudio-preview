@@ -1,0 +1,721 @@
+{
+  "about": "Topple sound set. Every sound is cut from CC0 recordings of real objects and instruments, see CREDITS-sound.md. Loops (loop: true) are seamless when played from a decoded buffer (Web Audio, AudioBufferSourceNode.loop).",
+  "key": "C major. mult_1..5 = G5 A5 C6 D6 E6 (pentatonic), gold_1..3 = C4 G4 C5, split = G6 then C7, all tuned to A = 440 Hz",
+  "format": "webm = Opus 48 kHz (mono 64 kbps, stereo 96 kbps); mp4 = AAC-LC fallback",
+  "sounds": {
+    "clack_wood_1": {
+      "files": [
+        "clack_wood_1.webm",
+        "clack_wood_1.mp4"
+      ],
+      "dur": 0.3,
+      "peak": -3,
+      "group": "impact"
+    },
+    "clack_wood_2": {
+      "files": [
+        "clack_wood_2.webm",
+        "clack_wood_2.mp4"
+      ],
+      "dur": 0.3,
+      "peak": -5,
+      "group": "impact"
+    },
+    "clack_wood_3": {
+      "files": [
+        "clack_wood_3.webm",
+        "clack_wood_3.mp4"
+      ],
+      "dur": 0.3,
+      "peak": -3,
+      "group": "impact"
+    },
+    "clack_wood_4": {
+      "files": [
+        "clack_wood_4.webm",
+        "clack_wood_4.mp4"
+      ],
+      "dur": 0.3,
+      "peak": -3.3,
+      "group": "impact"
+    },
+    "clack_ivory_1": {
+      "files": [
+        "clack_ivory_1.webm",
+        "clack_ivory_1.mp4"
+      ],
+      "dur": 0.24,
+      "peak": -4.5,
+      "group": "impact"
+    },
+    "clack_ivory_2": {
+      "files": [
+        "clack_ivory_2.webm",
+        "clack_ivory_2.mp4"
+      ],
+      "dur": 0.24,
+      "peak": -3,
+      "group": "impact"
+    },
+    "clack_ivory_3": {
+      "files": [
+        "clack_ivory_3.webm",
+        "clack_ivory_3.mp4"
+      ],
+      "dur": 0.24,
+      "peak": -3.4,
+      "group": "impact"
+    },
+    "clack_ivory_4": {
+      "files": [
+        "clack_ivory_4.webm",
+        "clack_ivory_4.mp4"
+      ],
+      "dur": 0.24,
+      "peak": -3,
+      "group": "impact"
+    },
+    "clack_metal_1": {
+      "files": [
+        "clack_metal_1.webm",
+        "clack_metal_1.mp4"
+      ],
+      "dur": 0.4,
+      "peak": -3,
+      "group": "impact"
+    },
+    "clack_metal_2": {
+      "files": [
+        "clack_metal_2.webm",
+        "clack_metal_2.mp4"
+      ],
+      "dur": 0.4,
+      "peak": -4.2,
+      "group": "impact"
+    },
+    "clack_metal_3": {
+      "files": [
+        "clack_metal_3.webm",
+        "clack_metal_3.mp4"
+      ],
+      "dur": 0.4,
+      "peak": -3.8,
+      "group": "impact"
+    },
+    "clack_metal_4": {
+      "files": [
+        "clack_metal_4.webm",
+        "clack_metal_4.mp4"
+      ],
+      "dur": 0.4,
+      "peak": -3,
+      "group": "impact"
+    },
+    "clack_stone_1": {
+      "files": [
+        "clack_stone_1.webm",
+        "clack_stone_1.mp4"
+      ],
+      "dur": 0.3,
+      "peak": -3,
+      "group": "impact"
+    },
+    "clack_stone_2": {
+      "files": [
+        "clack_stone_2.webm",
+        "clack_stone_2.mp4"
+      ],
+      "dur": 0.3,
+      "peak": -3,
+      "group": "impact"
+    },
+    "clack_stone_3": {
+      "files": [
+        "clack_stone_3.webm",
+        "clack_stone_3.mp4"
+      ],
+      "dur": 0.3,
+      "peak": -4.5,
+      "group": "impact"
+    },
+    "clack_stone_4": {
+      "files": [
+        "clack_stone_4.webm",
+        "clack_stone_4.mp4"
+      ],
+      "dur": 0.085,
+      "peak": -4,
+      "group": "impact"
+    },
+    "clack_glass_1": {
+      "files": [
+        "clack_glass_1.webm",
+        "clack_glass_1.mp4"
+      ],
+      "dur": 0.36,
+      "peak": -3,
+      "group": "impact"
+    },
+    "clack_glass_2": {
+      "files": [
+        "clack_glass_2.webm",
+        "clack_glass_2.mp4"
+      ],
+      "dur": 0.36,
+      "peak": -3.1,
+      "group": "impact"
+    },
+    "clack_glass_3": {
+      "files": [
+        "clack_glass_3.webm",
+        "clack_glass_3.mp4"
+      ],
+      "dur": 0.36,
+      "peak": -3,
+      "group": "impact"
+    },
+    "thud_small_1": {
+      "files": [
+        "thud_small_1.webm",
+        "thud_small_1.mp4"
+      ],
+      "dur": 0.6,
+      "peak": -3,
+      "group": "impact"
+    },
+    "thud_small_2": {
+      "files": [
+        "thud_small_2.webm",
+        "thud_small_2.mp4"
+      ],
+      "dur": 0.6,
+      "peak": -3.8,
+      "group": "impact"
+    },
+    "thud_small_3": {
+      "files": [
+        "thud_small_3.webm",
+        "thud_small_3.mp4"
+      ],
+      "dur": 0.6,
+      "peak": -3,
+      "group": "impact"
+    },
+    "thud_big_1": {
+      "files": [
+        "thud_big_1.webm",
+        "thud_big_1.mp4"
+      ],
+      "dur": 0.8,
+      "peak": -3,
+      "group": "impact"
+    },
+    "thud_big_2": {
+      "files": [
+        "thud_big_2.webm",
+        "thud_big_2.mp4"
+      ],
+      "dur": 0.8,
+      "peak": -3,
+      "group": "impact"
+    },
+    "thud_big_3": {
+      "files": [
+        "thud_big_3.webm",
+        "thud_big_3.mp4"
+      ],
+      "dur": 0.8,
+      "peak": -5.1,
+      "group": "impact"
+    },
+    "slam_huge_1": {
+      "files": [
+        "slam_huge_1.webm",
+        "slam_huge_1.mp4"
+      ],
+      "dur": 2.8,
+      "peak": -5.2,
+      "group": "impact"
+    },
+    "slam_huge_2": {
+      "files": [
+        "slam_huge_2.webm",
+        "slam_huge_2.mp4"
+      ],
+      "dur": 2.8,
+      "peak": -3,
+      "group": "impact"
+    },
+    "rumble_loop": {
+      "files": [
+        "rumble_loop.webm",
+        "rumble_loop.mp4"
+      ],
+      "dur": 4,
+      "peak": -4.5,
+      "group": "impact",
+      "loop": true
+    },
+    "wobble_1": {
+      "files": [
+        "wobble_1.webm",
+        "wobble_1.mp4"
+      ],
+      "dur": 0.959,
+      "peak": -3,
+      "group": "stand"
+    },
+    "wobble_2": {
+      "files": [
+        "wobble_2.webm",
+        "wobble_2.mp4"
+      ],
+      "dur": 0.802,
+      "peak": -3,
+      "group": "stand"
+    },
+    "wobble_3": {
+      "files": [
+        "wobble_3.webm",
+        "wobble_3.mp4"
+      ],
+      "dur": 0.99,
+      "peak": -5.8,
+      "group": "stand"
+    },
+    "creak_1": {
+      "files": [
+        "creak_1.webm",
+        "creak_1.mp4"
+      ],
+      "dur": 0.52,
+      "peak": -3,
+      "group": "stand"
+    },
+    "creak_2": {
+      "files": [
+        "creak_2.webm",
+        "creak_2.mp4"
+      ],
+      "dur": 0.85,
+      "peak": -4.4,
+      "group": "stand"
+    },
+    "ball_swing": {
+      "files": [
+        "ball_swing.webm",
+        "ball_swing.mp4"
+      ],
+      "dur": 0.55,
+      "peak": -4,
+      "group": "ball"
+    },
+    "ball_hit_1": {
+      "files": [
+        "ball_hit_1.webm",
+        "ball_hit_1.mp4"
+      ],
+      "dur": 0.85,
+      "peak": -3,
+      "group": "ball"
+    },
+    "ball_hit_2": {
+      "files": [
+        "ball_hit_2.webm",
+        "ball_hit_2.mp4"
+      ],
+      "dur": 0.85,
+      "peak": -3,
+      "group": "ball"
+    },
+    "ball_hit_3": {
+      "files": [
+        "ball_hit_3.webm",
+        "ball_hit_3.mp4"
+      ],
+      "dur": 0.85,
+      "peak": -6,
+      "group": "ball"
+    },
+    "bank_ting": {
+      "files": [
+        "bank_ting.webm",
+        "bank_ting.mp4"
+      ],
+      "dur": 0.5,
+      "peak": -3,
+      "group": "ball"
+    },
+    "mult_1": {
+      "files": [
+        "mult_1.webm",
+        "mult_1.mp4"
+      ],
+      "dur": 1.3,
+      "peak": -3,
+      "group": "special",
+      "note": "G5"
+    },
+    "mult_2": {
+      "files": [
+        "mult_2.webm",
+        "mult_2.mp4"
+      ],
+      "dur": 1.3,
+      "peak": -3,
+      "group": "special",
+      "note": "A5"
+    },
+    "mult_3": {
+      "files": [
+        "mult_3.webm",
+        "mult_3.mp4"
+      ],
+      "dur": 1.3,
+      "peak": -3,
+      "group": "special",
+      "note": "C6"
+    },
+    "mult_4": {
+      "files": [
+        "mult_4.webm",
+        "mult_4.mp4"
+      ],
+      "dur": 1.3,
+      "peak": -3,
+      "group": "special",
+      "note": "D6 + D7"
+    },
+    "mult_5": {
+      "files": [
+        "mult_5.webm",
+        "mult_5.mp4"
+      ],
+      "dur": 1.3,
+      "peak": -3,
+      "group": "special",
+      "note": "E6 + E7"
+    },
+    "gold_1": {
+      "files": [
+        "gold_1.webm",
+        "gold_1.mp4"
+      ],
+      "dur": 2.4,
+      "peak": -3,
+      "group": "special",
+      "note": "C4"
+    },
+    "gold_2": {
+      "files": [
+        "gold_2.webm",
+        "gold_2.mp4"
+      ],
+      "dur": 2.4,
+      "peak": -3,
+      "group": "special",
+      "note": "G4"
+    },
+    "gold_3": {
+      "files": [
+        "gold_3.webm",
+        "gold_3.mp4"
+      ],
+      "dur": 2.4,
+      "peak": -3,
+      "group": "special",
+      "note": "C5"
+    },
+    "split": {
+      "files": [
+        "split.webm",
+        "split.mp4"
+      ],
+      "dur": 1,
+      "peak": -3,
+      "group": "special",
+      "note": "G6 then C7"
+    },
+    "bonus_in": {
+      "files": [
+        "bonus_in.webm",
+        "bonus_in.mp4"
+      ],
+      "dur": 3.05,
+      "peak": -3,
+      "group": "special"
+    },
+    "world_up": {
+      "files": [
+        "world_up.webm",
+        "world_up.mp4"
+      ],
+      "dur": 1.2,
+      "peak": -3,
+      "group": "special"
+    },
+    "count_tick_loop": {
+      "files": [
+        "count_tick_loop.webm",
+        "count_tick_loop.mp4"
+      ],
+      "dur": 1,
+      "peak": -3,
+      "group": "count",
+      "loop": true
+    },
+    "win_end_low": {
+      "files": [
+        "win_end_low.webm",
+        "win_end_low.mp4"
+      ],
+      "dur": 1.2,
+      "peak": -3,
+      "group": "result",
+      "note": "harp C5, G5"
+    },
+    "win_end_over": {
+      "files": [
+        "win_end_over.webm",
+        "win_end_over.mp4"
+      ],
+      "dur": 2.3,
+      "peak": -3,
+      "group": "result",
+      "note": "harp C4 E4 G4 C5, glockenspiel E6 G6 C7, tubular bell C5"
+    },
+    "win_end_high": {
+      "files": [
+        "win_end_high.webm",
+        "win_end_high.mp4"
+      ],
+      "dur": 4.2,
+      "peak": -3,
+      "group": "result",
+      "note": "harp run C3 to C6, then tubular bells C4 G4 C5 + glockenspiel C6 E6 G6 C7 + crash, bass drum, gong"
+    },
+    "lose_soft": {
+      "files": [
+        "lose_soft.webm",
+        "lose_soft.mp4"
+      ],
+      "dur": 0.6,
+      "peak": -12,
+      "group": "result",
+      "note": "marimba G4"
+    },
+    "ui_click_1": {
+      "files": [
+        "ui_click_1.webm",
+        "ui_click_1.mp4"
+      ],
+      "dur": 0.09,
+      "peak": -9,
+      "group": "ui"
+    },
+    "ui_click_2": {
+      "files": [
+        "ui_click_2.webm",
+        "ui_click_2.mp4"
+      ],
+      "dur": 0.09,
+      "peak": -9,
+      "group": "ui"
+    },
+    "ui_hover": {
+      "files": [
+        "ui_hover.webm",
+        "ui_hover.mp4"
+      ],
+      "dur": 0.07,
+      "peak": -9,
+      "group": "ui"
+    },
+    "bet_tick": {
+      "files": [
+        "bet_tick.webm",
+        "bet_tick.mp4"
+      ],
+      "dur": 0.13,
+      "peak": -9,
+      "group": "ui"
+    },
+    "amb_room": {
+      "files": [
+        "amb_room.webm",
+        "amb_room.mp4"
+      ],
+      "dur": 12.026,
+      "peak": -3.9,
+      "group": "ambience",
+      "loop": true
+    },
+    "amb_street": {
+      "files": [
+        "amb_street.webm",
+        "amb_street.mp4"
+      ],
+      "dur": 12,
+      "peak": -3.9,
+      "group": "ambience",
+      "loop": true
+    },
+    "amb_city": {
+      "files": [
+        "amb_city.webm",
+        "amb_city.mp4"
+      ],
+      "dur": 12,
+      "peak": -4.7,
+      "group": "ambience",
+      "loop": true
+    },
+    "amb_sky": {
+      "files": [
+        "amb_sky.webm",
+        "amb_sky.mp4"
+      ],
+      "dur": 14,
+      "peak": -2,
+      "group": "ambience",
+      "loop": true
+    },
+    "music_candidate_1": {
+      "files": [
+        "music_candidate_1.webm",
+        "music_candidate_1.mp4"
+      ],
+      "dur": 42.857,
+      "peak": -2.4,
+      "group": "music",
+      "loop": true
+    },
+    "music_candidate_2": {
+      "files": [
+        "music_candidate_2.webm",
+        "music_candidate_2.mp4"
+      ],
+      "dur": 72.453,
+      "peak": -1.5,
+      "group": "music",
+      "loop": true
+    },
+    "music_candidate_3": {
+      "files": [
+        "music_candidate_3.webm",
+        "music_candidate_3.mp4"
+      ],
+      "dur": 72,
+      "peak": -4.7,
+      "group": "music",
+      "loop": true
+    },
+    "music_casino_1": {
+      "files": [
+        "music_casino_1.webm",
+        "music_casino_1.mp4"
+      ],
+      "dur": 45,
+      "peak": -8.2,
+      "group": "music",
+      "loop": true
+    },
+    "music_casino_2": {
+      "files": [
+        "music_casino_2.webm",
+        "music_casino_2.mp4"
+      ],
+      "dur": 34.911,
+      "peak": -5.8,
+      "group": "music",
+      "loop": true
+    },
+    "music_casino_3": {
+      "files": [
+        "music_casino_3.webm",
+        "music_casino_3.mp4"
+      ],
+      "dur": 30.969,
+      "peak": -7.7,
+      "group": "music",
+      "loop": true
+    }
+  },
+  "pools": {
+    "clack_wood": [
+      "clack_wood_1",
+      "clack_wood_2",
+      "clack_wood_3",
+      "clack_wood_4"
+    ],
+    "clack_ivory": [
+      "clack_ivory_1",
+      "clack_ivory_2",
+      "clack_ivory_3",
+      "clack_ivory_4"
+    ],
+    "clack_metal": [
+      "clack_metal_1",
+      "clack_metal_2",
+      "clack_metal_3",
+      "clack_metal_4"
+    ],
+    "clack_stone": [
+      "clack_stone_1",
+      "clack_stone_2",
+      "clack_stone_3",
+      "clack_stone_4"
+    ],
+    "clack_glass": [
+      "clack_glass_1",
+      "clack_glass_2",
+      "clack_glass_3"
+    ],
+    "thud_small": [
+      "thud_small_1",
+      "thud_small_2",
+      "thud_small_3"
+    ],
+    "thud_big": [
+      "thud_big_1",
+      "thud_big_2",
+      "thud_big_3"
+    ],
+    "slam_huge": [
+      "slam_huge_1",
+      "slam_huge_2"
+    ],
+    "wobble": [
+      "wobble_1",
+      "wobble_2",
+      "wobble_3"
+    ],
+    "creak": [
+      "creak_1",
+      "creak_2"
+    ],
+    "ball_hit": [
+      "ball_hit_1",
+      "ball_hit_2",
+      "ball_hit_3"
+    ],
+    "ui_click": [
+      "ui_click_1",
+      "ui_click_2"
+    ]
+  },
+  "ladders": {
+    "mult": [
+      "mult_1",
+      "mult_2",
+      "mult_3",
+      "mult_4",
+      "mult_5"
+    ],
+    "gold": [
+      "gold_1",
+      "gold_2",
+      "gold_3"
+    ]
+  }
+}
