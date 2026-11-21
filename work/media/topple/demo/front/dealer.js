@@ -69,9 +69,25 @@
       else if (p.ph === 3) { const d = home() - x; x += Math.sign(d) * Math.min(Math.abs(d), WALK_V * dt); if (Math.abs(home() - x) < 1e-3) { x = home(); p.ph = 4; p.t = 0; p.y0 = yaw; fadeTo(baseName, 0.6); } }
       else if (p.ph === 4) { yaw = p.y0 * (1 - ease(p.t / 0.6)); if (p.t >= 0.6) { yaw = 0; pace = null; } }
     }
-    // a pace cut short (a round starts): he turns back to the front where he stands
-    let unturn = null;
-    function stopPace() { if (pace) { pace = null; unturn = { y0: yaw, t: 0 }; } }
+    // a pace cut short (a round starts): he hurries back to his spot on the curtain side, turns to the front, and only
+    // then plays whatever was asked meanwhile (the throw). Already home: he just turns to the front.
+    const RET_V = 0.95;                                                   // m/s on the way back (the walk clip runs faster to match)
+    let unturn = null, ret = null, pending = null;
+    function stopPace() {
+      if (!pace) return;
+      pace = null;
+      if (Math.abs(home() - x) < 0.02) { x = home(); unturn = { y0: yaw, t: 0 }; return; }
+      ret = { t: 0 }; if (A.walk) { if (curName !== 'walk') fadeTo('walk', 0.2); A.walk.timeScale = RET_V / WALK_V; }
+    }
+    function stepRet(dt) {
+      ret.t += dt; const d = home() - x;
+      yaw += (face(d) - yaw) * Math.min(1, dt * 14);                     // a quick turn towards home
+      x += Math.sign(d) * Math.min(Math.abs(d), RET_V * dt);
+      if (Math.abs(home() - x) < 1e-3) {
+        x = home(); ret = null; unturn = { y0: yaw, t: 0 }; if (A.walk) A.walk.timeScale = 1;
+        const n = pending; pending = null; fadeTo(n || baseName, n ? 0.25 : 0.4);
+      }
+    }
 
     // ---------- the monocle: a brass ring, a pane of glass and a fine chain to the lapel ----------
     const head = B.Head, brass = new T.MeshStandardMaterial({ color: 0xc99a3c, metalness: 1, roughness: 0.22 });
@@ -117,6 +133,7 @@
     fadeTo('idle', 0);
     function update(dt) {
       if (pace) stepPace(dt);
+      else if (ret) stepRet(dt);
       else if (unturn) { unturn.t += dt; yaw = unturn.y0 * (1 - ease(unturn.t / 0.35)); if (unturn.t >= 0.35) { yaw = 0; unturn = null; } }
       else { const want = curName === 'throw' && cur && cur.time < 4.2 ? side * 1.05 : 0; yaw += (want - yaw) * Math.min(1, dt * (want ? 9 : 3)); }   // he turns to the table to throw
       mixer.update(dt);
@@ -141,7 +158,7 @@
     }
     const api = {
       root, bones: B, onRelease: null, hand: () => B.RightHand,
-      base(name, quiet) { if (!A[name]) name = 'idle'; baseName = name; if (pace && name !== 'idle') stopPace(); if (!quiet && LOOP[curName] && curName !== name && !pace) fadeTo(name, 0.45); },
+      base(name, quiet) { if (!A[name]) name = 'idle'; baseName = name; if (pace && name !== 'idle') stopPace(); if (!quiet && LOOP[curName] && curName !== name && !pace && !ret) fadeTo(name, 0.45); },
       has(name) { return !!A[name]; },
       // holding his breath: the hand rub nearly stops while a stone hangs on its edge
       hold(on) { if (A.rub) A.rub.timeScale = on ? 0.1 : 1; },
@@ -150,10 +167,11 @@
         if (opt.reduced && name === 'big') name = 'win';
         stopPace();
         if (name === 'big') popped = false;
+        if (ret) { pending = name; return; }                              // played as soon as he is back home
         if (!fadeTo(name, 0.3) && name === 'throw' && api.onRelease) api.onRelease();
       },
       update, look(lx, ly) { look.x = lx; look.y = ly; }, inner(s) { const n = s >= 0 ? 1 : -1; if (n !== side) { side = n; if (!pace) x = home(); } },
-      get clip() { return pace ? 'walk' : curName; }, get x() { return x; }, get yaw() { return yaw; }
+      get clip() { return pace || ret ? 'walk' : curName; }, get x() { return x; }, get yaw() { return yaw; }
     };
     return api;
   };

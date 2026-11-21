@@ -10,7 +10,17 @@
     giants: { label: 'GIANTS', note: 'Stones grow ×2' }
   };
   const WORLD_NAMES = ['', 'THE TABLE', 'THE ROOM', 'THE STREET', 'THE CITY', 'ABOVE THE CLOUDS'];
-  let api, sc, el = {}, shown = null, busy = false, track = 'base', lastAmount = null, lastLevel = -1, dealer = null, stageEl = null;
+  // YOUR STONE: before every round the player sets one stone into the row. Track and stone together are the mode
+  // (track_stone, e.g. base_push). Where each stone stands comes from the published books (tracks.js).
+  const PK = window.TOPPLE_PICKS || {}, STONE_ORDER = ['push', 'gold', 'mult'];
+  const STONES = {
+    push: { label: 'EXTRA PUSH', kind: 'p', note: 'The safe stone: your first stop is forgiven.' },
+    gold: { label: 'GOLD', kind: 'g', note: 'The bonus stone: one of the three golds is already in the row.' },
+    mult: { label: '×5', kind: 'm', x: 5, note: 'Everything collected so far is ×5 when the chain reaches it.' }
+  };
+  const modeName = (t, st) => t + '_' + st, splitMode = name => { const m = /^(long|base|giants)_(push|gold|mult)$/.exec(name || ''); return m ? { track: m[1], stone: m[2] } : null; };
+  const pickOf = (t, st) => (PK[t] && PK[t][st]) || null;
+  let api, sc, el = {}, shown = null, busy = false, track = 'base', stone = 'push', lastAmount = null, lastLevel = -1, dealer = null, stageEl = null;
 
   // ---------- small helpers ----------
   const fmtV = v => { const x = v / 100; return (x >= 100 ? Math.round(x) : x >= 10 ? Math.round(x * 10) / 10 : Math.round(x * 100) / 100).toString(); };
@@ -46,7 +56,7 @@
         const ids = Object.keys(list).filter(k => list[k] && list[k].files && (list[k].group !== 'music' || k === MUSIC) && !/^amb_|^rumble_loop$/.test(k)).sort((a, b) => loopy(a) - loopy(b));   // short sounds first
         for (let i = 0; i < ids.length; i += 4) await Promise.all(ids.slice(i, i + 4).map(async id => {
           try {
-            const ab = inline ? Uint8Array.from(atob(inline.data[id]), c => c.charCodeAt(0)).buffer : await fetch('assets/snd/' + (list[id].files[fmt] || list[id].files[0])).then(r => r.arrayBuffer());
+            const ab = inline ? Uint8Array.from(atob(inline.data[id]), c => c.charCodeAt(0)).buffer : await fetch('assets/snd/' + (list[id].files.find(f => /.mp4$/.test(f)) || list[id].files[fmt] || list[id].files[0])).then(r => r.arrayBuffer());   // the upload ships the .mp4 (AAC) only
             bufs[id] = await ctx.decodeAudioData(ab); if (loopy(id)) sync();
           } catch (e) { /* a missing sound is simply silent */ }
         }));
@@ -189,7 +199,7 @@
       if (location.protocol === 'file:' && !window.TOPPLE_DEALER) await inject('../offline/dealer-inline.js');
       const buf = window.TOPPLE_DEALER ? Uint8Array.from(atob(window.TOPPLE_DEALER), c => c.charCodeAt(0)).buffer : await fetch('assets/char/dealer.glb').then(r => (r.ok ? r.arrayBuffer() : null));
       if (!buf) return;
-      const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
+      const L = window.TP_gltfNoBlob ? window.TP_gltfNoBlob(new THREE.GLTFLoader()) : new THREE.GLTFLoader(); if (window.MeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
       const g = await new Promise((res, rej) => L.parse(buf, '', res, rej));
       dealer = window.ToppleDealer(THREE, g.scene, { reduced }, g.animations); sc.setDealer(dealer); placeDealer(); if (window.__TP_TEST) { window.__TP_DEALER = dealer; window.__TP_SC = sc; }   // test hook only
       // now and then, while nothing is being played, he checks his watch
@@ -208,20 +218,71 @@
     const $ = api.$, h = api.h, panel = $('lzPanel'), field = $('lzField'), step = field.querySelector('.lz-stepper');
     // balance and win share a wrapper that is invisible to layout (display: contents) except in the small pop-out, where
     // they stack so long amounts never run into each other
-    el.cam = h('button', { type: 'button', class: 'lz-icon tp-cam', id: 'tpCam', 'aria-pressed': 'false', 'aria-label': 'Steady camera', title: 'Steady camera' });
+    el.cam = h('button', { type: 'button', class: 'lz-icon tp-cam', id: 'tpCam', 'aria-pressed': 'false', 'aria-label': 'Freeze camera', title: 'Freeze the camera: one still shot per world' });
     el.cam.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5h3l1.6-2.5h8.8L18 8.5h3V19H3z"/><circle cx="12" cy="13.2" r="3.4"/></svg>';
     panel.prepend(h('div', { class: 'tp-b-left' }, $('lzInfo'), $('lzSound'), el.cam), h('div', { class: 'tp-money' }, $('lzWallet'), $('lzWinBox')));
+    // sound and the frozen camera carry a visible name and an ON / OFF lamp, so a player sees what they do and that they
+    // can be switched (the ON / OFF text comes from aria-pressed in game.css)
+    $('lzSound').append(h('span', { class: 'tp-blbl', 'aria-hidden': 'true' }, h('b', { text: 'SOUND' }), h('i')));
+    el.cam.append(h('span', { class: 'tp-blbl', 'aria-hidden': 'true' }, h('b', { text: 'FREEZE CAM' }), h('i')));
     const min = $('lzMin'), max = $('lzMax'); min.classList.add('tp-edge'); max.classList.add('tp-edge'); step.prepend(min); step.append(max);
-    // each track button carries its growth (×1.5 ...), printed on the stub of its ticket
-    for (const b of document.querySelectorAll('#lzModes [data-mode]')) { const t = TR[b.dataset.mode]; if (t) b.dataset.grow = '×' + t.growth; }
-    const dock = h('div', { class: 'tp-dock' }); if ($('lzModes')) dock.append($('lzModes')); else dock.append(h('span'));
+    // each track button carries its growth (×1.5 ...), printed on the stub of its ticket. The shell made one button per
+    // mode (nine); only the three of the chosen stone are shown, under their track's name.
+    for (const b of document.querySelectorAll('#lzModes [data-mode]')) {
+      const tm = splitMode(b.dataset.mode); if (!tm) continue;
+      b.dataset.track = tm.track; b.dataset.stone = tm.stone; b.querySelector('b').textContent = TRACK_INFO[tm.track].label;
+      const t = TR[tm.track]; if (t) b.dataset.grow = '×' + t.growth;
+    }
+    el.stones = h('div', { class: 'tp-stones', role: 'group', 'aria-label': 'Your stone' }, h('span', { class: 'tp-stones-lbl', text: 'Your stone' }),
+      ...STONE_ORDER.map(k => { const b = h('button', { type: 'button', 'data-stone': k, 'aria-pressed': 'false', title: STONES[k].note }, h('i', { class: 'tp-dom k-' + STONES[k].kind, html: STONES[k].kind === 'm' ? '×5' : GLYPH[STONES[k].kind] }), h('b', { text: STONES[k].label })); b.addEventListener('click', () => chooseStone(k)); return b; }));
+    amountMenu();
+    const dock = h('div', { class: 'tp-dock' }); if ($('lzModes')) dock.append(h('div', { class: 'tp-pickcol' }, el.stones, $('lzModes'))); else dock.append(h('span'));
     if ($('lzFeats')) dock.append($('lzFeats'));
     stage.append(dock);
+  }
+  // ---------- play amount: the shell's native list is replaced by a menu in the game's own style ----------
+  // The shell's <select> stays the source of truth (its options, value, disabled state and change event); it is only
+  // taken out of reach of the pointer and the keyboard. The menu opens upwards from the amount ticket.
+  function amountMenu() {
+    const $ = api.$, h = api.h, box = document.querySelector('#lzApp .lz-amount'), sel = $('lzAmtSel'); if (!box || !sel) return;
+    sel.tabIndex = -1; sel.setAttribute('aria-hidden', 'true');
+    const btn = h('button', { type: 'button', class: 'tp-amt-btn', 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-label': 'Play amount' });
+    const list = h('div', { class: 'tp-amt-list', role: 'listbox', 'aria-label': 'Play amount' });
+    const menu = h('div', { class: 'tp-amt-menu', hidden: true }, h('div', { class: 'tp-amt-head', text: 'Play amount' }), list);
+    box.append(btn); document.body.append(menu); el.amtMenu = menu;   // outside the ticket: its notch mask would clip the menu
+    const items = () => [...list.querySelectorAll('button')];
+    const close = focusBtn => { if (menu.hidden) return; menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); box.classList.remove('open'); if (focusBtn) btn.focus({ preventScroll: true }); };
+    const pick = v => { if (sel.disabled) return close(); if (sel.value !== v) { sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); Snd.play('bet_tick', { vol: 0.5, jitter: 0 }); } close(true); };
+    const open = () => {
+      if (sel.disabled || busy) return;
+      const n = sel.options.length; list.style.setProperty('--cols', n > 12 ? 3 : n > 5 ? 2 : 1);
+      list.replaceChildren(...[...sel.options].map(o => { const b = h('button', { type: 'button', role: 'option', 'aria-selected': String(o.value === sel.value), 'data-v': o.value, text: o.textContent }); b.addEventListener('click', () => pick(o.value)); return b; }));
+      menu.hidden = false; btn.setAttribute('aria-expanded', 'true'); box.classList.add('open');
+      const r = box.getBoundingClientRect(), w = menu.offsetWidth, x = Math.max(8 + w / 2, Math.min(innerWidth - 8 - w / 2, r.left + r.width / 2));
+      menu.style.setProperty('--mx', x + 'px'); menu.style.setProperty('--my', (innerHeight - r.top + 12) + 'px'); menu.style.maxHeight = Math.max(120, r.top - 18) + 'px';
+      const cur = items().find(b => b.getAttribute('aria-selected') === 'true') || items()[0]; if (cur) { cur.focus({ preventScroll: true }); cur.scrollIntoView({ block: 'nearest' }); }
+    };
+    btn.addEventListener('click', () => (menu.hidden ? open() : close()));
+    // keys inside the menu: arrows move, Enter and Space choose (and do not reach the shell's space-to-play), Escape and Tab close
+    menu.addEventListener('keydown', e => {
+      const all = items(), i = all.indexOf(document.activeElement), cols = Number(list.style.getPropertyValue('--cols')) || 1;
+      const go = k => { const t = all[Math.max(0, Math.min(all.length - 1, k))]; if (t) t.focus({ preventScroll: true }); };
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); }
+      else if (e.key === 'Tab') close(false);
+      else if (e.key === 'ArrowDown') { e.preventDefault(); go(i + cols); } else if (e.key === 'ArrowUp') { e.preventDefault(); go(i - cols); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); go(i + 1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); go(i - 1); }
+      else if (e.key === 'Home') { e.preventDefault(); go(0); } else if (e.key === 'End') { e.preventDefault(); go(all.length - 1); }
+      else if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') { e.preventDefault(); e.stopPropagation(); if (all[i]) pick(all[i].dataset.v); }
+    });
+    document.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) close(false); }, true);
+    addEventListener('resize', () => close(false));
+    // a round, autoplay or a modal that starts while it is open closes it
+    setInterval(() => { if (!menu.hidden && (sel.disabled || busy)) close(false); }, 150);
   }
   const GLYPH = { m: '×', g: '<svg viewBox="0 0 20 20"><path d="M10 1.5l2.5 5.4 5.9.7-4.4 4 1.2 5.9L10 14.6l-5.2 2.9L6 11.6 1.6 7.6l5.9-.7z"/></svg>', p: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/></svg>', s: '<svg viewBox="0 0 20 20"><path d="M10 18V11L4 3M10 11l6-8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>' };
   function drawStrip(slots) {
     el.strip.replaceChildren(...slots.slice(1).map((s, k) => {
-      const c = api.h('i', { class: 'w' + s.world + (s.kind !== 'v' && s.kind !== 'l' ? ' k-' + s.kind : '') + (s.kind === 'm' ? ' x' + s.x : '') + (k && slots[k].world !== s.world ? ' edge' : '') });
+      const c = api.h('i', { class: 'w' + s.world + (s.kind !== 'v' && s.kind !== 'l' ? ' k-' + s.kind : '') + (s.kind === 'm' ? ' x' + s.x : '') + (k && slots[k].world !== s.world ? ' edge' : '') + (s.mine ? ' mine' : '') });
       if (s.kind === 'm') c.textContent = s.x; else if (GLYPH[s.kind]) c.innerHTML = GLYPH[s.kind];
       return c;
     }));
@@ -256,13 +317,27 @@
   function attract() {
     const t = TR[track] || TR.base; if (!t || !sc) return;
     lastAmount = api.amount; lastLevel = levelFrac();
-    showRow({ growth: t.growth, bonus: false, attract: true, betScale: 0.82 + 0.4 * lastLevel, slots: slotsFrom(t.w.map((w, k) => ({ t: 'v', v: t.v[k], w })), api.money(api.amount)) });
+    const d = t.w.map((w, k) => ({ t: 'v', v: t.v[k], w })), P = pickOf(track, stone);
+    if (P) { const o = d[P.at - 1]; d[P.at - 1] = P.t === 'm' ? { t: 'm', x: P.x, w: o.w } : { t: P.t, v: o.v, w: o.w }; }
+    showRow({ growth: t.growth, bonus: false, attract: true, betScale: 0.82 + 0.4 * lastLevel, slots: markMine(slotsFrom(d, api.money(api.amount)), P && P.at) });
     setPot(0, 0);
+  }
+  function markMine(slots, at) { if (at && slots[at]) slots[at].mine = true; return slots; }
+  // A stone button: the shell's own (hidden) mode button for this track and stone is pressed, so the shell keeps
+  // owning the mode (busy, autoplay and replay rules included) and tells the game through onMode.
+  function chooseStone(k) {
+    if (k === stone || busy) return;
+    const b = document.querySelector('#lzModes [data-mode="' + modeName(track, k) + '"]'); if (b && !b.disabled) b.click();
+  }
+  function showStone(announce) {
+    if (el.stones) for (const b of el.stones.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.stone === stone));
+    const m = document.getElementById('lzModes'); if (m) m.dataset.stone = stone;
+    if (announce && !api.reduced) { banner('Your stone', STONES[stone].label, 1100); Snd.play(stone === 'gold' ? 'gold_1' : stone === 'mult' ? 'mult_3' : 'bank_ting', { vol: 0.55, jitter: 0 }); }
   }
 
   // ---------- one round ----------
   async function play(events, ctx) {
-    busy = true; el.note.hidden = true; Snd.sync(); Snd.excite(0.3); const still = calm(); if (dealer && !still) dealer.base('rub', true); if (still) lookAt(0.3, -0.1); else lookAt(0.75, -0.25);
+    busy = true; el.note.hidden = true; if (el.amtMenu && !el.amtMenu.hidden) document.querySelector('.tp-amt-btn').click(); Snd.sync(); Snd.excite(0.3); const still = calm(); if (dealer && !still) dealer.base('rub', true); if (still) lookAt(0.3, -0.1); else lookAt(0.75, -0.25);
     const speed = () => (ctx.fast() ? 2.3 : 1);
     let cur = null, basePot = 0, pot = 0, hadBonus = false, golds = 0, fell = 0, deepest = 1;
     const total = () => basePot + pot, show = bump => { const u = ctx.units(total()); setPot(u, total() / 100, bump); ctx.setWin(u, true); };
@@ -270,6 +345,7 @@
     const onCollect = st => {
       const list = cur.by.get(keyOf(st.slot, st.lane)); if (st.slot > 0) { const c = cell(st.slot); if (c) c.classList.add('down'); }
       if (!list) return;
+      if (cur.mine && st.slot === cur.mine && !(shown && shown.bonus)) fly('YOUR STONE', st.slot, st.lane, 'mine');
       for (const e of list) {
         if (e.type === 'fall') { pot += e.v; fell++; deepest = Math.max(deepest, st.world); fly('+' + fmtV(e.v), st.slot, st.lane); show('bump'); Snd.excite(0.3 + fell / 16); }
         else if (e.type === 'mult') { pot = e.pot; fly('×' + e.x, st.slot, st.lane, 'big'); show('mult'); if (e.x >= 5 && !still) act('win'); Snd.play('mult_' + (e.x >= 20 ? 5 : e.x >= 10 ? 4 : e.x >= 5 ? 3 : e.x >= 3 ? 2 : 1), { vol: 0.9, jitter: 0, duck: 0.45 }); }
@@ -307,7 +383,7 @@
     const add = e => { const k = keyOf(e.i, e.l); if (!cur.by.has(k)) cur.by.set(k, []); cur.by.get(k).push(e); };
 
     for (const e of events) {
-      if (e.type === 'row') { track = e.track || track; await begin({ growth: e.growth, bonus: false, betScale: 0.82 + 0.4 * levelFrac(), slots: slotsFrom(e.d, ctx.money(ctx.amount)) }, { slot: 0 }); setPot(0, 0); }
+      if (e.type === 'row') { track = e.track || track; if (STONES[e.pick]) { stone = e.pick; showStone(false); } await begin({ growth: e.growth, bonus: false, betScale: 0.82 + 0.4 * levelFrac(), slots: markMine(slotsFrom(e.d, ctx.money(ctx.amount)), e.at) }, { slot: 0 }); cur.mine = e.at || 0; setPot(0, 0); }
       else if (e.type === 'bonus') {
         await flush(); hadBonus = true; basePot += pot; pot = 0;
         const title = e.kind === 'skyline' ? 'SKYLINE' : 'GOLDEN RUN';
@@ -346,17 +422,32 @@
 
 
   // ---------- rules: every number here is read from the published books (tracks.js), never typed by hand ----------
+  function yourStoneHtml(num) {
+    const tracks = ['base', 'long', 'giants'].filter(k => TR[k] && PK[k]);
+    if (!tracks.length) return '';
+    const what = { push: 'An extra push stone. When it falls, one push is kept: the first time the chain stops, that push knocks over the standing stone and the chain goes on.', gold: 'A gold stone. When it falls it counts as one of the three gold stones that start a Golden Run.', mult: 'A ×' + ((PK.base && PK.base.mult && PK.base.mult.x) || 5) + ' multiplier. When it falls, everything collected so far is multiplied.' };
+    let h = '<h3>Your stone</h3><p>Before every push, choose one of three stones. It is set into the row at a fixed position and replaces the plain stone there; the rest of the row is drawn as usual. Each track with each stone is its own game mode with the same return to player. The stones change how a round plays: with a stronger stone, the other stones stay standing a little more often.</p>';
+    h += '<table><thead><tr><th>Stone</th><th>What it is</th><th>Position (' + tracks.map(k => TRACK_INFO[k].label).join(' / ') + ')</th></tr></thead><tbody>';
+    for (const st of STONE_ORDER) h += '<tr><td>' + STONES[st].label + '</td><td>' + what[st] + '</td><td>' + tracks.map(k => PK[k][st] ? PK[k][st].at : '–').join(' / ') + '</td></tr>';
+    h += '</tbody></table>';
+    h += '<table><thead><tr><th>Track and stone</th><th>Rounds that win more than the play amount</th><th>A Golden Run starts about</th><th>Most a round can win</th></tr></thead><tbody>';
+    for (const k of tracks) for (const st of STONE_ORDER) { const m = MODES[modeName(k, st)]; if (m) h += '<tr><td>' + TRACK_INFO[k].label + ' · ' + STONES[st].label + '</td><td>' + (m.aboveCostPct != null ? (Math.round(m.aboveCostPct * 10) / 10) + '%' : '–') + '</td><td>' + (m.featureOneIn ? 'once in ' + num(Math.round(m.featureOneIn)) + ' rounds' : '–') + '</td><td>' + num(m.maxWin) + '×</td></tr>'; }
+    return h + '</tbody></table>';
+  }
   function rulesHtml() {
     const W = ['', 'The Table', 'The Room', 'The Street', 'The City', 'Above the Clouds'], num = n => (Math.round(n * 100) / 100).toLocaleString('en-US');
     const byWorld = (w, v) => { const out = []; w.forEach((x, k) => { const o = out[out.length - 1]; if (o && o.w === x) { o.to = k + 1; if (v[k] != null) o.v.push(v[k]); } else out.push({ w: x, from: k + 1, to: k + 1, v: v[k] != null ? [v[k]] : [] }); }); return out; };
     const ladder = (w, v) => '<table><thead><tr><th>World</th><th>Positions</th><th>Value of each stone (× the play amount)</th></tr></thead><tbody>' + byWorld(w, v).map(o => '<tr><td>' + W[o.w] + '</td><td>' + (o.from === o.to ? o.from : o.from + ' to ' + o.to) + '</td><td>' + o.v.map(x => '+' + fmtV(x)).join(', ') + '</td></tr>').join('') + '</tbody></table>';
-    const tracks = ['base', 'long', 'giants'].filter(k => TR[k]), mults = [...new Set(tracks.flatMap(k => (MODES[k] && MODES[k].mults) || []))].sort((a, b) => a - b);
-    const bonusOf = k => MODES[k] && MODES[k].bonus, anyBonus = tracks.map(bonusOf).find(Boolean);
-    let h = '<h3>How to play</h3><p>Choose a track and press PUSH. A brass ball knocks over the first stone, which stands for your play. Every stone knocks over the next, bigger stone. Each stone that falls adds the value engraved on it to the pot. The chain ends when a stone wobbles and stays standing, or when the last stone of the row falls. The round wins the pot: the values shown are multiples of the play amount.</p>';
+    const tracks = ['base', 'long', 'giants'].filter(k => TR[k]), modesOf = k => STONE_ORDER.map(st => MODES[modeName(k, st)]).filter(Boolean);
+    const mults = [...new Set(tracks.flatMap(k => modesOf(k).flatMap(m => m.mults || [])))].sort((a, b) => a - b);
+    const bonusOf = k => (modesOf(k).find(m => m.bonus) || {}).bonus, anyBonus = tracks.map(bonusOf).find(Boolean);
+    const trackMax = k => Math.max(0, ...modesOf(k).map(m => m.maxWin || 0));
+    let h = '<h3>How to play</h3><p>Choose a track and your stone, then press PUSH. A brass ball knocks over the first stone, which stands for your play. Every stone knocks over the next, bigger stone. Each stone that falls adds the value engraved on it to the pot. The chain ends when a stone wobbles and stays standing, or when the last stone of the row falls. The round wins the pot: the values shown are multiples of the play amount.</p>';
     h += '<p>The whole row, with all its special stones, is on the table before the push. The strip at the top of the stage shows every position of the row.</p>';
-    h += '<h3>Tracks</h3><table><thead><tr><th>Track</th><th>Each stone is</th><th>Stones in the row</th><th>Most a round can win</th></tr></thead><tbody>' + tracks.map(k => '<tr><td>' + TRACK_INFO[k].label + '</td><td>×' + TR[k].growth + ' the one before</td><td>' + TR[k].w.length + '</td><td>' + num(maxWin(k, 0)) + '×</td></tr>').join('') + '</tbody></table>';
+    h += yourStoneHtml(num);
+    h += '<h3>Tracks</h3><table><thead><tr><th>Track</th><th>Each stone is</th><th>Stones in the row</th><th>Most a round can win</th></tr></thead><tbody>' + tracks.map(k => '<tr><td>' + TRACK_INFO[k].label + '</td><td>×' + TR[k].growth + ' the one before</td><td>' + TR[k].w.length + '</td><td>' + num(trackMax(k)) + '×</td></tr>').join('') + '</tbody></table>';
     h += '<p>Multiplier stones in Golden Runs and Skyline rounds are ' + [...new Set(['golden', 'skyline'].flatMap(k => (MODES[k] && MODES[k].bonusMults) || []))].sort((a, b) => a - b).map(x => '×' + x).join(', ') + '.</p>';
-    h += '<p>All three tracks are played for the same play amount. A row passes through five worlds; the stones of each world are made of a different material.</p>';
+    h += '<p>All three tracks are played for the same play amount, with any of the three stones. A row passes through five worlds; the stones of each world are made of a different material.</p>';
     for (const k of tracks) h += '<h3>' + TRACK_INFO[k].label + ': values on the stones</h3>' + ladder(TR[k].w, TR[k].v);
     h += '<h3>Special stones</h3><table><thead><tr><th>Stone</th><th>What it does when it falls</th></tr></thead><tbody>';
     h += '<tr><td>Multiplier (' + mults.map(x => '×' + x).join(', ') + ')</td><td>Multiplies the pot collected so far. It adds no value of its own. Several can fall in one round.</td></tr>';
@@ -377,28 +468,29 @@
 
   // ---------- boot ----------
   const baseModes = Object.keys(TRACK_INFO).filter(k => TR[k] || !Object.keys(TR).length);
+  const stoneModes = ['base', 'long', 'giants'].filter(k => baseModes.indexOf(k) >= 0).flatMap(k => STONE_ORDER.map(st => ({ name: modeName(k, st), label: TRACK_INFO[k].label + ' · ' + STONES[st].label, note: TRACK_INFO[k].note, cost: 1, maxWin: maxWin(modeName(k, st), 5000) })));
   LZ.boot({
     id: 'topple', title: 'Topple', tagline: 'Your play is the first stone. Every stone knocks down a bigger one.', rtp: '96.30', layout: 'bar',
     logo: '<span class="tp-logo">TOPPLE</span>',
     modes: [
-      ...['base', 'long', 'giants'].filter(k => baseModes.indexOf(k) >= 0).map(k => ({ name: k, label: TRACK_INFO[k].label, note: TRACK_INFO[k].note, cost: 1, maxWin: maxWin(k, 5000) })),
+      ...stoneModes,
       { name: 'golden', kind: 'feature', label: 'GOLDEN RUN', cost: costOf('golden', 25), maxWin: maxWin('golden', 5000), blurb: 'Starts a Golden Run at once: a golden row and three pushes.', confirmTitle: 'Start a Golden Run?', confirmLabel: 'Start' },
       { name: 'skyline', kind: 'feature', label: 'SKYLINE', cost: costOf('skyline', 100), maxWin: maxWin('skyline', 10000), blurb: 'Starts among the towers with five pushes and an early multiplier.', confirmTitle: 'Start a Skyline?', confirmLabel: 'Start' }
     ],
-    modeGroupLabel: 'track', featureName: 'a Golden Run', statLabel: 'Golden Runs',
+    modeGroupLabel: 'track and stone', featureName: 'a Golden Run', statLabel: 'Golden Runs',
     playLabel: 'PUSH', busyLabel: 'ROLLING',
     winTiers: TIERS, celebrate: false,
     rules: rulesHtml(),
     introCards: [
       { art: '<img src="assets/ui/card-1.webp" alt="">', title: 'EVERY STONE IS BIGGER', text: 'Your play is the first stone. Each stone that falls adds to the pot.' },
-      { art: '<img src="assets/ui/card-2.webp" alt="">', title: 'SPECIAL STONES', text: 'Multipliers, splits, extra pushes and gold wait along the row.' },
+      { art: '<img src="assets/ui/card-2.webp" alt="">', title: 'CHOOSE YOUR STONE', text: 'Before every push, set an extra push, a gold or a ×5 stone into the row.' },
       { art: '<img src="assets/ui/card-3.webp" alt="">', title: 'GOLDEN RUN', text: 'Three gold stones open a golden row with three pushes.' }
     ],
     async mount(stage, a) {
       api = a; buildHud(stage);
       const rb = a.$('lzRulesBody');
       rb.innerHTML = rb.innerHTML.replace(/<b>PLAY<\/b>/g, '<b>PUSH</b> (the round brass button)').replace(/mode PLAY and/g, 'mode PUSH and')
-        .replace('<li>The <b>speaker</b>', '<li>The <b>track</b> and feature buttons sit on the stage, under the stones; they step aside while a round plays.</li><li>A named win screen (KNOCKOUT and up) counts the win; tap it to finish the count at once.</li><li>The <b>camera</b> button beside the speaker keeps the camera steady: a wider view with no shaking and no flight around the table on a big win. The game remembers the choice.</li><li>The <b>speaker</b>');
+        .replace('<li>The <b>speaker</b>', '<li>The <b>Your stone</b> buttons (EXTRA PUSH, GOLD, ×5) and the <b>track</b> buttons choose together which mode PUSH and autoplay use. They sit on the stage with the feature buttons and step aside while a round plays.</li><li>A named win screen (KNOCKOUT and up) counts the win; tap it to finish the count at once.</li><li><b>FREEZE CAM</b>, beside SOUND, freezes the camera on the tracks: it holds one still shot while the chain is in a world and moves once, smoothly, when the chain reaches the next world, with no shaking and no flight around the table on a big win. Golden Runs and Skyline rounds always use the moving camera. The game remembers the choice.</li><li>The <b>speaker</b>');
       if (location.protocol === 'file:' && !window.TOPPLE_PACK) { (await inject('../offline/assets-inline.js')) || (await inject('../look/assets-inline.js')); }
       if (location.protocol === 'file:' && !window.TOPPLE_SND) await inject('../offline/snd-inline.js');
       let lists = {};
@@ -410,7 +502,7 @@
       // steady camera: the player's choice, kept between visits (if the page blocks storage it lasts for this visit)
       const setCam = on => { sc.setSteady(on); el.cam.setAttribute('aria-pressed', on ? 'true' : 'false'); el.cam.classList.toggle('on', on); try { localStorage.setItem('topple-steady', on ? '1' : '0'); } catch (e) { /* storage blocked */ } };
       let camOn = false; try { camOn = localStorage.getItem('topple-steady') === '1'; } catch (e) { /* storage blocked */ }
-      setCam(camOn); el.cam.addEventListener('click', () => { setCam(!sc.steady); api.toast(sc.steady ? 'Steady camera on' : 'Steady camera off'); });
+      setCam(camOn); el.cam.addEventListener('click', () => { setCam(!sc.steady); api.toast(sc.steady ? 'Camera frozen' : 'Camera follows the chain'); });
       sc.onHit = h => {
         const n = shown ? shown.slots.length : 20, rate = 1.25 * Math.pow(0.36, h.slot / n), fam = h.mat === 'ivory' || h.mat === 'pearl' ? 'clack_ivory' : h.mat === 'diamond' ? 'clack_glass' : h.mat === 'black' || /^m/.test(h.mat) ? 'clack_stone' : 'clack_metal';
         if (h.kind === 'hit') { Snd.play(fam, { rate, vol: 0.55 + 0.1 * h.world, gap: 0.03 }); if (h.world >= 3) Snd.play('thud_big', { rate: Math.max(0.5, rate * 1.4), vol: 0.5, gap: 0.05 }); }
@@ -431,6 +523,10 @@
     reset() { busy = false; lookAt(0, 0); if (dealer) dealer.base('idle'); if (sc) { sc.setRate(1); sc.fadeIn(); attract(); } },
     idle() { busy = false; },
     onSound() { Snd.sync(); }, onStart() { Snd.sync(); },
-    onMode(name) { if (TR[name]) { track = name; if (!busy && sc) attract(); } }
+    onMode(name) {
+      const tm = splitMode(name); if (!tm) return;
+      const changed = tm.stone !== stone && !!sc; track = tm.track; stone = tm.stone; showStone(changed && !busy);
+      if (!busy && sc) attract();
+    }
   });
 })();

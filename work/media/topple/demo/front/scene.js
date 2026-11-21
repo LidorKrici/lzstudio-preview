@@ -47,6 +47,26 @@
 
   const PERF = () => window.__TP_PERF;
   const mark = (name, t0) => { const p = PERF(); if (p) p.ev.push([name, Math.round(t0), Math.round((performance.now() - t0) * 10) / 10]); };
+  // GLB textures without blob: URLs. three's GLTFLoader turns every embedded image into a blob: URL and loads that;
+  // Stake's game host forbids blob: images (CSP), so every textured model came out white with one console error per
+  // texture. This plugin decodes the image bytes straight to an ImageBitmap instead (same result, no URL at all).
+  window.TP_gltfNoBlob = function (loader) {
+    loader.register(parser => {
+      const orig = parser.loadImageSource.bind(parser);
+      parser.loadImageSource = function (index, imgLoader) {
+        if (this.sourceCache[index] !== undefined) return this.sourceCache[index].then(t => t.clone());
+        const def = this.json.images[index];
+        if (def.bufferView === undefined || typeof createImageBitmap === 'undefined') return orig(index, imgLoader);
+        const p = this.getDependency('bufferView', def.bufferView)
+          .then(buf => createImageBitmap(new Blob([buf], { type: def.mimeType }), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }))
+          .then(bmp => { const t = new T.Texture(bmp); t.needsUpdate = true; t.userData.mimeType = def.mimeType; return t; })
+          .catch(e => { console.warn('Topple: texture ' + index + ' could not be decoded'); return orig(index, imgLoader); });
+        this.sourceCache[index] = p; return p;
+      };
+      return { name: 'TP_noBlob' };
+    });
+    return loader;
+  };
   window.ToppleScene = function (canvas, opts) {
     opts = opts || {};
     const PACK = window.TOPPLE_PACK || (window.TOPPLE_ASSETS ? { ground: window.TOPPLE_ASSETS.tex, env: window.TOPPLE_ASSETS.hdr, props: {}, manifest: {} } : null);
@@ -187,7 +207,7 @@
       const k = s.kind === 'bet' ? betScale : 1, h = hAt(slot) * k, w = h / 2, t = w * TH, psi = SP.psi0 + slot * TURN, ux = Math.cos(psi), uz = Math.sin(psi);   // the play stone is a little bigger for a bigger play
       let cx = SP.R * hAt(slot) * Math.cos(slot * TURN), cz = SP.R * hAt(slot) * Math.sin(slot * TURN);
       if (lane >= 0) { const o = (lane ? 1 : -1) * LANE * w; cx += -uz * o; cz += ux * o; }
-      const [mat, ink] = bodyOf(s, bonus), st = { slot, lane, kind: s.kind, world: s.world || 1, x: s.x, h, w, t, cx, cz, psi, gap: GAP * hAt(slot) - (t - hAt(slot) / 2 * TH) / 2, tip: Math.atan(t / h), th: 0, om: 0, state: 0, lim: 0, stopper: false, done: false, nexts: [], prevs: [], mat };
+      const [mat, ink] = bodyOf(s, bonus), st = { mine: !!s.mine, slot, lane, kind: s.kind, world: s.world || 1, x: s.x, h, w, t, cx, cz, psi, gap: GAP * hAt(slot) - (t - hAt(slot) / 2 * TH) / 2, tip: Math.atan(t / h), th: 0, om: 0, state: 0, lim: 0, stopper: false, done: false, nexts: [], prevs: [], mat };
       st.k = kOf(st);
       const pivot = new T.Group(); pivot.position.set(cx + t / 2 * ux, 0, cz + t / 2 * uz); pivot.rotation.y = -psi;
       const tilt = new T.Group(), inner = new T.Group(); inner.scale.setScalar(w); inner.position.set(-t / 2, h / 2, 0); tilt.add(inner); pivot.add(tilt);
@@ -218,7 +238,7 @@
       if (propWait[id]) return propWait[id];
       return (propWait[id] = new Promise(res => {
         if (!hasProp(id) || !T.GLTFLoader) return res();
-        const L = new T.GLTFLoader(); if (window.MeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
+        const L = window.TP_gltfNoBlob(new T.GLTFLoader()); if (window.MeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
         const got = b => L.parse(b, '', g => {
           g.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
           const box = new T.Box3().setFromObject(g.scene); g.scene.userData.rad = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2; propSrc[id] = g.scene; res();
@@ -308,7 +328,7 @@
     const find = (slot, lane) => (lane === 0 || lane === 1 ? stones.find(s => s.slot === slot && s.lane === lane) : null) || stones.find(s => s.slot === slot);
 
     // ---------- the fall ----------
-    const events = []; let seen = 0, simT = 0, endT = -1, stopSet = new Set(), teaseSet = new Set(), collectCb = null, quiet = 0, running = null, rate = 1, steady = false;
+    const events = []; let seen = 0, simT = 0, endT = -1, stopSet = new Set(), teaseSet = new Set(), collectCb = null, quiet = 0, running = null, rate = 1, steady = false, still = false;
     // the tease (only on stones that DO fall, chosen by the game, e.g. a big multiplier): it reaches its tipping point,
     // hangs there rocking twice, each time less, and then goes over. Sim time; the camera's slow motion stretches it.
     const TEASE_T = 0.72, TEASE_P = 0.36;
@@ -334,8 +354,8 @@
         if (d.state !== 1) continue;
         if (d.tease && d.tease.wait && d.th >= d.tip - 0.02) { d.tease = { t: 0 }; events.push({ s: d, kind: 'tease' }); }
         if (teasing(d)) {
-          const T = d.tease; T.t += dt; const k = Math.min(1, T.t / TEASE_T);
-          d.th = d.tip - 0.01 - 0.08 * (0.5 - 0.5 * Math.cos(2 * Math.PI * T.t / TEASE_P)) * (1 - k) * (1 - k * 0.4); d.om = 0;
+          const tz = d.tease; tz.t += dt; const k = Math.min(1, tz.t / TEASE_T);
+          d.th = d.tip - 0.01 - 0.08 * (0.5 - 0.5 * Math.cos(2 * Math.PI * tz.t / TEASE_P)) * (1 - k) * (1 - k * 0.4); d.om = 0;
           if (k >= 1) { d.tease = null; d.th = d.tip + 0.003; d.om = 0.28 * Math.sqrt(d.k); events.push({ s: d, kind: 'teaseEnd' }); }
           continue;
         }
@@ -484,7 +504,7 @@
         if (d > 0 && !s.waved) { s.waved = true; if (api.onWave) api.onWave(i, n); }
       }
       // camera: rise over the whole spiral, then drift slowly around it
-      const kIn = c.big && !steady ? Math.min(1, c.t / 1.1) : 0, kOut = c.out ? Math.min(1, c.outT / 0.8) : 0;
+      const kIn = c.big && !still ? Math.min(1, c.t / 1.1) : 0, kOut = c.out ? Math.min(1, c.outT / 0.8) : 0;
       if (c.out) c.outT += dt;
       celK = (kIn * kIn * (3 - 2 * kIn)) * (1 - kOut * kOut * (3 - 2 * kOut));
       if (celK > 0) {
@@ -518,11 +538,13 @@
       }
     }
     function frame(dt) {
-      wall += dt;
+      wall += dt; still = steady && !bonus;          // golden rows (Golden Run, Skyline) always use the moving camera
       const f = front();
       slow += ((f.wob ? 0.4 : 1) - slow) * (1 - Math.exp(-dt / 0.12));
       if (strikeJob) strikeStep(dt);
       if (tossed) tossStep(dt);
+      // YOUR STONE: the stone the player chose breathes a soft gold light until it falls
+      if (!cel) for (const s of stones) if (s.mine) { const m = s.bodyMat; if (!m.userData.em) m.userData.em = { c: m.emissive.clone(), i: m.emissiveIntensity }; const em = m.userData.em, g = s.state === 0 ? 0.3 + 0.22 * Math.sin(wall * 3.2) : 0; m.emissive.copy(em.c).lerp(GOLDC, Math.min(1, g * 1.6)); m.emissiveIntensity = em.i + g; }
       let left = dt * slow * rate; while (left > 1e-6) { const s = Math.min(left, 1 / 480); step(s); left -= s; }
       for (; seen < events.length; seen++) {
         const e = events[seen], rel = e.s.h / hAt(sF), big = e.s.world >= 3 ? 1 : 0.6;
@@ -532,11 +554,13 @@
       shake *= Math.exp(-12 * dt);
       if (running) { if (moving() || strikeJob && !strikeJob.hit) quiet = 0; else if ((quiet += dt * rate) > 0.22) { const r = running; running = null; collectCb = null; r(); } }
 
-      sF += (f.F - sF) * (1 - Math.exp(-dt * Math.max(1, rate * 0.8) / (steady ? 0.9 : 0.32)));
+      sF += (f.F - sF) * (1 - Math.exp(-dt * Math.max(1, rate * 0.8) / (still ? 0.9 : 0.32)));
+      if (still) { steadyFrame(dt, f); return; }
+      motes.pts.visible = true;
       // fast-growing rows: the next stones are huge, so the camera climbs and backs off (u = 0 at x1.5 and below, 1 at x2)
       const u = Math.max(0, Math.min(1, (growth - 1.5) / 0.5)), mixP = (p, q) => ({ a: p.a + (q.a - p.a) * u, b: p.b + (q.b - p.b) * u, h: p.h + (q.h - p.h) * u, ta: p.ta + (q.ta - p.ta) * u, tb: p.tb + (q.tb - p.tb) * u, th: p.th + (q.th - p.th) * u });
-      const hc = hAt(sF), zoom = (f.wob && !steady ? 0.86 : 1) * (steady ? 1.2 : 1) * (1 + (growth - 1.3) * (CAMG - 0.5 * u)), P = opts.cam || (portrait ? mixP(CAM.p, CAM.pg) : mixP(CAM.l, CAM.lg));
-      const psi = SP.psi0 + sF * TURN + (steady ? 0 : Math.sin(wall * 0.3) * 0.03);
+      const hc = hAt(sF), zoom = (f.wob ? 0.86 : 1) * (1 + (growth - 1.3) * (CAMG - 0.5 * u)), P = opts.cam || (portrait ? mixP(CAM.p, CAM.pg) : mixP(CAM.l, CAM.lg));
+      const psi = SP.psi0 + sF * TURN + Math.sin(wall * 0.3) * 0.03;
       U.set(Math.cos(psi), 0, Math.sin(psi)); V.set(-Math.sin(psi), 0, Math.cos(psi));
       const cx = SP.R * hc * Math.cos(sF * TURN), cz = SP.R * hc * Math.sin(sF * TURN);
       tgt.set(cx, P.th * hc, cz).addScaledVector(U, P.ta * hc).addScaledVector(V, P.tb * hc);
@@ -544,7 +568,7 @@
       camera.near = 0.08 * hc; camera.far = 700 * hc; camera.updateProjectionMatrix(); camera.lookAt(tgt);
       if (cel) celFrame(dt, hc);
       const sh = hc + (celR - hc) * celK;
-      if (shake > 0.002 && !opts.reduced && !steady) { const s = shake * 0.03 * sh; camera.position.x += Math.sin(wall * 113) * s; camera.position.y += Math.sin(wall * 144 + 1) * s; }
+      if (shake > 0.002 && !opts.reduced) { const s = shake * 0.03 * sh; camera.position.x += Math.sin(wall * 113) * s; camera.position.y += Math.sin(wall * 144 + 1) * s; }
 
       applyLook(dt, false);
       const kh = Math.max(hc, sh * 0.55);
@@ -559,6 +583,62 @@
       for (const s of stones) s.tilt.rotation.z = -s.th;
       fade += (fadeTo - fade) * (1 - Math.exp(-dt / 0.09)); vig.uniforms.fade.value = fade;
       if (opts.hero) { groundGroup.visible = sceneryGroup.visible = motes.pts.visible = false; scene.background = null; scene.fog.density = 0; renderer.setClearColor(0x000000, 0); renderer.render(scene, camera); return; }
+      renderer.setRenderTarget(sceneRT); renderer.render(scene, camera); renderer.setRenderTarget(null);
+      composer.render();
+      drawDealer(dt);
+      drawFly(dt);
+    }
+    // ---------- the steady camera: a still shot per world ----------
+    // The player's choice (the camera button). The camera does not ride along: no following, no sway, no shake, no
+    // flight on a big win. While the chain is in a world it holds one still shot that frames that world and the next
+    // one; when the chain crosses into the next world it glides once (0.8 s) to the still shot of that world, so the
+    // falling stones are always in the picture. Worked out again for every row and on resize.
+    const fixedTgt = new T.Vector3(), fixedPos = new T.Vector3(), fixedDir = new T.Vector3(), shotTgt = new T.Vector3(), shotPos = new T.Vector3(), fromTgt = new T.Vector3(), fromPos = new T.Vector3();
+    let fixedR = 0, curR = 0, fromR = 0, fixedFor = null, fixedAspect = 0, shotW = 0, glide = 1;
+    function fitFixed(wBase) {
+      if (!stones.length) return;
+      let first = slots.findIndex((sl, i) => i > 0 && sl.world >= wBase); if (first < 0) first = 1;
+      const from = Math.max(1, first - 2);
+      let last = slots.findIndex((sl, i) => i > 0 && sl.world >= wBase + 2); if (last < 0) last = slots.length - 1;
+      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, h1 = 0;
+      for (const st of stones) {
+        if (st.slot > last || (st.slot < from && !(from === 1 && st.slot === 0))) continue;
+        const r = st.w * 0.8; x0 = Math.min(x0, st.cx - r); x1 = Math.max(x1, st.cx + r); z0 = Math.min(z0, st.cz - r); z1 = Math.max(z1, st.cz + r); h1 = Math.max(h1, st.h);
+      }
+      shotTgt.set((x0 + x1) / 2, h1 * 0.3, (z0 + z1) / 2);
+      fixedR = Math.hypot(x1 - x0, z1 - z0, h1) / 2;
+      // look from the side the normal camera rides on, seen towards the big end of the stretch, higher up
+      const psi = SP.psi0 + (from + (last - from) * 0.8) * TURN, P = portrait ? CAM.p : CAM.l;
+      const u = new T.Vector3(Math.cos(psi), 0, Math.sin(psi)), v = new T.Vector3(-Math.sin(psi), 0, Math.cos(psi));
+      fixedDir.copy(u).multiplyScalar(P.a).addScaledVector(v, P.b).addScaledVector(UP, P.h * 1.5).normalize();
+      const vf = camera.fov * Math.PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
+      const dist = fixedR / Math.sin(Math.min(vf, hf) / 2) * 1.02;
+      // the dealer stands on the left in landscape and on the right in portrait: the stretch is framed away from him
+      const right = new T.Vector3().crossVectors(fixedDir, UP).normalize().negate();
+      shotTgt.addScaledVector(right, (portrait ? 0.24 : -0.22) * fixedR);
+      shotPos.copy(shotTgt).addScaledVector(fixedDir, dist);
+    }
+    function steadyFrame(dt, f) {
+      const fi = Math.max(1, Math.min(slots.length - 1, Math.round(f.F || 1))), w = slots[fi] ? slots[fi].world : 1;
+      if (fixedFor !== stones || fixedAspect !== camera.aspect) { fixedFor = stones; fixedAspect = camera.aspect; shotW = w; fitFixed(w); fixedPos.copy(shotPos); fixedTgt.copy(shotTgt); curR = fixedR; glide = 1; }
+      else if (w !== shotW) { shotW = w; fromPos.copy(fixedPos); fromTgt.copy(fixedTgt); fromR = curR; fitFixed(w); glide = 0; }
+      if (glide < 1) { glide = Math.min(1, glide + dt / 0.8); const e = glide * glide * (3 - 2 * glide); fixedPos.lerpVectors(fromPos, shotPos, e); fixedTgt.lerpVectors(fromTgt, shotTgt, e); curR = fromR + (fixedR - fromR) * e; }
+      const hcv = curR / 4;
+      tgt.copy(fixedTgt); camera.position.copy(fixedPos);
+      const dist = fixedPos.distanceTo(fixedTgt);
+      camera.near = Math.max(1e-4, dist * 0.004); camera.far = dist * 60; camera.updateProjectionMatrix(); camera.lookAt(tgt);
+      if (cel) celFrame(dt, hcv);
+      U.set(1, 0, 0); V.set(0, 0, 1);
+      applyLook(dt, false);
+      key.target.position.copy(tgt); key.position.copy(tgt).addScaledVector(U, -3.2 * hcv).addScaledVector(V, 4.2 * hcv).addScaledVector(UP, 8 * hcv);
+      const sc = key.shadow.camera; sc.left = sc.bottom = -6 * hcv; sc.right = sc.top = 6 * hcv; sc.near = 0.5 * hcv; sc.far = 26 * hcv; sc.updateProjectionMatrix(); key.shadow.normalBias = 0.008 * hcv; key.shadow.bias = -0.0004;
+      scene.fog.density = (opts.fog == null ? (bonus ? 0.065 : 0.06) : opts.fog) / (hcv * 6);
+      for (const q of [dofH, dofV]) { q.uniforms.near.value = camera.near; q.uniforms.far.value = camera.far; q.uniforms.focus.value = dist; q.uniforms.aperture.value = 0.42 / (hcv * 40); }
+      if (stars.visible) { stars.position.copy(camera.position); stars.scale.setScalar(camera.far * 0.9); }
+      motes.pts.visible = false;
+      for (const p of puffs) { if (!p.sp.visible) continue; p.t += dt / p.d; if (p.t >= 1) { p.sp.visible = false; continue; } const e = 1 - (1 - p.t) * (1 - p.t); p.sp.position.set(p.x + p.vx * e, p.r * (0.4 + e * 0.9), p.z + p.vz * e); p.sp.scale.setScalar(p.r * (1 + e * 2.2)); p.sp.material.opacity = 0.1 * (1 - p.t); p.sp.material.color.copy(key.color); }
+      for (const st of stones) st.tilt.rotation.z = -st.th;
+      fade += (fadeTo - fade) * (1 - Math.exp(-dt / 0.09)); vig.uniforms.fade.value = fade;
       renderer.setRenderTarget(sceneRT); renderer.render(scene, camera); renderer.setRenderTarget(null);
       composer.render();
       drawDealer(dt);
@@ -652,7 +732,7 @@
       if (!dl || !dl.box || !dl.d.has || !dl.d.has('throw')) return strike(slot, lane);
       return new Promise(res => {
         let done = false;
-        const fallback = setTimeout(() => { if (!done) { done = true; dl.d.onRelease = null; strike(slot, lane).then(res); } }, 2200);   // e.g. the tab was hidden
+        const fallback = setTimeout(() => { if (!done) { done = true; dl.d.onRelease = null; strike(slot, lane).then(res); } }, 3000);   // e.g. the tab was hidden (he may first walk home: up to about 1.5 s)
         dl.d.onRelease = () => {
           if (done) return; done = true; clearTimeout(fallback); dl.d.onRelease = null;
           dl.d.hand().getWorldPosition(hp); const a = toPx(hp, dl.cam, dl.box);
@@ -730,14 +810,16 @@
       g.traverse(o => { if (o.geometry && o.geometry.type === 'PlaneGeometry') o.geometry.dispose(); });
       mark('warm', t0);
     }
-    Object.assign(api, {
+    // defineProperties, not Object.assign: assign would read each getter once and freeze its value (the steady camera
+    // could then never be switched off, and dealer / front / stones / celebrating would never change)
+    Object.defineProperties(api, Object.getOwnPropertyDescriptors({
       setRow, strike, throwStrike, run, project, resize, warm, setDealer, setDealerBox, get dealer() { return dl && dl.d; },
-      setRate(r) { rate = r; }, setSteady(v) { steady = !!v; }, get steady() { return steady; }, celebrate, finale, release, get celebrating() { return !!cel; }, fadeOut() { fadeTo = 0; }, fadeIn() { fadeTo = 1; },
+      setRate(r) { rate = r; }, setSteady(v) { steady = !!v; fixedFor = null; }, get steady() { return steady; }, celebrate, finale, release, get celebrating() { return !!cel; }, fadeOut() { fadeTo = 0; }, fadeIn() { fadeTo = 1; },
       start() { if (!opts.manual && !raf) { last = performance.now(); raf = requestAnimationFrame(loop); } },
-      tick(dt) { frame(dt); },
+      tick(dt) { frame(dt); }, get camera() { return camera; },
       get front() { return sF; }, get stones() { return stones; }, worldName: w => (bonus ? NOIR : WORLDS[w] || WORLDS[1]).name,
       rendererInfo() { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'unknown'; }
-    });
+    }));
     return api;
   };
 })();

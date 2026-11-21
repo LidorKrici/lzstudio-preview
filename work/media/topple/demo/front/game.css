@@ -249,3 +249,137 @@ body{background:var(--lz-bg)}
 #lzApp .lz-feat small{color:#3a2004;border-left-color:rgba(58,32,4,.4);font-size:calc(var(--u)*1.15)}
 #lzApp .lz-feat[data-mode="skyline"]{background:linear-gradient(115deg,#0d1422,#2a3b5a 35%,#0d1422 60%,#24324a);color:#ffd27a}
 #lzApp .lz-feat[data-mode="skyline"] small{color:#cfe6ff;border-left-color:rgba(207,230,255,.35)}
+
+/* ---------- YOUR STONE: three small dominoes above the track tickets. Track and stone together are the mode; the shell's
+   nine mode buttons stay, and only the three of the chosen stone are shown ---------- */
+.tp-pickcol{display:flex;flex-direction:column;align-items:flex-start;gap:calc(var(--u)*.75);flex:none}
+#lzApp .lz-modes[data-stone="push"] button:not([data-stone="push"]),#lzApp .lz-modes[data-stone="gold"] button:not([data-stone="gold"]),#lzApp .lz-modes[data-stone="mult"] button:not([data-stone="mult"]){display:none}
+.tp-stones{display:flex;align-items:center;gap:calc(var(--u)*.55);padding:calc(var(--u)*.45) calc(var(--u)*.6) calc(var(--u)*.45) calc(var(--u)*.9);border-radius:calc(var(--u)*.8);
+  background:linear-gradient(180deg,rgba(58,7,11,.92),rgba(36,4,7,.92));box-shadow:inset 0 0 0 1px rgba(215,174,92,.55),0 calc(var(--u)*.35) calc(var(--u)*.8) rgba(0,0,0,.55)}
+.tp-stones-lbl{font:700 calc(var(--u)*1.0)/1.1 "Cinzel",Georgia,serif;letter-spacing:.2em;text-transform:uppercase;color:#f2cf85;margin-right:calc(var(--u)*.35);max-width:calc(var(--u)*6);text-align:left}
+.tp-stones button{display:flex;align-items:center;gap:calc(var(--u)*.55);padding:calc(var(--u)*.4) calc(var(--u)*.85) calc(var(--u)*.4) calc(var(--u)*.45);border-radius:calc(var(--u)*.55);cursor:pointer;
+  background:rgba(0,0,0,.28);border:1px solid rgba(242,207,133,.28);color:#fbe9c6;opacity:.78;transition:transform .14s cubic-bezier(.3,1.5,.5,1),opacity .14s,background .14s,box-shadow .14s}
+.tp-stones button:hover:not([aria-pressed="true"]){opacity:1;transform:translateY(-2px)}
+.tp-stones button:focus-visible{outline:2px solid #fff3c6;outline-offset:2px}
+.tp-stones button b{font:700 calc(var(--u)*1.2)/1 "Cinzel",Georgia,serif;letter-spacing:.12em;white-space:nowrap}
+.tp-stones button[aria-pressed="true"]{opacity:1;color:#3a2004;border-color:transparent;transform:translateY(calc(var(--u)*-.3));
+  background:linear-gradient(115deg,#a8741e,#ffe7a6 30%,#d9a441 55%,#fff0c0 70%,#b8862c);box-shadow:0 0 calc(var(--u)*1) rgba(255,200,110,.55)}
+/* the little domino: a vertical stone with its glyph, coloured like that stone on the table */
+.tp-dom{flex:none;display:grid;place-items:center;width:calc(var(--u)*1.45);height:calc(var(--u)*2.55);border-radius:calc(var(--u)*.25);font:800 calc(var(--u)*.95)/1 "Jost",sans-serif;font-style:normal;color:var(--tp-ink);
+  box-shadow:inset 0 calc(var(--u)*-.2) 0 rgba(0,0,0,.25),inset 0 calc(var(--u)*.15) 0 rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.5);transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+.tp-dom svg{width:72%;height:auto;fill:currentColor;display:block}
+.tp-dom.k-p{background:#c9a253}.tp-dom.k-g{background:#ffc35a}.tp-dom.k-m{background:#7a2fd6;color:#fff}
+.tp-stones button[aria-pressed="true"] .tp-dom{transform:rotate(-8deg) scale(1.08)}
+/* the chosen stone in the row strip: a gold marker over it */
+.tp-strip i.mine{position:relative;outline:calc(var(--u)*.18) solid #ffd27a;outline-offset:calc(var(--u)*.1)}
+.tp-strip i.mine::before{content:"";position:absolute;left:50%;top:calc(var(--u)*-1.05);transform:translateX(-50%);border:calc(var(--u)*.42) solid transparent;border-top-color:#ffd27a;border-bottom-width:0}
+.tp-strip i.mine.down{outline-color:rgba(255,210,122,.5)}
+.tp-pop.mine{font:700 calc(var(--u)*1.6)/1 "Cinzel",Georgia,serif;letter-spacing:.16em;color:#ffd27a;margin-top:calc(var(--u)*-3.6);animation:tp-stay 1.1s cubic-bezier(.2,.8,.3,1) forwards}
+@media (max-aspect-ratio:1/1){
+  .tp-stones-lbl{font-size:max(8px,calc(var(--u)*1.4))}
+  .tp-stones button b{font-size:max(9px,calc(var(--u)*1.75))}
+  .tp-dom{width:calc(var(--u)*2.1);height:calc(var(--u)*3.6);font-size:max(8px,calc(var(--u)*1.35))}
+  .tp-stones button{padding:calc(var(--u)*.7) calc(var(--u)*1.1) calc(var(--u)*.7) calc(var(--u)*.6)}
+}
+@media (min-aspect-ratio:1/1) and (max-height:330px){
+  .tp-stones-lbl{display:none}.tp-stones{padding:2px 3px;gap:3px}
+  .tp-stones button{padding:2px 5px 2px 3px}.tp-stones button b{font-size:8px;letter-spacing:.05em}
+  .tp-dom{width:8px;height:14px;font-size:5px}
+}
+
+/* ---------- controls v5: every button a real object of the theatre. Round brass-rimmed medallions (rules, − and +),
+   labelled toggles with a lamp (SOUND, FREEZE CAM), velvet pills with a gold rim (MIN, MAX, TURBO, AUTO), and the brass
+   PUSH ball that breathes while it waits. Hover lifts and glows, a press sinks, keyboard focus shows a bright ring ---------- */
+#lzPanel{min-height:clamp(40px,9.4vh,64px)}
+#lzApp .lz-icon,#lzApp .lz-stepper>button:not(.tp-edge){width:clamp(30px,6.2vh,42px);height:clamp(30px,6.2vh,42px);border:0;border-radius:50%;color:#f6d888;
+  background:radial-gradient(circle at 50% 32%,#741823,#3a070b 62%,#22040a);
+  box-shadow:0 0 0 2px #d7ae5c,0 0 0 3.5px #3a2407,inset 0 2px 2px rgba(255,214,170,.3),inset 0 -3px 5px rgba(0,0,0,.55),0 3px 7px rgba(0,0,0,.55);
+  transition:transform .14s cubic-bezier(.3,1.6,.5,1),box-shadow .2s,background .2s}
+#lzApp .lz-icon svg{width:50%;height:50%}
+#lzApp .lz-stepper>button:not(.tp-edge){font:600 clamp(16px,3.2vh,22px)/1 "Jost",sans-serif}
+#lzApp :is(.lz-icon,.lz-stepper>button,.lz-quick button):not(:disabled):hover{transform:translateY(-2px);box-shadow:0 0 0 2px #f2cf85,0 0 0 3.5px #3a2407,inset 0 2px 2px rgba(255,214,170,.35),inset 0 -3px 5px rgba(0,0,0,.5),0 5px 10px rgba(0,0,0,.5),0 0 14px rgba(255,200,110,.45)}
+#lzApp :is(.lz-icon,.lz-stepper>button,.lz-quick button):not(:disabled):active{transform:translateY(1px) scale(.95);transition-duration:.05s}
+#lzApp :is(.lz-icon,.lz-stepper>button,.lz-quick button,.tp-stones button):focus-visible{outline:2px solid #fff3c6;outline-offset:3px}
+#lzApp :is(.lz-stepper>button,.lz-quick button):disabled{opacity:.45}
+/* labelled toggles: icon, name, and a lamp with ON / OFF under it */
+#lzApp #lzSound,#lzApp .tp-cam{width:auto;padding:0 clamp(11px,1.1vw,16px) 0 clamp(8px,.8vw,11px);border-radius:999px;display:inline-flex;align-items:center;gap:clamp(6px,.6vw,9px)}
+#lzApp #lzSound svg,#lzApp .tp-cam svg{width:clamp(15px,2.9vh,21px);height:clamp(15px,2.9vh,21px);flex:none}
+#lzApp .lz-icon .tp-blbl{display:flex;flex-direction:column;align-items:flex-start;gap:3px;line-height:1;white-space:nowrap}
+.tp-blbl b{font:700 clamp(8px,1.55vh,11px)/1 "Cinzel",Georgia,serif;letter-spacing:.15em;color:#fbe9c6}
+.tp-blbl i{display:flex;align-items:center;gap:4px;font:600 clamp(7px,1.3vh,9.5px)/1 "Jost",sans-serif;font-style:normal;letter-spacing:.2em;color:#f2cf85}
+.tp-blbl i::before{content:"";width:clamp(5px,.9vh,7px);height:clamp(5px,.9vh,7px);border-radius:50%;background:#4a1d18;box-shadow:inset 0 1px 1px rgba(0,0,0,.7)}
+#lzSound[aria-pressed="false"] .tp-blbl i::after,.tp-cam[aria-pressed="true"] .tp-blbl i::after{content:"ON"}
+#lzSound[aria-pressed="true"] .tp-blbl i::after,.tp-cam[aria-pressed="false"] .tp-blbl i::after{content:"OFF"}
+#lzSound[aria-pressed="false"] .tp-blbl i::before,.tp-cam[aria-pressed="true"] .tp-blbl i::before{background:#ffe08a;box-shadow:0 0 6px #ffc35a,0 0 2px #fff}
+#lzApp #lzSound[aria-pressed="true"]{color:#b99a6a}#lzApp #lzSound[aria-pressed="true"] .tp-blbl b{color:#cdb48c}
+#lzApp .tp-cam.on{color:#3a2004;background:linear-gradient(115deg,#a8741e,#ffe7a6 32%,#d9a441 58%,#fff0c0 76%,#b8862c)}
+#lzApp .tp-cam.on .tp-blbl b{color:#3a2004}#lzApp .tp-cam.on .tp-blbl i{color:#5a3a10}
+#lzApp .tp-cam.on .tp-blbl i::before{background:#fff6d0;box-shadow:0 0 6px #fff,0 0 10px #ffc35a}
+/* velvet pills: MIN, MAX, TURBO, AUTO */
+#lzApp .lz-quick button,#lzApp .lz-stepper>button.tp-edge{height:clamp(28px,5.6vh,38px);padding:0 clamp(11px,1.15vw,17px);border:0;border-radius:999px;color:#fbe9c6;
+  background:linear-gradient(180deg,#661019,#3a070b);font:700 clamp(8px,1.6vh,11px)/1 "Cinzel",Georgia,serif;letter-spacing:.18em;
+  box-shadow:0 0 0 1.5px #d7ae5c,inset 0 1px 0 rgba(255,220,180,.28),inset 0 -2px 3px rgba(0,0,0,.45),0 2px 5px rgba(0,0,0,.5);transition:transform .14s cubic-bezier(.3,1.6,.5,1),box-shadow .2s,background .2s}
+#lzApp .lz-quick button[aria-pressed="true"],#lzApp .lz-quick button.on{color:#3a2004;background:linear-gradient(115deg,#a8741e,#ffe7a6 32%,#d9a441 58%,#fff0c0 76%,#b8862c);box-shadow:0 0 0 1.5px #fff0c0,0 0 12px rgba(255,200,110,.55),0 2px 5px rgba(0,0,0,.5)}
+#lzApp .lz-amount{height:clamp(28px,5.6vh,38px);min-width:clamp(70px,9.5vw,130px)}
+#lzApp .lz-amount b{font-size:clamp(12px,2.8vh,18px)}
+/* the PUSH ball: a slow breath of light around it while it waits for a play */
+#lzApp .lz-action:not(:disabled):not(.busy):not(.auto)::after{content:"";position:absolute;inset:-3%;border-radius:50%;pointer-events:none;animation:tp-halo 2.8s ease-out infinite}
+@keyframes tp-halo{0%{box-shadow:0 0 0 0 rgba(255,214,120,.55)}70%,100%{box-shadow:0 0 0 calc(var(--tp-d)*.16) rgba(255,214,120,0)}}
+#lzApp .lz-action:not(:disabled):hover{transform:translateY(-3px);filter:brightness(1.07) drop-shadow(0 0 calc(var(--tp-d)*.1) rgba(255,205,120,.55))}
+#lzApp .lz-action:not(:disabled):active{transform:translateY(1px) scale(.94);filter:brightness(.95)}
+#lzApp .lz-action:focus-visible{outline:2px solid #fff3c6;outline-offset:4px}
+@media (prefers-reduced-motion:reduce){#lzApp .lz-action::after{animation:none!important}}
+@media (max-aspect-ratio:1/1){
+  #lzApp .lz-icon,#lzApp .lz-stepper>button:not(.tp-edge){width:38px;height:38px}
+  #lzApp #lzSound,#lzApp #tpCam{width:auto;padding:0 12px 0 9px;gap:6px}
+  .tp-blbl b{font-size:8.5px;letter-spacing:.1em}.tp-blbl i{font-size:7.5px}
+  #lzApp .lz-quick button,#lzApp .lz-stepper>button.tp-edge{height:36px;font-size:10px}
+  #lzApp .lz-amount{height:38px}
+  #lzPanel{grid-template-areas:"left left left" "wallet wallet win" "field field action" "quick quick action"}
+}
+@media (min-aspect-ratio:1/1) and (max-height:330px){
+  #lzApp .lz-icon .tp-blbl{display:none}
+  #lzApp #lzSound,#lzApp .tp-cam{padding:0;width:24px;justify-content:center}
+  #lzApp .lz-icon,#lzApp .lz-stepper>button:not(.tp-edge){width:24px;height:24px}
+  #lzApp .lz-quick button,#lzApp .lz-stepper>button.tp-edge{height:22px;padding:0 7px;font-size:7px}
+  #lzApp .lz-amount{height:22px;min-width:52px;padding:0 6px}#lzApp .lz-amount b{font-size:11px}
+  #lzApp .lz-amount b::after{display:none}
+  #lzApp .lz-quick button{padding:0 6px;letter-spacing:.08em}
+  #lzPanel{min-height:0;gap:5px}
+}
+
+/* ---------- play amount menu: a velvet card with a gold rim that rises from the amount ticket; every amount is an
+   ivory ticket, the chosen one gold foil ---------- */
+#lzApp .lz-amount select{pointer-events:none}
+#lzApp .lz-amount{overflow:visible}
+.tp-amt-btn{position:absolute;inset:0;z-index:2;margin:0;padding:0;border:0;background:none;cursor:pointer;border-radius:inherit}
+.tp-amt-btn:focus-visible{outline:2px solid #fff3c6;outline-offset:3px}
+#lzApp .lz-amount:has(.tp-amt-btn:hover) b,#lzApp .lz-amount.open b{color:#8d1b23}
+#lzApp .lz-amount b::after{content:"";display:inline-block;width:0;height:0;margin-left:.45em;vertical-align:.18em;border:.28em solid transparent;border-bottom:0;border-top:.34em solid currentColor;opacity:.55;transition:transform .2s}
+#lzApp .lz-amount.open b::after{transform:rotate(180deg)}
+/* the menu is a child of body (the notch mask on the ticket would clip it), placed by game.js over the ticket */
+.tp-amt-menu{position:fixed;z-index:40;left:var(--mx,50%);bottom:var(--my,80px);transform:translateX(-50%);width:max-content;min-width:200px;max-width:calc(100vw - 16px);
+  max-height:calc(100vh - 110px);overflow:auto;padding:10px 12px 12px;border-radius:14px;
+  background:radial-gradient(120% 90% at 50% 0%,#7a1620,#43080d 60%,#2a0508);
+  box-shadow:0 0 0 1.5px #d7ae5c,0 0 0 3.5px #2a1505,inset 0 1px 0 rgba(255,220,180,.25),0 16px 34px rgba(0,0,0,.65);
+  animation:tp-amt-in .18s cubic-bezier(.2,.9,.3,1)}
+.tp-amt-menu[hidden]{display:none}
+@keyframes tp-amt-in{from{opacity:0;transform:translate(-50%,8px) scale(.97)}to{opacity:1;transform:translate(-50%,0)}}
+.tp-amt-head{display:flex;align-items:center;gap:10px;margin:0 2px 9px;font:700 11px/1 "Cinzel",Georgia,serif;letter-spacing:.24em;text-transform:uppercase;color:#f2cf85;white-space:nowrap}
+.tp-amt-head::before,.tp-amt-head::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#d7ae5c)}
+.tp-amt-head::after{background:linear-gradient(90deg,#d7ae5c,transparent)}
+.tp-amt-list{display:grid;grid-template-columns:repeat(var(--cols,2),minmax(96px,1fr));gap:7px}
+.tp-amt-list button{position:relative;height:36px;padding:0 16px;border:0;cursor:pointer;color:#1b130b;font:600 15px/1 "Jost",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;
+  background:linear-gradient(180deg,#fbf3e2,#e6d6b2);border-radius:4px;
+  -webkit-mask:radial-gradient(circle at 0 50%,transparent 5px,#000 5.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 5px,#000 5.5px) right/51% 100% no-repeat;
+  mask:radial-gradient(circle at 0 50%,transparent 5px,#000 5.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 5px,#000 5.5px) right/51% 100% no-repeat;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));transition:transform .14s cubic-bezier(.3,1.6,.5,1),filter .15s,background .15s}
+.tp-amt-list button:hover{transform:translateY(-2px);filter:drop-shadow(0 4px 6px rgba(0,0,0,.55)) drop-shadow(0 0 8px rgba(255,200,110,.45))}
+.tp-amt-list button:active{transform:translateY(1px) scale(.97)}
+.tp-amt-list button:focus-visible{outline:none;filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 3px #fff3c6) drop-shadow(0 0 8px #ffd27a)}
+.tp-amt-list button[aria-selected="true"]{color:#3a2004;font-weight:700;background:linear-gradient(115deg,#a8741e,#ffe7a6 32%,#d9a441 58%,#fff0c0 76%,#b8862c)}
+@media (prefers-reduced-motion:reduce){.tp-amt-menu{animation:none}}
+@media (min-aspect-ratio:1/1) and (max-height:330px){
+  .tp-amt-list{grid-template-columns:repeat(3,minmax(64px,1fr));gap:4px}.tp-amt-list button{height:24px;font-size:11px;padding:0 8px}
+  .tp-amt-head{font-size:8px;margin-bottom:5px}.tp-amt-menu{padding:6px 8px 8px;min-width:0}
+}
