@@ -122,6 +122,7 @@ body{background:var(--lz-bg)}
 .tp-b-left{display:flex;gap:clamp(4px,.6vw,8px);flex:none}
 #lzApp .lz-icon{width:clamp(22px,5.2vh,36px);height:clamp(22px,5.2vh,36px);border-radius:50%;background:transparent;box-shadow:none;border:1px solid rgba(201,162,83,.4);color:var(--tp-ivory)}
 #lzApp .lz-icon svg{width:52%;height:52%}
+#lzApp .tp-cam.on{background:#d7ae5c;color:#3a070b;border-color:#d7ae5c}
 #lzApp .lz-wallet,#lzApp .lz-win{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;padding:0;background:none;border:0;box-shadow:none;border-radius:0;flex:0 1 auto;min-width:0}
 #lzApp .lz-wallet b,#lzApp .lz-win b{font:600 clamp(12px,2.9vh,20px)/1.15 "Jost",sans-serif;color:var(--tp-ivory);white-space:nowrap}
 #lzApp .lz-win.has b{color:var(--tp-gold)}
@@ -155,6 +156,7 @@ body{background:var(--lz-bg)}
 /* tracks and features live on the stage, next to the stones, and step aside while a round plays */
 .tp-dock{position:absolute;left:max(calc(var(--u)*1.6),var(--tp-dl,0px));right:calc(var(--u)*1.6);bottom:calc(var(--u)*1.4);display:flex;justify-content:space-between;align-items:flex-end;gap:calc(var(--u));pointer-events:none;transition:opacity .25s,transform .25s cubic-bezier(.2,.9,.3,1)}
 .tp-dock>*{pointer-events:auto}
+.tp-dock.two{flex-direction:column;align-items:flex-end;justify-content:flex-end;gap:calc(var(--u)*.8)}
 #lzApp.busy .tp-dock{opacity:0;transform:translateY(calc(var(--u)*2))}
 #lzApp.busy .tp-dock>*{pointer-events:none}
 #lzApp .lz-modes{display:flex;gap:calc(var(--u)*.6);padding:0;background:none;border:0;border-radius:0;flex:none}
@@ -209,3 +211,41 @@ body{background:var(--lz-bg)}
   .tp-world,.tp-note{display:none}
   .tp-logo-img{display:none}.tp-top{left:calc(var(--u)*1.6)}
 }
+
+
+/* ---------- the bottom, a theatre (it carries on the dealer's curtain). Red velvet bar with lit footlights along its top edge; tracks are theatre tickets with
+   punched notches and a stub; features are golden tickets; PUSH is the brass ball on a velvet cushion ---------- */
+#lzPanel{border:0;border-radius:10px;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 2px,rgba(0,0,0,0) 2px 7px,rgba(255,120,120,.05) 7px 9px,rgba(0,0,0,0) 9px 13px),linear-gradient(180deg,#8d1b23,#5c0d13 70%,#43080d);
+  box-shadow:inset 0 3px 0 #d7ae5c,inset 0 4px 0 rgba(255,236,190,.4),inset 0 -5px 9px rgba(0,0,0,.5),0 8px 20px rgba(0,0,0,.55)}
+#lzPanel::before{content:"";position:absolute;left:18px;right:calc(var(--tp-d) + 24px);top:-7px;height:12px;pointer-events:none;
+  background:radial-gradient(circle at 50% 100%,#fff3c6 0 3px,#f7c25e 4px,rgba(247,194,94,.35) 7px,transparent 10px) 0 0/34px 12px repeat-x;filter:drop-shadow(0 0 4px rgba(255,200,100,.8))}
+#lzApp .lz-lbl{color:#f2cf85}
+#lzApp .lz-icon,#lzApp .lz-stepper>button:not(.tp-edge){background:#3a070b;border:1px solid #d7ae5c}
+#lzApp .lz-stepper>button.tp-edge{border-color:rgba(242,207,133,.4);color:#f2cf85}
+#lzApp .lz-amount{border:0;border-radius:4px;background:linear-gradient(180deg,#fbf3e2,#e9dbbb);color:#1b130b;
+  -webkit-mask:radial-gradient(circle at 0 50%,transparent 5px,#000 5.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 5px,#000 5.5px) right/51% 100% no-repeat;
+  mask:radial-gradient(circle at 0 50%,transparent 5px,#000 5.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 5px,#000 5.5px) right/51% 100% no-repeat}
+#lzApp .lz-amount b{color:#1b130b}
+#lzApp .lz-quick button{background:#3a070b;border:1px solid rgba(242,207,133,.6);color:#fbe9c6}
+#lzApp .lz-quick button[aria-pressed="true"],#lzApp .lz-quick button.on{background:#d7ae5c;color:#3a070b}
+#lzApp .lz-action{border:0;outline:0;color:#3a2407;overflow:visible;
+  background:radial-gradient(circle at 34% 27%,#fff8de 0,#f6d888 10%,#d4a54c 34%,#9b6c26 66%,#4f3410 100%);
+  box-shadow:0 calc(var(--tp-d)*.06) calc(var(--tp-d)*.12) rgba(0,0,0,.6),inset 0 calc(var(--tp-d)*-.06) calc(var(--tp-d)*.12) rgba(0,0,0,.35)}
+#lzApp .lz-action span,#lzApp .lz-action small{text-shadow:0 1px 0 rgba(255,240,200,.65),0 -1px 0 rgba(0,0,0,.35)}
+#lzApp .lz-action::before{content:"";position:absolute;z-index:-1;left:-12%;right:-12%;bottom:-6%;height:28%;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 30%,#b3252f,#6e0f16 60%,#3a060b);box-shadow:0 4px 8px rgba(0,0,0,.6),inset 0 2px 0 rgba(255,150,150,.25)}
+#lzApp .lz-modes button,#lzApp .lz-feat{position:relative;display:grid;grid-template-columns:auto auto;align-items:center;column-gap:calc(var(--u)*.9);
+  padding:calc(var(--u)*.6) calc(var(--u)*1.25);border:0;border-radius:calc(var(--u)*.3);filter:drop-shadow(0 calc(var(--u)*.35) calc(var(--u)*.5) rgba(0,0,0,.6));
+  -webkit-mask:radial-gradient(circle at 0 50%,transparent calc(var(--u)*.7),#000 calc(var(--u)*.72)) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent calc(var(--u)*.7),#000 calc(var(--u)*.72)) right/51% 100% no-repeat;
+  mask:radial-gradient(circle at 0 50%,transparent calc(var(--u)*.7),#000 calc(var(--u)*.72)) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent calc(var(--u)*.7),#000 calc(var(--u)*.72)) right/51% 100% no-repeat}
+#lzApp .lz-modes button{background:linear-gradient(180deg,#fbf3e2,#e6d6b2);color:#3a070b;opacity:.75}
+#lzApp .lz-modes button small{display:none}
+#lzApp .lz-modes button::after,#lzApp .lz-feat small{padding-left:calc(var(--u)*.9);border-left:2px dashed rgba(58,7,11,.4);align-self:stretch;display:flex;align-items:center}
+#lzApp .lz-modes button b,#lzApp .lz-feat span{font-size:calc(var(--u)*1.25)}
+#lzApp .lz-modes button::after{content:attr(data-grow);font:800 calc(var(--u)*1.45)/1 "Cinzel",Georgia,serif;color:#8d1b23}
+#lzApp .lz-modes button[aria-pressed="true"]{opacity:1;transform:translateY(calc(var(--u)*-.35)) rotate(-1.5deg);filter:drop-shadow(0 calc(var(--u)*.5) calc(var(--u)*.7) rgba(0,0,0,.6)) drop-shadow(0 0 calc(var(--u)*.9) rgba(255,200,110,.55))}
+#lzApp .lz-feat{background:linear-gradient(115deg,#a8741e,#ffe7a6 30%,#d9a441 55%,#fff0c0 70%,#b8862c);color:#3a2004}
+#lzApp .lz-feat small{color:#3a2004;border-left-color:rgba(58,32,4,.4);font-size:calc(var(--u)*1.15)}
+#lzApp .lz-feat[data-mode="skyline"]{background:linear-gradient(115deg,#0d1422,#2a3b5a 35%,#0d1422 60%,#24324a);color:#ffd27a}
+#lzApp .lz-feat[data-mode="skyline"] small{color:#cfe6ff;border-left-color:rgba(207,230,255,.35)}

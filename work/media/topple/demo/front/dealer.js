@@ -143,6 +143,8 @@
       root, bones: B, onRelease: null, hand: () => B.RightHand,
       base(name, quiet) { if (!A[name]) name = 'idle'; baseName = name; if (pace && name !== 'idle') stopPace(); if (!quiet && LOOP[curName] && curName !== name && !pace) fadeTo(name, 0.45); },
       has(name) { return !!A[name]; },
+      // holding his breath: the hand rub nearly stops while a stone hangs on its edge
+      hold(on) { if (A.rub) A.rub.timeScale = on ? 0.1 : 1; },
       play(name) {
         if (name === 'pace') { if (curName === 'idle' && !pace) startPace(); return; }
         if (opt.reduced && name === 'big') name = 'win';

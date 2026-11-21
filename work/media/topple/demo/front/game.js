@@ -167,12 +167,17 @@
     // the buttons go back to the left edge, over his stage.
     const PL = 0.594; let h = port ? Math.min(r.height * 0.46, r.width * 0.8) : r.height * 1.02, dl = 0;
     if (!port && dock) {
-      stageEl.style.setProperty('--tp-dl', '0px');
+      stageEl.style.setProperty('--tp-dl', '0px'); dock.classList.remove('two');
       const [modes, feats] = dock.children, fs = feats ? getComputedStyle(feats) : null;
-      const need = (modes ? modes.scrollWidth : 0) + (feats ? feats.scrollWidth + (parseFloat(fs.marginRight) || 0) : 0) + u * 2.6;
-      const room = r.width - u * 1.6 - need;
-      if (h * PL > room) h = room / PL;
-      if (h < r.height * 0.62) h = r.height * 0.74; else dl = Math.round(h * PL + u * 0.6);
+      const mW = modes ? modes.scrollWidth : 0, fW = feats ? feats.scrollWidth + (parseFloat(fs.marginRight) || 0) : 0, gap = u * 1.6;
+      const maxH = need => (r.width - u * 1.6 - need - u * 2.6 - gap) / PL, H0 = h;
+      const one = maxH(mW + fW), two = maxH(Math.max(mW, fW));
+      // one row beside his stage if he can stay nearly full height; else two rows (tracks over bonuses) on the right;
+      // else one row with a smaller dealer; on a very cramped stage the buttons go back over his stage
+      if (one >= H0 * 0.8) { h = Math.min(H0, one); dl = Math.round(h * PL + gap); }
+      else if (two >= H0 * 0.8) { h = Math.min(H0, two); dl = Math.round(h * PL + gap); dock.classList.add('two'); }
+      else if (one >= r.height * 0.5) { h = one; dl = Math.round(h * PL + gap); }
+      else h = r.height * 0.74;
     }
     const w = h * 0.66, x = port ? r.width - w * 0.94 : -w * 0.02;
     sc.setDealerBox({ x, y: bottom - h, w, h });
@@ -186,12 +191,15 @@
       if (!buf) return;
       const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
       const g = await new Promise((res, rej) => L.parse(buf, '', res, rej));
-      dealer = window.ToppleDealer(THREE, g.scene, { reduced }, g.animations); sc.setDealer(dealer); placeDealer();
+      dealer = window.ToppleDealer(THREE, g.scene, { reduced }, g.animations); sc.setDealer(dealer); placeDealer(); if (window.__TP_TEST) { window.__TP_DEALER = dealer; window.__TP_SC = sc; }   // test hook only
       // now and then, while nothing is being played, he checks his watch
-      (function idle() { setTimeout(() => { if (!busy && dealer.clip === 'idle') dealer.play('pace'); idle(); }, 9000 + Math.random() * 7000); })();
+      (function idle() { setTimeout(() => { if (!busy && !calm() && dealer.clip === 'idle') dealer.play('pace'); idle(); }, 9000 + Math.random() * 7000); })();
     } catch (e) { dealer = null; /* the game plays the same without him */ }
   }
   const act = name => { if (dealer) dealer.play(name); };
+  // autoplay: the same moves every few seconds tire the eye, so he stays almost still (no throw, no hand rub, no
+  // reaction per round) and only celebrates named wins. The shell marks autoplay with the class 'auto' on PUSH.
+  const calm = () => { const b = document.getElementById('lzAction'); return !!(b && b.classList.contains('auto')); };
   const lookAt = (x, y) => { if (dealer) dealer.look(x, y); };
 
   // House bar layout: icons, balance and win on the left; amount, speed and the round main button on the right.
@@ -200,8 +208,12 @@
     const $ = api.$, h = api.h, panel = $('lzPanel'), field = $('lzField'), step = field.querySelector('.lz-stepper');
     // balance and win share a wrapper that is invisible to layout (display: contents) except in the small pop-out, where
     // they stack so long amounts never run into each other
-    panel.prepend(h('div', { class: 'tp-b-left' }, $('lzInfo'), $('lzSound')), h('div', { class: 'tp-money' }, $('lzWallet'), $('lzWinBox')));
+    el.cam = h('button', { type: 'button', class: 'lz-icon tp-cam', id: 'tpCam', 'aria-pressed': 'false', 'aria-label': 'Steady camera', title: 'Steady camera' });
+    el.cam.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5h3l1.6-2.5h8.8L18 8.5h3V19H3z"/><circle cx="12" cy="13.2" r="3.4"/></svg>';
+    panel.prepend(h('div', { class: 'tp-b-left' }, $('lzInfo'), $('lzSound'), el.cam), h('div', { class: 'tp-money' }, $('lzWallet'), $('lzWinBox')));
     const min = $('lzMin'), max = $('lzMax'); min.classList.add('tp-edge'); max.classList.add('tp-edge'); step.prepend(min); step.append(max);
+    // each track button carries its growth (×1.5 ...), printed on the stub of its ticket
+    for (const b of document.querySelectorAll('#lzModes [data-mode]')) { const t = TR[b.dataset.mode]; if (t) b.dataset.grow = '×' + t.growth; }
     const dock = h('div', { class: 'tp-dock' }); if ($('lzModes')) dock.append($('lzModes')); else dock.append(h('span'));
     if ($('lzFeats')) dock.append($('lzFeats'));
     stage.append(dock);
@@ -250,7 +262,7 @@
 
   // ---------- one round ----------
   async function play(events, ctx) {
-    busy = true; el.note.hidden = true; Snd.sync(); Snd.excite(0.3); if (dealer) dealer.base('rub', true); lookAt(0.75, -0.25);
+    busy = true; el.note.hidden = true; Snd.sync(); Snd.excite(0.3); const still = calm(); if (dealer && !still) dealer.base('rub', true); if (still) lookAt(0.3, -0.1); else lookAt(0.75, -0.25);
     const speed = () => (ctx.fast() ? 2.3 : 1);
     let cur = null, basePot = 0, pot = 0, hadBonus = false, golds = 0, fell = 0, deepest = 1;
     const total = () => basePot + pot, show = bump => { const u = ctx.units(total()); setPot(u, total() / 100, bump); ctx.setWin(u, true); };
@@ -260,7 +272,7 @@
       if (!list) return;
       for (const e of list) {
         if (e.type === 'fall') { pot += e.v; fell++; deepest = Math.max(deepest, st.world); fly('+' + fmtV(e.v), st.slot, st.lane); show('bump'); Snd.excite(0.3 + fell / 16); }
-        else if (e.type === 'mult') { pot = e.pot; fly('×' + e.x, st.slot, st.lane, 'big'); show('mult'); if (e.x >= 5) act('win'); Snd.play('mult_' + (e.x >= 20 ? 5 : e.x >= 10 ? 4 : e.x >= 5 ? 3 : e.x >= 3 ? 2 : 1), { vol: 0.9, jitter: 0, duck: 0.45 }); }
+        else if (e.type === 'mult') { pot = e.pot; fly('×' + e.x, st.slot, st.lane, 'big'); show('mult'); if (e.x >= 5 && !still) act('win'); Snd.play('mult_' + (e.x >= 20 ? 5 : e.x >= 10 ? 4 : e.x >= 5 ? 3 : e.x >= 3 ? 2 : 1), { vol: 0.9, jitter: 0, duck: 0.45 }); }
         else if (e.type === 'gold') { golds = e.n; tokens(el.gold, golds, 3, 'star'); Snd.play('gold_' + Math.min(3, golds), { vol: 0.9, jitter: 0, duck: 0.45 }); }
         else if (e.type === 'bank') { cur.pushes = e.n; tokens(el.push, e.n, Math.max(3, e.n), 'ball'); fly('+1 push', st.slot, st.lane, 'tok'); Snd.play('bank_ting', { vol: 0.7 }); }
         else if (e.type === 'split') { Snd.play('split', { vol: 0.8, jitter: 0 }); }
@@ -271,12 +283,20 @@
       sc.setRate(speed());
       if (cur.strike) {
         // the dealer throws the ball (TURBO and reduced motion keep the quicker pendulum)
-        const s = cur.strike, thrown = dealer && !ctx.fast() && !api.reduced; cur.strike = null;
+        const s = cur.strike, thrown = dealer && !ctx.fast() && !api.reduced && !still; cur.strike = null;
         if (!thrown) Snd.play('ball_swing', { vol: 0.5 });
         await (thrown ? sc.throwStrike(s.slot, s.lane) : sc.strike(s.slot, s.lane));
       }
       const stops = cur.stops; cur.stops = [];
-      await sc.run(stops, onCollect);
+      // the tease: the first big multiplier (x5 and up) of this run hangs on its edge before it falls. Not in TURBO,
+      // autoplay or reduced motion. Only stones that do fall are chosen, so it never hides a stop.
+      let teases = [];
+      if (!ctx.fast() && !api.reduced && !still) {
+        const stopKeys = new Set(stops.map(p => keyOf(p.slot, p.lane))), big = [];
+        for (const [k, list] of cur.by) if (!stopKeys.has(k) && list.some(e => e.type === 'mult' && e.x >= 5)) { const [i, l] = k.split(':').map(Number); big.push({ slot: i, lane: l < 0 ? -1 : l }); }
+        big.sort((a, b) => a.slot - b.slot); teases = big.slice(0, 1);
+      }
+      await sc.run(stops, onCollect, teases);
       for (const s of stops) { const c = cell(s.slot); if (c) c.classList.add('stand'); cur.standing.push(s); }
     };
     const begin = async (desc, strike) => {
@@ -291,7 +311,7 @@
       else if (e.type === 'bonus') {
         await flush(); hadBonus = true; basePot += pot; pot = 0;
         const title = e.kind === 'skyline' ? 'SKYLINE' : 'GOLDEN RUN';
-        Snd.play('bonus_in', { vol: 1, jitter: 0, duck: 0.25 }); act('bow'); banner(e.pushes + ' pushes', title, 2000 / speed()); await ctx.sleep(1500);
+        Snd.play('bonus_in', { vol: 1, jitter: 0, duck: 0.25 }); if (!still) act('bow'); banner(e.pushes + ' pushes', title, 2000 / speed()); await ctx.sleep(1500);
         await begin({ growth: e.growth, bonus: true, title, pushes: e.pushes, betScale: 1, slots: slotsFrom(e.d, title === 'SKYLINE' ? 'SKY' : 'GOLD', true) }, null);
         el.push.dataset.keep = '1'; tokens(el.push, e.pushes, Math.max(3, e.pushes), 'ball');
       }
@@ -314,9 +334,9 @@
     const x = total() / 100;
     const tier = TIERS.filter(t => x / Math.pow(ctx.cost, 0.588) >= t.x).pop();
     lookAt(0, 0); if (dealer) dealer.base('idle');
-    if (x < ctx.cost) act('lose');
+    if (x < ctx.cost && !still) act('lose');
     if (x > 0 && x < ctx.cost) Snd.play('lose_soft', { vol: 0.35 });
-    else if (x >= ctx.cost && !tier && !ctx.capped) { act('win'); const sp = speed(); sc.celebrate({ big: false, dur: 1.0 / sp }); const stop = Snd.climb('count_tick_loop', 0.35, 400, 0.9 / sp); await ctx.sleep(900); stop(); Snd.play('win_end_low', { vol: 0.7, jitter: 0 }); sc.release(); }
+    else if (x >= ctx.cost && !tier && !ctx.capped) { if (!still) act('win'); const sp = speed(); sc.celebrate({ big: false, dur: 1.0 / sp }); const stop = Snd.climb('count_tick_loop', 0.35, 400, 0.9 / sp); await ctx.sleep(900); stop(); Snd.play('win_end_low', { vol: 0.7, jitter: 0 }); sc.release(); }
     el.note.textContent = fell + (fell === 1 ? ' stone fell' : ' stones fell') + ' · ' + (hadBonus ? 'bonus played' : WORLD_NAMES[deepest].toLowerCase()); el.note.hidden = false;
     await ctx.sleep(x >= ctx.cost ? 500 : 280);
     if (x >= ctx.cost && (tier || ctx.capped)) await bigWin(ctx, '', ctx.capped ? TIERS.length : TIERS.indexOf(tier), ctx.units(total()), x, ctx.capped);
@@ -378,7 +398,7 @@
       api = a; buildHud(stage);
       const rb = a.$('lzRulesBody');
       rb.innerHTML = rb.innerHTML.replace(/<b>PLAY<\/b>/g, '<b>PUSH</b> (the round brass button)').replace(/mode PLAY and/g, 'mode PUSH and')
-        .replace('<li>The <b>speaker</b>', '<li>The <b>track</b> and feature buttons sit on the stage, under the stones; they step aside while a round plays.</li><li>A named win screen (KNOCKOUT and up) counts the win; tap it to finish the count at once.</li><li>The <b>speaker</b>');
+        .replace('<li>The <b>speaker</b>', '<li>The <b>track</b> and feature buttons sit on the stage, under the stones; they step aside while a round plays.</li><li>A named win screen (KNOCKOUT and up) counts the win; tap it to finish the count at once.</li><li>The <b>camera</b> button beside the speaker keeps the camera steady: a wider view with no shaking and no flight around the table on a big win. The game remembers the choice.</li><li>The <b>speaker</b>');
       if (location.protocol === 'file:' && !window.TOPPLE_PACK) { (await inject('../offline/assets-inline.js')) || (await inject('../look/assets-inline.js')); }
       if (location.protocol === 'file:' && !window.TOPPLE_SND) await inject('../offline/snd-inline.js');
       let lists = {};
@@ -387,11 +407,17 @@
       sc = window.ToppleScene(el.canvas, Object.assign({ reduced: a.reduced, font: 'Cinzel, Georgia, serif' }, lists));
       sc.onWorld = w => { setWorld(w, busy && !(shown && shown.bonus)); if (busy) Snd.play('world_up', { vol: 0.6 }); }; 
       sc.onThrow = () => Snd.play('ball_swing', { vol: 0.55 });
+      // steady camera: the player's choice, kept between visits (if the page blocks storage it lasts for this visit)
+      const setCam = on => { sc.setSteady(on); el.cam.setAttribute('aria-pressed', on ? 'true' : 'false'); el.cam.classList.toggle('on', on); try { localStorage.setItem('topple-steady', on ? '1' : '0'); } catch (e) { /* storage blocked */ } };
+      let camOn = false; try { camOn = localStorage.getItem('topple-steady') === '1'; } catch (e) { /* storage blocked */ }
+      setCam(camOn); el.cam.addEventListener('click', () => { setCam(!sc.steady); api.toast(sc.steady ? 'Steady camera on' : 'Steady camera off'); });
       sc.onHit = h => {
         const n = shown ? shown.slots.length : 20, rate = 1.25 * Math.pow(0.36, h.slot / n), fam = h.mat === 'ivory' || h.mat === 'pearl' ? 'clack_ivory' : h.mat === 'diamond' ? 'clack_glass' : h.mat === 'black' || /^m/.test(h.mat) ? 'clack_stone' : 'clack_metal';
         if (h.kind === 'hit') { Snd.play(fam, { rate, vol: 0.55 + 0.1 * h.world, gap: 0.03 }); if (h.world >= 3) Snd.play('thud_big', { rate: Math.max(0.5, rate * 1.4), vol: 0.5, gap: 0.05 }); }
         else if (h.kind === 'slam') Snd.play('slam_huge', { rate: 0.9, vol: 1, duck: 0.3 });
         else if (h.kind === 'wobble') Snd.play('wobble', { rate: Math.max(0.5, rate * 1.2), vol: 0.8 });
+        else if (h.kind === 'tease') { Snd.play('creak', { rate: Math.max(0.6, rate), vol: 0.9 }); Snd.play('wobble', { rate: Math.max(0.5, rate * 1.1), vol: 0.7 }); Snd.hold(0.3); if (dealer) dealer.hold(true); }
+        else if (h.kind === 'teaseEnd') { Snd.hold(1); if (dealer) dealer.hold(false); }
         else if (h.kind === 'strike') Snd.play('ball_hit', { rate: Math.max(0.55, rate), vol: 0.9 });
       };
       await sc.ready; sc.resize(); sc.start(); loadDealer(a.reduced);

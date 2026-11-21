@@ -308,7 +308,11 @@
     const find = (slot, lane) => (lane === 0 || lane === 1 ? stones.find(s => s.slot === slot && s.lane === lane) : null) || stones.find(s => s.slot === slot);
 
     // ---------- the fall ----------
-    const events = []; let seen = 0, simT = 0, endT = -1, stopSet = new Set(), collectCb = null, quiet = 0, running = null, rate = 1;
+    const events = []; let seen = 0, simT = 0, endT = -1, stopSet = new Set(), teaseSet = new Set(), collectCb = null, quiet = 0, running = null, rate = 1, steady = false;
+    // the tease (only on stones that DO fall, chosen by the game, e.g. a big multiplier): it reaches its tipping point,
+    // hangs there rocking twice, each time less, and then goes over. Sim time; the camera's slow motion stretches it.
+    const TEASE_T = 0.72, TEASE_P = 0.36;
+    const teasing = d => !!(d.tease && d.tease.t != null);
     function rest(a, b) {
       const c = Math.cos(b.th), s = Math.sin(b.th), Qx = a.gap + b.t - b.t * c, Qy = b.t * s, f = th => (a.h * Math.sin(th) - Qx) * c - (a.h * Math.cos(th) - Qy) * s;
       let lo = 0, hi = Math.PI / 2; if (f(hi) <= 0) return hi;
@@ -322,11 +326,19 @@
       b.state = 1;
       if (stopSet.has(b)) { b.stopper = true; b.om = 0.955 * omCrit(b); events.push({ s: b, kind: 'wobble' }); }
       else b.om = Math.max(REST * a.om * Math.sqrt(b.k / a.k), 1.35 * omCrit(b));
+      if (!b.stopper && teaseSet.has(b)) b.tease = { wait: true };
     }
     function step(dt) {
       simT += dt;
       for (const d of stones) {
         if (d.state !== 1) continue;
+        if (d.tease && d.tease.wait && d.th >= d.tip - 0.02) { d.tease = { t: 0 }; events.push({ s: d, kind: 'tease' }); }
+        if (teasing(d)) {
+          const T = d.tease; T.t += dt; const k = Math.min(1, T.t / TEASE_T);
+          d.th = d.tip - 0.01 - 0.08 * (0.5 - 0.5 * Math.cos(2 * Math.PI * T.t / TEASE_P)) * (1 - k) * (1 - k * 0.4); d.om = 0;
+          if (k >= 1) { d.tease = null; d.th = d.tip + 0.003; d.om = 0.28 * Math.sqrt(d.k); events.push({ s: d, kind: 'teaseEnd' }); }
+          continue;
+        }
         d.om += d.k * Math.sin(d.th - d.tip) * dt; d.th += d.om * dt;
         if (d.th < 0) { d.th = 0; d.om = -d.om * 0.55; if (d.om < 0.06 * omCrit(d)) { d.om = 0; d.state = 2; d.stopper = false; } else events.push({ s: d, kind: 'rock' }); }
       }
@@ -342,8 +354,8 @@
       }
     }
     const moving = () => stones.some(s => s.state === 1 && (Math.abs(s.om) > 0.03 * Math.sqrt(s.k) || (s.th > 0.02 && s.th < limit(s) - 0.004)));
-    function run(stops, onCollect) {
-      stopSet = new Set((stops || []).map(p => find(p.slot, p.lane)).filter(Boolean)); collectCb = onCollect || null; quiet = 0;
+    function run(stops, onCollect, teases) {
+      stopSet = new Set((stops || []).map(p => find(p.slot, p.lane)).filter(Boolean)); teaseSet = new Set((teases || []).map(p => find(p.slot, p.lane)).filter(Boolean)); collectCb = onCollect || null; quiet = 0;
       return new Promise(res => { running = res; });
     }
 
@@ -419,7 +431,7 @@
     const tgt = new T.Vector3(), U = new T.Vector3(), V = new T.Vector3(), UP = new T.Vector3(0, 1, 0), tmp = new T.Vector3(), cFog = new T.Color(), cKey = new T.Color();
     function front() {
       let F = 0, wob = null;
-      for (const s of stones) { if (s.state === 0) continue; if (s.stopper && s.state === 1) { wob = s; continue; } if (s.state === 2) continue; F = Math.max(F, s.slot + Math.min(1, s.th / THC)); }
+      for (const s of stones) { if (s.state === 0) continue; if ((s.stopper || teasing(s)) && s.state === 1) { wob = s; continue; } if (s.state === 2) continue; F = Math.max(F, s.slot + Math.min(1, s.th / THC)); }
       if (strikeJob && !strikeJob.hit) F = Math.max(F, strikeJob.s.slot);
       if (fly) F = Math.max(F, fly.s.slot);
       if (wob && wob.slot >= Math.floor(F)) return { F: wob.slot - 0.3, wob };
@@ -472,7 +484,7 @@
         if (d > 0 && !s.waved) { s.waved = true; if (api.onWave) api.onWave(i, n); }
       }
       // camera: rise over the whole spiral, then drift slowly around it
-      const kIn = c.big ? Math.min(1, c.t / 1.1) : 0, kOut = c.out ? Math.min(1, c.outT / 0.8) : 0;
+      const kIn = c.big && !steady ? Math.min(1, c.t / 1.1) : 0, kOut = c.out ? Math.min(1, c.outT / 0.8) : 0;
       if (c.out) c.outT += dt;
       celK = (kIn * kIn * (3 - 2 * kIn)) * (1 - kOut * kOut * (3 - 2 * kOut));
       if (celK > 0) {
@@ -520,11 +532,11 @@
       shake *= Math.exp(-12 * dt);
       if (running) { if (moving() || strikeJob && !strikeJob.hit) quiet = 0; else if ((quiet += dt * rate) > 0.22) { const r = running; running = null; collectCb = null; r(); } }
 
-      sF += (f.F - sF) * (1 - Math.exp(-dt * Math.max(1, rate * 0.8) / 0.32));
+      sF += (f.F - sF) * (1 - Math.exp(-dt * Math.max(1, rate * 0.8) / (steady ? 0.9 : 0.32)));
       // fast-growing rows: the next stones are huge, so the camera climbs and backs off (u = 0 at x1.5 and below, 1 at x2)
       const u = Math.max(0, Math.min(1, (growth - 1.5) / 0.5)), mixP = (p, q) => ({ a: p.a + (q.a - p.a) * u, b: p.b + (q.b - p.b) * u, h: p.h + (q.h - p.h) * u, ta: p.ta + (q.ta - p.ta) * u, tb: p.tb + (q.tb - p.tb) * u, th: p.th + (q.th - p.th) * u });
-      const hc = hAt(sF), zoom = (f.wob ? 0.86 : 1) * (1 + (growth - 1.3) * (CAMG - 0.5 * u)), P = opts.cam || (portrait ? mixP(CAM.p, CAM.pg) : mixP(CAM.l, CAM.lg));
-      const psi = SP.psi0 + sF * TURN + Math.sin(wall * 0.3) * 0.03;
+      const hc = hAt(sF), zoom = (f.wob && !steady ? 0.86 : 1) * (steady ? 1.2 : 1) * (1 + (growth - 1.3) * (CAMG - 0.5 * u)), P = opts.cam || (portrait ? mixP(CAM.p, CAM.pg) : mixP(CAM.l, CAM.lg));
+      const psi = SP.psi0 + sF * TURN + (steady ? 0 : Math.sin(wall * 0.3) * 0.03);
       U.set(Math.cos(psi), 0, Math.sin(psi)); V.set(-Math.sin(psi), 0, Math.cos(psi));
       const cx = SP.R * hc * Math.cos(sF * TURN), cz = SP.R * hc * Math.sin(sF * TURN);
       tgt.set(cx, P.th * hc, cz).addScaledVector(U, P.ta * hc).addScaledVector(V, P.tb * hc);
@@ -532,7 +544,7 @@
       camera.near = 0.08 * hc; camera.far = 700 * hc; camera.updateProjectionMatrix(); camera.lookAt(tgt);
       if (cel) celFrame(dt, hc);
       const sh = hc + (celR - hc) * celK;
-      if (shake > 0.002 && !opts.reduced) { const s = shake * 0.03 * sh; camera.position.x += Math.sin(wall * 113) * s; camera.position.y += Math.sin(wall * 144 + 1) * s; }
+      if (shake > 0.002 && !opts.reduced && !steady) { const s = shake * 0.03 * sh; camera.position.x += Math.sin(wall * 113) * s; camera.position.y += Math.sin(wall * 144 + 1) * s; }
 
       applyLook(dt, false);
       const kh = Math.max(hc, sh * 0.55);
@@ -720,7 +732,7 @@
     }
     Object.assign(api, {
       setRow, strike, throwStrike, run, project, resize, warm, setDealer, setDealerBox, get dealer() { return dl && dl.d; },
-      setRate(r) { rate = r; }, celebrate, finale, release, get celebrating() { return !!cel; }, fadeOut() { fadeTo = 0; }, fadeIn() { fadeTo = 1; },
+      setRate(r) { rate = r; }, setSteady(v) { steady = !!v; }, get steady() { return steady; }, celebrate, finale, release, get celebrating() { return !!cel; }, fadeOut() { fadeTo = 0; }, fadeIn() { fadeTo = 1; },
       start() { if (!opts.manual && !raf) { last = performance.now(); raf = requestAnimationFrame(loop); } },
       tick(dt) { frame(dt); },
       get front() { return sF; }, get stones() { return stones; }, worldName: w => (bonus ? NOIR : WORLDS[w] || WORLDS[1]).name,
