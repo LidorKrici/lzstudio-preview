@@ -1,0 +1,197 @@
+/* Last Step: theme of the shell + the in-stage HUD. Style C "gilded night" (art/סגנון.md): emerald-black world,
+ * jade and ember as the live colours, gold kept for wins. One display face: Limelight. Motif: the sun-ray fan. */
+@font-face { font-family: "Limelight"; src: url("fonts/limelight.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Jost"; src: url("fonts/jost.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+:root {
+  --lz-bg: #08201B;
+  --lz-panel: rgba(9, 32, 27, .9);
+  --lz-panel-solid: #0E2A24;
+  --lz-line: rgba(233, 185, 73, .28);
+  --lz-text: #EAF3EE;
+  --lz-muted: #93AFA3;
+  --lz-accent: #E9B949;
+  --lz-accent-ink: #1B1306;
+  --lz-accent2: #2FE08C;
+  --lz-good: #2FE08C;
+  --lz-bad: #FF6A2A;
+  --lz-radius: 6px;
+  --lz-font-display: "Limelight", Georgia, serif;
+  --lz-font-body: "Jost", system-ui, sans-serif;
+  --lz-action-bg: #E9B949;
+  --ls-gold: #E9B949;
+  --ls-gold-hi: #FFDA72;
+  --ls-ink: #0E2A24;
+  --ls-fan: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%2050%22%3E%3Cpath%20fill%3D%22%23E9B949%22%20d%3D%22M50%2050L3.2%2039.2L2.2%2045.8ZM50%2050L8.9%2025.3L5.8%2031.3ZM50%2050L18.5%2013.8L13.8%2018.5ZM50%2050L31.3%205.8L25.3%208.9ZM50%2050L45.8%202.2L39.2%203.2ZM50%2050L60.8%203.2L54.2%202.2ZM50%2050L74.7%208.9L68.7%205.8ZM50%2050L86.2%2018.5L81.5%2013.8ZM50%2050L94.2%2031.3L91.1%2025.3ZM50%2050L97.8%2045.8L96.8%2039.2Z%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2214%22%20fill%3D%22%23E9B949%22%2F%3E%3C%2Fsvg%3E");
+}
+body { background: #061915; }
+.ls-logo { font-family: "Limelight", serif; color: var(--ls-gold); letter-spacing: .08em; font-weight: 400; }
+
+/* the stage is one picture (.ls-full, the Pixi canvas); .ls-box is the framed board window over it, placed by game.js */
+.ls-full { position: absolute; inset: 0; overflow: hidden; }
+.ls-full canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
+.ls-box { position: absolute; overflow: hidden; pointer-events: none; }
+.ls-box .ls-big { pointer-events: auto; }
+
+/* the value plaque, top centre: the number that matters */
+.ls-plaque {
+  position: absolute; left: 50%; top: calc(var(--u) * 1.6); transform: translateX(-50%);
+  min-width: calc(var(--u) * 17); padding: calc(var(--u) * .6) calc(var(--u) * 2.2) calc(var(--u) * .7);
+  text-align: center; color: var(--ls-gold-hi);
+  background: rgba(8, 28, 23, .82); border: calc(var(--u) * .18) solid var(--ls-gold); border-radius: calc(var(--u) * .5);
+  outline: calc(var(--u) * .12) solid rgba(233, 185, 73, .45); outline-offset: calc(var(--u) * -.5);
+  pointer-events: none;
+}
+.ls-plaque::before, .ls-plaque::after {          /* the sun-ray fan motif on both ends */
+  content: ""; position: absolute; top: 50%; width: calc(var(--u) * 2.2); height: calc(var(--u) * 1.1);
+  transform: translateY(-50%);
+  background: var(--ls-fan) no-repeat center bottom / contain;
+}
+.ls-plaque::before { left: calc(var(--u) * -2.6); }
+.ls-plaque::after { right: calc(var(--u) * -2.6); }
+.ls-plaque b { display: block; font: 400 calc(var(--u) * 3.4)/1 "Limelight", serif; letter-spacing: .03em; }
+.ls-plaque small { display: block; margin-top: calc(var(--u) * .3); font: 600 calc(var(--u) * 1.05)/1 "Jost", sans-serif; letter-spacing: .22em; color: #B9CFC5; }
+.ls-plaque.pop b { animation: ls-pop .33s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes ls-pop { 0% { transform: scale(.5); } 25% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+/* ropes left in the vault */
+.ls-ropes { position: absolute; left: calc(var(--u) * 2); top: calc(var(--u) * 5.6); display: flex; gap: calc(var(--u) * .8); }
+.ls-ropes .rope { width: calc(var(--u) * 3.2); height: calc(var(--u) * 5.8); background: no-repeat center / contain; transition: transform .3s, opacity .3s, filter .3s; }
+.ls-ropes .rope.gone { opacity: .25; filter: grayscale(1); transform: translateY(calc(var(--u) * 1)) rotate(-18deg); }
+.ls-title {
+  position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
+  font: 400 calc(var(--u) * 7)/1 "Limelight", serif; color: var(--ls-gold-hi); letter-spacing: .08em;
+  -webkit-text-stroke: calc(var(--u) * .12) #3a2606;
+  animation: ls-title 1s cubic-bezier(.34, 1.56, .64, 1) both; pointer-events: none;
+}
+@keyframes ls-title { 0% { transform: translate(-50%, -50%) scale(.15); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1); } }
+
+/* gold flash between the bridge and the vault */
+.ls-wipe { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: #FFE9A8; }
+.ls-wipe.go { animation: ls-wipe .9s ease-out; }
+@keyframes ls-wipe { 0% { opacity: 0; } 40% { opacity: .95; } 100% { opacity: 0; } }
+
+/* the big-win card */
+.ls-big { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(4, 16, 13, .55); cursor: pointer; }
+.ls-big[hidden] { display: none; }
+.ls-big-card {
+  position: relative; text-align: center; padding: calc(var(--u) * 2.4) calc(var(--u) * 5) calc(var(--u) * 1.6);
+  background: rgba(10, 34, 28, .94); border: calc(var(--u) * .3) solid var(--ls-gold); border-radius: calc(var(--u) * .6);
+  outline: calc(var(--u) * .15) solid rgba(233, 185, 73, .5); outline-offset: calc(var(--u) * -.75);
+  animation: ls-card .5s cubic-bezier(.34, 1.56, .64, 1) both;
+  margin-top: calc(var(--u) * -14);
+}
+.ls-big-card::before {                             /* sun-ray crown */
+  content: ""; position: absolute; left: 50%; top: calc(var(--u) * -4.4); width: calc(var(--u) * 12); height: calc(var(--u) * 6);
+  transform: translateX(-50%);
+  background: var(--ls-fan) no-repeat center bottom / contain;
+}
+.ls-big-card b { display: block; font: 400 calc(var(--u) * 4.2)/1 "Limelight", serif; color: var(--ls-gold-hi); letter-spacing: .06em; }
+.ls-big-card strong { display: block; margin-top: calc(var(--u) * .8); font: 400 calc(var(--u) * 6.2)/1 "Limelight", serif; color: #FFF2C4; }
+.ls-big-card small { display: block; margin-top: calc(var(--u) * 1.2); font: 500 calc(var(--u) * 1.1)/1 "Jost", sans-serif; letter-spacing: .2em; color: var(--lz-muted); text-transform: uppercase; }
+.ls-big[data-tier="1"] .ls-big-card { animation: ls-card .5s cubic-bezier(.34, 1.56, .64, 1) both, ls-beat .7s ease-in-out .5s infinite; }
+.ls-big[data-tier="2"] .ls-big-card, .ls-big[data-tier="3"] .ls-big-card { animation: ls-card .5s cubic-bezier(.34, 1.56, .64, 1) both, ls-beat .6s ease-in-out .5s infinite; }
+@keyframes ls-card { 0% { transform: scale(.15); opacity: 0; } 40% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes ls-beat { 50% { transform: scale(1.03); } }
+
+/* the shell, in the temple's materials */
+.lz-intro { background: #061915; }
+.lz-action, #lzPlay { color: var(--lz-accent-ink); font-family: "Limelight", serif; letter-spacing: .08em; }
+.lz-modes button[aria-pressed="true"] { border-color: var(--ls-gold); outline: 1px solid var(--ls-gold); outline-offset: -2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-plaque.pop b, .ls-title, .ls-big-card { animation: none !important; }
+  .ls-wipe.go { animation-duration: .01s; }
+}
+.lz-intro-card b { color: var(--ls-gold); }
+.lz-ic-art img { height: clamp(54px, 15vh, 120px); width: auto; max-width: 100%; object-fit: contain; }
+/* base-mode buttons: the "from 1.08x" note must fit under TILE n at every size */
+.lz-modes button { min-width: 0; }
+.lz-modes button small { font-size: clamp(8px, 1.1vw, 11px); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+@media (max-height: 300px) { .lz-modes button small { display: none; } }
+/* the explorer is the face of the game (2026-11-20): he waves on the intro screen and leans on the big-win card */
+.ls-portrait { position: absolute; left: calc(var(--u) * -10); bottom: calc(var(--u) * -1); height: calc(var(--u) * 17); width: auto; pointer-events: none; }
+/* phones: the portrait sits inside the card instead of leaning out past the screen edge; intro card art fits its card */
+@media (max-width: 600px) {
+  .ls-big-card { padding-left: calc(var(--u) * 12); padding-right: calc(var(--u) * 3); }
+  .ls-portrait { left: calc(var(--u) * -1.5); height: calc(var(--u) * 14); }
+  .lz-ic-art img { height: 56px; }
+}
+
+
+/* win celebrations (2026-11-26, the user: many more animations when he wins more than he played; game.js winShow/bigWin) */
+.ls-fxc { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* turning sun rays behind the banner and behind the big-win card (the sun-ray fan of the style, as light) */
+.ls-rays {
+  position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 72); height: calc(var(--u) * 72); translate: -50% -50%;
+  border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+  background: repeating-conic-gradient(rgba(255, 196, 96, .55) 0deg 5deg, rgba(255, 196, 96, 0) 5deg 15deg);
+  -webkit-mask: radial-gradient(circle, #000 6%, rgba(0, 0, 0, .55) 28%, transparent 62%);
+  mask: radial-gradient(circle, #000 6%, rgba(0, 0, 0, .55) 28%, transparent 62%);
+  animation: ls-rays-in .5s cubic-bezier(.2, 1.4, .4, 1) both, ls-spin 18s linear infinite;
+}
+@keyframes ls-rays-in { from { scale: .15; } to { scale: 1; } }
+@keyframes ls-spin { to { rotate: 360deg; } }
+/* the banner: WIN / NICE WIN / GREAT WIN / SUPERB WIN over the bridge */
+.ls-win { position: absolute; inset: 0; pointer-events: auto; cursor: pointer; transition: opacity .2s; }
+.ls-win[hidden] { display: none; }
+.ls-win.out { opacity: 0; }
+.ls-win .ls-rays { top: 31%; opacity: .5; }
+.ls-win[data-lv="0"] .ls-win-in { animation-duration: .26s; }
+.ls-win[data-lv="0"] .ls-rays { animation-duration: .26s, 18s; }
+.ls-win[data-lv="0"].out { transition-duration: .12s; }
+.ls-win[data-lv="1"] .ls-rays { opacity: .7; }
+.ls-win[data-lv="2"] .ls-rays { opacity: .9; width: calc(var(--u) * 86); height: calc(var(--u) * 86); animation-duration: .5s, 12s; }
+.ls-win[data-lv="3"] .ls-rays { opacity: 1; width: calc(var(--u) * 100); height: calc(var(--u) * 100); animation-duration: .5s, 8s; }
+.ls-win-in::before { content: ""; position: absolute; inset: -38% -22%; z-index: -1; pointer-events: none; background: radial-gradient(closest-side, rgba(5, 18, 14, .78), rgba(5, 18, 14, .45) 60%, rgba(5, 18, 14, 0)); }
+.ls-win-in { position: absolute; left: 50%; top: 31%; translate: -50% -50%; text-align: center; white-space: nowrap; animation: ls-stamp .5s cubic-bezier(.3, 1.5, .5, 1) both; }
+@keyframes ls-stamp { 0% { scale: 2.6; opacity: 0; } 45% { scale: .9; opacity: 1; } 100% { scale: 1; opacity: 1; } }
+.ls-win-t, .ls-big-card b {
+  background: linear-gradient(100deg, #C98F2A 0%, #FFE08A 32%, #FFFBEA 48%, #FFE08A 64%, #C98F2A 100%) 0 0 / 260% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: ls-sheen 1.7s linear infinite;
+}
+.ls-win-t {
+  display: block; font: 400 calc(var(--u) * 5.4)/1.05 "Limelight", serif; letter-spacing: .07em; padding: 0 .1em;
+  filter: drop-shadow(0 calc(var(--u) * .28) 0 #3a2606) drop-shadow(0 0 calc(var(--u) * 1.4) rgba(0, 0, 0, .6));
+}
+@keyframes ls-sheen { from { background-position: 115% 0; } to { background-position: -15% 0; } }
+.ls-win[data-lv="2"] .ls-win-t { font-size: calc(var(--u) * 6.4); }
+.ls-win[data-lv="3"] .ls-win-t { font-size: calc(var(--u) * 7.4); }
+.ls-win-amt {
+  display: inline-block; margin-top: calc(var(--u) * .7); padding: calc(var(--u) * .55) calc(var(--u) * 2.4) calc(var(--u) * .65);
+  font: 400 calc(var(--u) * 3.3)/1 "Limelight", serif; color: #FFF2C4; letter-spacing: .03em;
+  background: rgba(8, 28, 23, .88); border: calc(var(--u) * .18) solid var(--ls-gold); border-radius: calc(var(--u) * .5);
+  outline: calc(var(--u) * .1) solid rgba(233, 185, 73, .45); outline-offset: calc(var(--u) * -.45);
+  box-shadow: 0 0 calc(var(--u) * 2.2) rgba(255, 200, 90, .4), 0 calc(var(--u) * .5) calc(var(--u) * 1.5) rgba(0, 0, 0, .5);
+}
+.ls-win.land .ls-win-amt { animation: ls-land .42s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes ls-land { 0% { scale: 1; } 30% { scale: 1.22; box-shadow: 0 0 calc(var(--u) * 5) rgba(255, 225, 140, .95); } 100% { scale: 1; } }
+.ls-win-x { display: block; margin-top: calc(var(--u) * .6); font: 600 calc(var(--u) * 1.25)/1 "Jost", sans-serif; letter-spacing: .26em; color: #DCEBE4; text-shadow: 0 1px 3px #000; }
+/* the plaque burns gold while a win is shown */
+.ls-plaque.hot { animation: ls-hot .55s ease-in-out infinite alternate; }
+@keyframes ls-hot {
+  from { box-shadow: 0 0 calc(var(--u) * 1.2) rgba(255, 205, 100, .45), inset 0 0 calc(var(--u) * .8) rgba(255, 205, 100, .25); }
+  to { box-shadow: 0 0 calc(var(--u) * 3.6) rgba(255, 215, 120, .9), inset 0 0 calc(var(--u) * 1.4) rgba(255, 215, 120, .5); }
+}
+/* the big-win card: rays behind it, a flash on every new title, the title slams in, the last number lands */
+.ls-big .ls-rays { top: calc(50% - var(--u) * 7); width: calc(var(--u) * 110); height: calc(var(--u) * 110); opacity: .6; }
+.ls-big[data-tier="1"] .ls-rays { opacity: .8; animation-duration: .5s, 12s; }
+.ls-big[data-tier="2"] .ls-rays, .ls-big[data-tier="3"] .ls-rays { opacity: 1; width: calc(var(--u) * 140); height: calc(var(--u) * 140); animation-duration: .5s, 7s; }
+.ls-flash {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(circle at 50% calc(50% - var(--u) * 7), rgba(255, 246, 205, .95), rgba(255, 222, 140, .45) 28%, rgba(255, 222, 140, 0) 62%);
+}
+.ls-flash.go { animation: ls-flash .6s ease-out; }
+@keyframes ls-flash { from { opacity: 1; } to { opacity: 0; } }
+.ls-big-card b { padding: 0 .1em; filter: drop-shadow(0 calc(var(--u) * .22) 0 #3a2606); }
+.ls-big-card.up b { animation: ls-slam .5s cubic-bezier(.3, 1.5, .5, 1), ls-sheen 1.7s linear infinite; }
+@keyframes ls-slam { 0% { scale: 2.3; opacity: 0; } 50% { scale: .92; opacity: 1; } 100% { scale: 1; opacity: 1; } }
+.ls-big.land .ls-big-card strong { animation: ls-land .45s cubic-bezier(.34, 1.56, .64, 1); }
+.ls-big[data-tier="1"] .ls-big-card { box-shadow: 0 0 calc(var(--u) * 3) rgba(255, 200, 90, .35); }
+.ls-big[data-tier="2"] .ls-big-card, .ls-big[data-tier="3"] .ls-big-card { box-shadow: 0 0 calc(var(--u) * 5) rgba(255, 205, 100, .6); }
+.ls-big[data-tier="2"] .ls-big-card strong, .ls-big[data-tier="3"] .ls-big-card strong { text-shadow: 0 0 calc(var(--u) * 1.6) rgba(255, 210, 110, .8); }
+@media (prefers-reduced-motion: reduce) {
+  .ls-rays, .ls-win-in, .ls-win-t, .ls-big-card b, .ls-big-card.up b, .ls-plaque.hot, .ls-win.land .ls-win-amt, .ls-big.land .ls-big-card strong { animation: none !important; }
+  .ls-flash.go { animation-duration: .01s; }
+}

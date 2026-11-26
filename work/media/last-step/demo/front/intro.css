@@ -1,0 +1,189 @@
+/* ================= Last Step: the opening screen (first rebuilt 2026-11-25) ================= */
+/* 2026-11-26 "the map in the dark", replaced the same evening by "the torch in the dark" (the user: did not like the
+ * map, and the three cards were lame): the monkey's torch lights the temple, the light runs along the bridge while the
+ * game loads (game.js introTorch), paper notes explain the game, the temple lights up when ready, PLAY dives in. */
+@font-face { font-family: "Patrick Hand"; src: url("fonts/patrickhand.ttf") format("truetype"); font-display: swap; }
+.lz-app[data-game="last-step"] ~ .lz-intro, #lzIntro { background: #040302; overflow: hidden; }
+/* the lit temple, covering the screen (placed by game.js) */
+#lzIntro .ls-tscene { position: absolute; z-index: 0; pointer-events: none; will-change: transform; }
+#lzIntro .ls-tscene > img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* a glint on each stone as the light reaches it */
+#lzIntro .ls-tg { position: absolute; width: 9%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; opacity: 0; mix-blend-mode: screen; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 252, 228, .95) 0%, rgba(255, 220, 130, .55) 22%, rgba(255, 200, 90, 0) 60%); }
+#lzIntro .ls-tg.on { animation: ls-tg .8s ease-out both; }
+@keyframes ls-tg { 0% { opacity: 0; scale: .2; } 30% { opacity: 1; scale: 1.15; } 100% { opacity: 0; scale: 1.5; } }
+/* the braziers flare and the idol shines when everything is ready */
+#lzIntro .ls-tbz { position: absolute; width: 22%; aspect-ratio: 1; translate: -50% -62%; border-radius: 50%; mix-blend-mode: screen; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 236, 170, .85) 0%, rgba(255, 170, 60, .45) 25%, rgba(255, 120, 30, 0) 62%); }
+#lzIntro.ls-found .ls-tbz { animation: ls-flare .9s cubic-bezier(.2, 1.4, .4, 1) both, ls-bz 1.7s ease-in-out .9s infinite; }
+@keyframes ls-flare { 0% { opacity: 0; scale: .3; } 45% { opacity: 1; scale: 1.5; } 100% { opacity: .75; scale: 1; } }
+@keyframes ls-bz { 0%, 100% { opacity: .75; scale: 1; } 30% { opacity: .9; scale: 1.06; } 60% { opacity: .68; scale: .96; } }
+#lzIntro .ls-tidol { position: absolute; width: 30%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; mix-blend-mode: screen; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 240, 180, .7) 0%, rgba(255, 200, 90, .3) 30%, rgba(255, 180, 60, 0) 65%); }
+#lzIntro.ls-found .ls-tidol { animation: ls-flare 1.1s ease-out .15s both, ls-idol-glow 2.4s ease-in-out 1.3s infinite; }
+@keyframes ls-idol-glow { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+#lzIntro .ls-iflag { position: absolute; width: auto; translate: -30% -96%; transform: translateY(-80%) scale(1.4); opacity: 0; filter: drop-shadow(0 6px 4px rgba(0, 0, 0, .45)); }
+/* the name and PLAY stay readable over the lit temple */
+#lzIntro .ls-tshade { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(4, 3, 2, .82) 0%, rgba(4, 3, 2, .45) calc(var(--ls-top, 140px) * .85), rgba(4, 3, 2, 0) calc(var(--ls-top, 140px) + 40px)),
+    linear-gradient(0deg, rgba(4, 3, 2, .7) 0%, rgba(4, 3, 2, 0) 22%),
+    radial-gradient(ellipse at 50% 55%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .45) 100%); }
+/* the dark (a canvas: the torch's light and the trail along the bridge are cut out of it); it lifts when ready */
+#lzIntro .ls-tdark { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 1.5s ease-in-out .2s; }
+#lzIntro.ls-found .ls-tdark { opacity: 0; }
+#lzIntro .ls-iwarm {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; mix-blend-mode: overlay; opacity: var(--lit, 0);
+  background: radial-gradient(circle var(--lr, 300px) at var(--fx, 30%) var(--fy, 60%), rgba(255, 150, 50, .5), rgba(255, 120, 40, 0) 100%);
+}
+/* the monkey and his torch */
+#lzIntro .ls-itorch { position: absolute; z-index: 1; pointer-events: none; }
+#lzIntro .ls-itorch[hidden], #lzIntro .ls-iflame[hidden], #lzIntro .ls-isparks[hidden] { display: none; }
+#lzIntro .ls-itorch img { width: 100%; height: 100%; display: block; transform-origin: 40% 100%; filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .6)); animation: ls-sway 4.2s ease-in-out infinite; }
+@keyframes ls-sway { 0%, 100% { transform: rotate(-.8deg); } 50% { transform: rotate(.8deg) scale(1.006, .994); } }
+#lzIntro .ls-iflame {
+  position: absolute; z-index: 1; width: 190px; height: 190px; margin: -95px 0 0 -95px; pointer-events: none; mix-blend-mode: screen; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 246, 200, .9) 0%, rgba(255, 190, 80, .45) 22%, rgba(255, 120, 30, .14) 48%, rgba(255, 100, 20, 0) 70%);
+  animation: ls-ignite .7s cubic-bezier(.2, 1.6, .5, 1) .42s both, ls-flicker 1.9s ease-in-out 1.2s infinite;
+}
+@keyframes ls-ignite { from { transform: scale(0); opacity: 0; } 40% { opacity: 1; } to { transform: scale(1); opacity: 1; } }
+@keyframes ls-flicker { 0%, 100% { transform: scale(1); opacity: 1; } 23% { transform: scale(1.07); opacity: .9; } 51% { transform: scale(.95); opacity: 1; } 77% { transform: scale(1.04); opacity: .86; } }
+#lzIntro .ls-isparks { position: absolute; z-index: 1; width: 0; height: 0; pointer-events: none; }
+#lzIntro .ls-isparks i {
+  position: absolute; left: -2px; top: -18px; width: 4px; height: 4px; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, #FFF6CC 0%, #FFB040 55%, rgba(255, 120, 40, 0) 75%);
+  animation: ls-spark ease-out infinite;
+}
+@keyframes ls-spark { 0% { transform: translate(0, 0) scale(1); opacity: 0; } 12% { opacity: 1; } 100% { transform: translate(var(--dx, 10px), calc(-1 * var(--h, 100px))) scale(.3); opacity: 0; } }
+/* the paper notes and their arrows (in place of the three cards) */
+#lzIntro .lz-intro-cards { display: none !important; }
+#lzIntro .ls-narrows { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+#lzIntro .ls-narrow { fill: none; stroke: #F6E7C1; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 7 6; opacity: 0; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .85)); transition: opacity .4s .25s; }
+#lzIntro .ls-narrow.on { opacity: .95; animation: ls-march 1.1s linear infinite; }
+@keyframes ls-march { to { stroke-dashoffset: -26; } }
+#lzIntro .ls-note {
+  position: absolute; z-index: 1; width: clamp(150px, 17vw, 250px); padding: .6em .85em .7em; box-sizing: border-box; pointer-events: none;
+  font: 400 clamp(14px, 1.45vw, 21px)/1.12 "Patrick Hand", "Jost", sans-serif; color: #3A2410; text-align: center;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 60%), linear-gradient(170deg, #F3E2B8 0%, #E6CC92 60%, #D2B072 100%);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .55), inset 0 0 14px rgba(120, 80, 30, .35);
+  clip-path: polygon(0 3%, 9% 0, 22% 2%, 40% 0, 58% 2%, 76% 0, 91% 2%, 100% 0, 99% 30%, 100% 62%, 98% 100%, 80% 97%, 61% 100%, 42% 98%, 24% 100%, 7% 98%, 0 100%, 1% 68%, 0 35%);
+  opacity: 0; scale: .5; rotate: var(--r, 0deg); transition: opacity .3s, scale .5s cubic-bezier(.3, 1.6, .5, 1);
+}
+#lzIntro .ls-note.on { opacity: 1; scale: 1; }
+#lzIntro .ls-note b { display: block; margin-bottom: .2em; font: 400 1.02em/1.05 "Limelight", serif; letter-spacing: .05em; color: #6B3810; }
+#lzIntro .ls-note span { display: block; }
+#lzIntro.ls-dive :is(.ls-note, .ls-narrows) { opacity: 0; transition: opacity .15s; }
+/* the band between the name and PLAY; the light is the loading bar, so the shell's bar is not shown */
+#lzIntro .lz-intro-in { height: 100%; box-sizing: border-box; padding-bottom: 26px; }
+#lzIntro .ls-igap { flex: 1 1 auto; min-height: clamp(70px, 17vh, 190px); width: 100%; pointer-events: none; }
+#lzIntro .lz-intro-load { display: none; }
+/* PLAY: the flag goes in, the view dives onto the bridge (inside the shell's 0.45 s fade) */
+#lzIntro.ls-dive .ls-tscene { transform: scale(2.4); transition: transform .5s cubic-bezier(.55, 0, .8, .3); }
+#lzIntro.ls-dive .ls-iflag { animation: ls-plant .22s cubic-bezier(.5, 0, .9, .5) both; }
+@keyframes ls-plant { to { transform: none; opacity: 1; } }
+#lzIntro.ls-dive :is(.lz-intro-in, .ls-itorch, .ls-iflame, .ls-isparks) { opacity: 0; transition: opacity .18s; }
+@media (max-aspect-ratio: 1/1) { #lzIntro .ls-note { width: clamp(118px, 36vw, 190px); font-size: clamp(12px, 3.4vw, 16px); } }
+@media (max-height: 420px) { #lzIntro .ls-note { width: 118px; font-size: 11px; } }
+@media (max-height: 300px) { #lzIntro :is(.ls-note, .ls-narrows) { display: none; } }
+
+/* the content */
+#lzIntro .lz-intro-in { position: relative; z-index: 2; width: min(900px, 100%); gap: clamp(8px, 2.2vh, 20px); }
+#lzIntro .lz-intro-logo { position: relative; height: auto; overflow: visible; }
+#lzIntro .lz-intro-logo::before {                                   /* the sun fan rising behind the name */
+  content: ""; position: absolute; left: 50%; bottom: 8%; width: clamp(180px, 46vh, 520px); aspect-ratio: 2 / 1; transform: translateX(-50%);
+  background: var(--ls-fan) center bottom / contain no-repeat; opacity: .22; z-index: -1; filter: blur(.3px) drop-shadow(0 0 30px rgba(255, 200, 90, .6));
+  animation: ls-fan-pulse 5s ease-in-out infinite;
+}
+@keyframes ls-fan-pulse { 0%, 100% { opacity: .18; transform: translateX(-50%) scale(1); } 50% { opacity: .3; transform: translateX(-50%) scale(1.04); } }
+#lzIntro .ls-logo {
+  display: block; font: 400 clamp(44px, 14vh, 136px)/.95 "Limelight", serif; letter-spacing: .07em; white-space: nowrap;
+  background: linear-gradient(180deg, #FFF6CF 0%, #FFE08A 30%, #E9B949 48%, #A8701A 52%, #F2C95C 70%, #FFE9A6 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 3px 0 #2E1C05) drop-shadow(0 0 2px #2E1C05) drop-shadow(0 8px 26px rgba(255, 190, 80, .4));
+  animation: ls-logo-in .9s cubic-bezier(.34, 1.4, .64, 1) both;
+}
+@keyframes ls-logo-in { from { transform: scale(.7) translateY(10px); opacity: 0; letter-spacing: .3em; } to { transform: none; opacity: 1; } }
+#lzIntro .lz-intro-tag {
+  display: flex; align-items: center; gap: 14px; max-width: none; margin-top: clamp(-4px, -.4vh, 0px);
+  font: 500 clamp(12px, 2vh, 17px)/1.3 "Jost", sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #E7D9AE;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, .8);
+}
+#lzIntro .lz-intro-tag::before, #lzIntro .lz-intro-tag::after { content: ""; flex: 0 0 clamp(30px, 6vw, 80px); height: 1px; background: linear-gradient(90deg, transparent, #E9B949); }
+#lzIntro .lz-intro-tag::after { background: linear-gradient(270deg, transparent, #E9B949); }
+#lzIntro .lz-intro-cards { gap: clamp(10px, 1.6vw, 20px); margin-top: clamp(2px, 1vh, 10px); }
+#lzIntro .lz-intro-card {
+  position: relative; gap: 6px; padding: clamp(12px, 2vh, 22px) 16px clamp(12px, 1.8vh, 18px); border-radius: 12px;
+  background: linear-gradient(180deg, rgba(18, 54, 45, .78), rgba(5, 20, 17, .9));
+  border: 1.5px solid rgba(233, 185, 73, .75);
+  box-shadow: inset 0 0 0 4px rgba(5, 20, 17, .6), inset 0 0 0 5px rgba(233, 185, 73, .22), inset 0 1px 0 rgba(255, 235, 170, .3), 0 18px 40px rgba(0, 0, 0, .55);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  animation: ls-card-in .7s cubic-bezier(.34, 1.4, .64, 1) both; transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), box-shadow .25s;
+}
+#lzIntro .lz-intro-card:nth-child(1) { animation-delay: .35s; }
+#lzIntro .lz-intro-card:nth-child(2) { animation-delay: .47s; }
+#lzIntro .lz-intro-card:nth-child(3) { animation-delay: .59s; }
+@keyframes ls-card-in { from { transform: translateY(26px) scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+#lzIntro .lz-intro-card::before {                                   /* a small fan crest on the top edge */
+  content: ""; position: absolute; left: 50%; top: -1px; width: 46px; height: 23px; transform: translate(-50%, -100%);
+  background: var(--ls-fan) center bottom / contain no-repeat; opacity: .9;
+}
+#lzIntro .lz-intro-card:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 4px rgba(5, 20, 17, .6), inset 0 0 0 5px rgba(233, 185, 73, .3), inset 0 1px 0 rgba(255, 235, 170, .3), 0 22px 44px rgba(0, 0, 0, .6), 0 0 24px rgba(255, 200, 90, .25); }
+#lzIntro .lz-intro-card { --art-h: clamp(58px, 15vh, 132px); }
+#lzIntro .lz-ic-art { position: relative; display: grid; place-items: center; height: var(--art-h); }
+#lzIntro .lz-ic-art::before { content: ""; position: absolute; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(255, 205, 100, .32), rgba(255, 205, 100, 0) 68%); }
+#lzIntro .lz-ic-art img { position: relative; height: var(--art-h); max-height: var(--art-h); filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .5)); animation: ls-float 4s ease-in-out infinite; }
+#lzIntro .lz-intro-card:nth-child(2) .lz-ic-art img { animation-delay: -1.3s; }
+#lzIntro .lz-intro-card:nth-child(3) .lz-ic-art img { animation-delay: -2.6s; }
+@keyframes ls-float { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-6px) rotate(1deg); } }
+#lzIntro .lz-intro-card b { font: 400 clamp(14px, 2.2vh, 19px)/1.1 "Limelight", serif; letter-spacing: .06em; color: #FFDA72; text-shadow: 0 2px 4px rgba(0, 0, 0, .6); }
+#lzIntro .lz-intro-card span { font: 400 clamp(12px, 1.75vh, 14.5px)/1.4 "Jost", sans-serif; color: #C9DAD2; }
+#lzIntro .lz-intro-in:has(.lz-intro-play:not(:disabled)) .lz-intro-load { opacity: 0; transition: opacity .4s; }
+#lzIntro .lz-intro-load { height: 5px; width: min(300px, 70%); background: rgba(0, 0, 0, .45); border: 1px solid rgba(233, 185, 73, .35); }
+#lzIntro .lz-intro-load i { background: linear-gradient(90deg, #A8701A, #FFE08A, #E9B949); box-shadow: 0 0 10px rgba(255, 210, 110, .7); }
+#lzIntro .lz-intro-play {
+  position: relative; overflow: hidden; min-width: clamp(200px, 22vw, 290px); height: clamp(44px, 8.5vh, 68px); padding: 0 40px;
+  border: 2px solid #FFE49A; border-radius: 999px; color: #2a1804;
+  background: radial-gradient(ellipse at 50% 20%, #FFF0B8 0%, #F3C95A 40%, #C68C2A 100%);
+  font: 400 clamp(18px, 3.4vh, 28px)/1 "Limelight", serif; letter-spacing: .14em;
+  box-shadow: 0 0 0 4px rgba(5, 20, 17, .9), 0 0 0 6px #C9973A, 0 14px 30px rgba(0, 0, 0, .55), 0 0 40px rgba(255, 200, 90, .5);
+  transition: transform .15s ease, filter .2s;
+}
+#lzIntro .lz-intro-play:not(:disabled) { animation: ls-play-glow 2.4s ease-in-out infinite; }
+#lzIntro .lz-intro-play::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .6) 48%, transparent 60%) -200% 0 / 300% 100% no-repeat;
+  animation: ls-shine 3.6s ease-in-out .8s infinite;
+}
+#lzIntro .lz-intro-play:not(:disabled):hover { transform: scale(1.04); filter: brightness(1.06); }
+#lzIntro .lz-intro-play:not(:disabled):active { transform: scale(.97); }
+#lzIntro .lz-intro-play:disabled { filter: saturate(.5) brightness(.75); }
+@keyframes ls-play-glow { 0%, 100% { box-shadow: 0 0 0 4px rgba(5, 20, 17, .9), 0 0 0 6px #C9973A, 0 14px 30px rgba(0, 0, 0, .55), 0 0 30px rgba(255, 200, 90, .4); } 50% { box-shadow: 0 0 0 4px rgba(5, 20, 17, .9), 0 0 0 6px #E9B949, 0 14px 30px rgba(0, 0, 0, .55), 0 0 60px rgba(255, 210, 110, .75); } }
+@keyframes ls-shine { 0%, 70% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+#lzIntro .lz-intro-fine { color: #A9BDB3; letter-spacing: .12em; text-transform: uppercase; font-size: 10.5px; text-shadow: 0 1px 4px rgba(0, 0, 0, .8); }
+#lzIntro .lz-studio { z-index: 2; }
+/* phones: the three cards stay in one short row, so the band for the map is tall; the monkey and his torch stand left of the stones (game.js) */
+@media (max-aspect-ratio: 1/1) {
+  #lzIntro .lz-intro-cards { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+  #lzIntro .lz-intro-card { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; padding: 8px 6px 9px; }
+  #lzIntro .lz-intro-card b { font-size: clamp(11px, 3.2vw, 14px); }
+  #lzIntro .lz-intro-card span { font-size: clamp(10px, 2.9vw, 12.5px); line-height: 1.3; }
+  #lzIntro .lz-intro-tag::before, #lzIntro .lz-intro-tag::after { display: none; }
+  #lzIntro .lz-intro-tag { font-size: clamp(10px, 2.9vw, 13px); letter-spacing: .1em; }
+  #lzIntro .ls-logo { font-size: clamp(40px, 13vw, 72px); }
+  #lzIntro .lz-intro-card::before { display: none; }
+  #lzIntro .lz-intro-card { --art-h: clamp(34px, 5.5vh, 54px); }
+  #lzIntro .lz-ic-art img { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #lzIntro :is(.ls-isparks i, .ls-iflame, .ls-itorch img, .ls-tidol, .ls-tbz, .ls-tg, .ls-narrow, .lz-intro-logo::before, .ls-logo, .lz-intro-card, .lz-ic-art img, .lz-intro-play, .lz-intro-play::after) { animation: none !important; }
+  #lzIntro .ls-isparks { display: none; }
+  #lzIntro .ls-tdark { transition: none; }
+}
+/* short wide screens: narrower cards, so the monkey and his torch keep their corner */
+@media (min-aspect-ratio: 5/4) { #lzIntro .lz-intro-in { width: min(900px, 100%, calc(100vw - 66vh)); } }
+/* the 400 x 225 popout (2026-11-26, smoke: PLAY was below the frame): a thin band, a wider one-line-shorter tagline */
+@media (max-height: 330px) {
+  #lzIntro .ls-igap { min-height: 8px; }
+  #lzIntro #lzIntroTag { font-size: 10px; line-height: 1.25; margin: 0; }
+  #lzIntro .lz-intro-in { width: min(900px, 100%, calc(100vw - 46vh)); }
+}

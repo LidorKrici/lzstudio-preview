@@ -1,0 +1,97 @@
+/* Neon Koi: midnight pachinko parlour. One palette for the machine, the HUD and the frame:
+   black-indigo lacquer, gold leaf and brass, cyan and koi-pink neon. Gold is for wins, pink for the gate and actions. */
+@font-face{font-family:"Unbounded";src:url("fonts/unbounded.woff2") format("woff2");font-weight:200 900;font-display:swap}
+@font-face{font-family:"Space Grotesk";src:url("fonts/space-grotesk.woff2") format("woff2");font-weight:300 700;font-display:swap}
+:root{
+  --lz-bg:#07051a;--lz-panel:rgba(16,10,44,.9);--lz-panel-solid:#100a2c;--lz-line:rgba(242,195,91,.16);
+  --lz-text:#fff4dc;--lz-muted:#b3a7d6;--lz-accent:#ff3d8b;--lz-accent-ink:#fff4dc;--lz-accent2:#f2c35b;
+  --lz-good:#7cf5c8;--lz-bad:#ff5a6e;--lz-radius:12px;
+  --lz-font-display:"Unbounded",system-ui,sans-serif;--lz-font-body:"Space Grotesk",system-ui,sans-serif;
+  --lz-action-bg:#ff3d8b;--lz-shadow:none;
+  --nk-gold:#f2c35b;--nk-cyan:#3ff2ff;--nk-pink:#ff3d8b;--nk-ink:#07051a;--nk-cream:#fff4dc
+}
+body{background:#07051a}
+
+/* ---------- Stage ---------- */
+.lz-stage.nk-stage{position:relative;overflow:hidden;border-radius:var(--lz-radius);
+  background:#0b0722 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cg fill='none' stroke='%23f2c35b' stroke-opacity='.07' stroke-width='1.2'%3E%3Cpath d='M0 24a24 24 0 0 1 48 0M8 24a16 16 0 0 1 32 0M16 24a8 8 0 0 1 16 0'/%3E%3Cpath d='M-24 12a24 24 0 0 1 48 0M24 12a24 24 0 0 1 48 0'/%3E%3C/g%3E%3C/svg%3E") repeat}
+.nk-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.nk-hud{position:absolute;inset:0;pointer-events:none;z-index:5;--u:6px;font-family:var(--lz-font-display);color:var(--nk-cream)}
+
+/* win: the hero number */
+.nk-win{position:absolute;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.4);
+  padding:calc(var(--u)*1.1) calc(var(--u)*2) calc(var(--u)*1.2);border-radius:calc(var(--u)*1.2);background:rgba(7,5,26,.82);
+  border:1px solid rgba(242,195,91,.35);box-shadow:0 0 0 1px rgba(255,61,139,.15),0 0 calc(var(--u)*3) rgba(255,61,139,.18);white-space:nowrap}
+.nk-win span{font-family:var(--lz-font-body);font-weight:700;font-size:calc(var(--u)*1.3);letter-spacing:.3em;color:var(--lz-muted)}
+.nk-win b{font-size:calc(var(--u)*3.6);font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--nk-cream)}
+.nk-win.bump b{animation:nkBump .4s var(--lz-ease)}
+.nk-win.lit{border-color:var(--nk-gold);box-shadow:0 0 calc(var(--u)*3) rgba(242,195,91,.45)}
+.nk-win.lit b{color:var(--nk-gold)}
+@keyframes nkBump{0%{transform:scale(1.22)}100%{transform:scale(1)}}
+
+/* balls left */
+.nk-balls{position:absolute;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.7);
+  padding:calc(var(--u)*1) calc(var(--u)*1.4);border-radius:calc(var(--u)*1.2);background:rgba(7,5,26,.72);border:1px solid rgba(63,242,255,.22)}
+.nk-balls span{font-family:var(--lz-font-body);font-weight:700;font-size:calc(var(--u)*1.1);letter-spacing:.24em;color:var(--lz-muted)}
+.nk-pips{display:grid;grid-template-columns:repeat(5,calc(var(--u)*1.5));gap:calc(var(--u)*.5)}
+.nk-pips i{width:calc(var(--u)*1.5);height:calc(var(--u)*1.5);border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);transition:background .2s,box-shadow .2s}
+.nk-pips i.on{background:radial-gradient(circle at 35% 30%,#fff,#c8d0e6 40%,#5a6380);border-color:transparent}
+.nk-pips i.gold.on{background:radial-gradient(circle at 35% 30%,#fff,#ffe08a 40%,#c47a10);box-shadow:0 0 calc(var(--u)*.8) rgba(242,195,91,.7)}
+
+/* KOI FEVER panel */
+.nk-fever{position:absolute;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.3);padding:calc(var(--u)*1) calc(var(--u)*1.8);
+  border-radius:calc(var(--u)*1.2);background:rgba(40,22,2,.86);border:1px solid var(--nk-gold);box-shadow:0 0 calc(var(--u)*3) rgba(242,195,91,.4)}
+.nk-fever span{font-family:var(--lz-font-body);font-weight:700;font-size:calc(var(--u)*1.1);letter-spacing:.28em;color:var(--nk-gold)}
+.nk-fever b{font-size:calc(var(--u)*4.2);font-weight:900;line-height:1;color:#ffe9a8;text-shadow:0 0 calc(var(--u)*1.6) rgba(242,195,91,.8)}
+.nk-fever i{font-style:normal;font-family:var(--lz-font-body);font-weight:700;font-size:calc(var(--u)*1.4);color:var(--nk-cream);font-variant-numeric:tabular-nums}
+.nk-fever.bump b{animation:nkBump .45s var(--lz-ease)}
+.nk-hud.fever .nk-balls{border-color:rgba(242,195,91,.4)}
+
+/* side layout: win in the left gutter, balls and fever in the right gutter */
+.nk-hud[data-layout="side"] .nk-win{left:calc(var(--side)/2);top:50%;transform:translate(-50%,-50%)}
+.nk-hud[data-layout="side"] .nk-balls{right:calc(var(--side)/2);top:50%;transform:translate(50%,calc(-100% - var(--u)*1))}
+.nk-hud[data-layout="side"] .nk-fever{right:calc(var(--side)/2);top:50%;transform:translate(50%,var(--u))}
+/* over layout (narrow stage): small panels in the top corners, over the cabinet's empty corners */
+.nk-hud[data-layout="over"]{--u:6.4px}
+.nk-hud[data-layout="over"] .nk-win{left:calc(var(--u)*1.2);top:calc(var(--u)*1.2);align-items:flex-start;padding:calc(var(--u)*.8) calc(var(--u)*1.4)}
+.nk-hud[data-layout="over"] .nk-win b{font-size:calc(var(--u)*3)}
+.nk-hud[data-layout="over"] .nk-balls{right:calc(var(--u)*1.2);top:calc(var(--u)*1.2);padding:calc(var(--u)*.7) calc(var(--u)*1)}
+.nk-hud[data-layout="over"] .nk-fever{right:calc(var(--u)*1.2);top:calc(var(--u)*12);padding:calc(var(--u)*.6) calc(var(--u)*1.2)}
+.nk-hud[data-layout="over"] .nk-fever b{font-size:calc(var(--u)*3.2)}
+.nk-hud[data-size="xs"] .nk-balls,.nk-hud[data-size="xs"] .nk-fever span,.nk-hud[data-size="xs"] .nk-fever i,.nk-hud[data-size="xs"] .nk-win span{display:none}
+.nk-hud[data-size="xs"]{--u:3.4px}
+.nk-hud[data-size="xs"] .nk-fever{top:calc(var(--u)*1.2)}
+
+/* reel pop-up under the screen (REACH / 7 7 7) */
+.nk-reelpop{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:calc(var(--u)*.6) calc(var(--u)*2);border-radius:999px;
+  font-weight:900;font-size:calc(var(--u)*2.6);letter-spacing:.12em;background:rgba(7,5,26,.85);border:2px solid var(--nk-cyan);color:var(--nk-cyan);
+  box-shadow:0 0 calc(var(--u)*3) rgba(63,242,255,.5);animation:nkPop .35s var(--lz-ease)}
+.nk-reelpop.reach{animation:nkPop .35s var(--lz-ease),nkThrob .5s ease-in-out infinite alternate .35s}
+.nk-reelpop.win{border-color:var(--nk-gold);color:#ffe9a8;box-shadow:0 0 calc(var(--u)*4) rgba(242,195,91,.7);font-size:calc(var(--u)*3.4)}
+.nk-hud[data-layout="side"] .nk-reelpop{top:62%}
+.nk-hud[data-size="l"] .nk-reelpop{display:none}
+@keyframes nkPop{from{transform:translate(-50%,-50%) scale(.6);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes nkThrob{to{box-shadow:0 0 calc(var(--u)*5) rgba(63,242,255,.9)}}
+
+/* title cards: KOI FEVER start and the FEVER WIN summary */
+.nk-card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.85);opacity:0;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.8);
+  padding:calc(var(--u)*2.2) calc(var(--u)*4);border-radius:calc(var(--u)*1.6);background:rgba(7,5,26,.9);border:2px solid var(--nk-gold);
+  box-shadow:0 0 0 calc(var(--u)*.5) rgba(255,61,139,.35),0 0 calc(var(--u)*8) rgba(242,195,91,.45);transition:transform .32s var(--lz-ease),opacity .25s;white-space:nowrap;text-align:center}
+.nk-card.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+.nk-card strong{font-size:calc(var(--u)*5.4);font-weight:900;letter-spacing:.04em;line-height:1;color:#ffe9a8;text-shadow:0 0 calc(var(--u)*2) rgba(242,195,91,.9),0 0 calc(var(--u)*5) rgba(255,61,139,.5)}
+.nk-card span{font-family:var(--lz-font-body);font-weight:700;font-size:calc(var(--u)*1.8);color:var(--nk-cream);letter-spacing:.06em}
+.nk-card.sum span{font-family:var(--lz-font-display);font-size:calc(var(--u)*4);font-weight:800;color:var(--nk-gold)}
+.nk-hud[data-size="xs"] .nk-card{padding:calc(var(--u)*1.4) calc(var(--u)*2.4)}
+
+.nk-flat .nk-hud[data-layout] .nk-win{left:50%;top:40%;transform:translate(-50%,-50%)}
+
+/* ---------- Frame: the shell restyled as the machine's tray ---------- */
+.lz-btn-play,.lz-play{box-shadow:0 0 0 2px rgba(255,244,220,.15),0 0 24px rgba(255,61,139,.45)}
+.lz-intro{background:#07051a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cg fill='none' stroke='%23f2c35b' stroke-opacity='.08' stroke-width='1.2'%3E%3Cpath d='M0 24a24 24 0 0 1 48 0M8 24a16 16 0 0 1 32 0M16 24a8 8 0 0 1 16 0'/%3E%3Cpath d='M-24 12a24 24 0 0 1 48 0M24 12a24 24 0 0 1 48 0'/%3E%3C/g%3E%3C/svg%3E") repeat}
+.lz-intro-card{border-color:rgba(242,195,91,.3)}
+
+@media (prefers-reduced-motion:reduce){.nk-win.bump b,.nk-fever.bump b,.nk-reelpop{animation:none}}
+
+/* the wordmark is wide: keep it from pushing the balance over the buttons on narrow screens */
+.lz-brand{height:clamp(22px,4.6vh,38px)}
+@media (max-width:560px){.lz-brand{height:24px}}

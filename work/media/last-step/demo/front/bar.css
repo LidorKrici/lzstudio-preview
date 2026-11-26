@@ -1,0 +1,215 @@
+/* ================= Last Step: the control bar (rebuilt 2026-11-25; the user: "ten levels up") =================
+ * One gilded strip. Left: the win and the five flag tiles, drawn as little jade tiles from the bridge, a flag on the
+ * chosen one. Centre: a round gold PLAY medallion that rises out of the strip. Right: the play amount, TURBO and AUTO
+ * as round icons, and the two Vaults with their pictures. MIN and MAX are gone (none of the four games that passed
+ * review have them; the amount list still reaches both ends). The strip is drawn for 1240 px and game.js scales it
+ * down on smaller screens (--ls-k). Images come in as CSS variables set by game.js (--ls-tile-img etc.). */
+.lz-app[data-game="last-step"] :is(#lzMin, #lzMax) { display: none; }
+
+/* --- the five flag tiles (every layout) --- */
+.lz-app[data-game="last-step"] .lz-modes { background: none; border: 0; padding: 0; gap: 7px; border-radius: 0; }
+.lz-app[data-game="last-step"] .lz-modes button {
+  position: relative; justify-content: flex-start; gap: 0; height: 62px; padding: 0; border: 0; border-radius: 7px;
+  background: none; color: #3b2408;
+  filter: saturate(.7) brightness(.68); transform: translateY(0);
+  transition: filter .2s ease, transform .28s cubic-bezier(.34, 1.56, .64, 1), box-shadow .2s ease;
+}
+.lz-app[data-game="last-step"] .lz-modes button::before {           /* only the face of the bridge tile, not the rock under it */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 70%; border-radius: 6px; z-index: -1;
+  background: var(--ls-tile-img) center 2% / 100% auto no-repeat; transition: box-shadow .2s ease;
+}
+.lz-app[data-game="last-step"] .lz-modes button { isolation: isolate; }
+.lz-app[data-game="last-step"] .lz-modes button b { display: grid; place-items: center; height: 70%; width: 100%; font: 400 24px/1 "Limelight", serif; color: #3b2408; text-shadow: 0 1px 0 rgba(255, 255, 255, .65); letter-spacing: 0; }
+.lz-app[data-game="last-step"] .lz-modes button b i { display: none; }
+.lz-app[data-game="last-step"] .lz-modes button small { margin-top: auto; padding-bottom: 1px; font: 700 11px/1 "Jost", sans-serif; color: #E9D49A; opacity: 1; letter-spacing: .02em; }
+.lz-app[data-game="last-step"] .lz-modes button:not([aria-pressed="true"]):not(:disabled):hover { filter: saturate(.75) brightness(.85); transform: translateY(-2px); }
+.lz-app[data-game="last-step"] .lz-modes button[aria-pressed="true"] {
+  filter: none; transform: translateY(-5px); background-color: transparent; color: #3b2408; outline: 0; box-shadow: none;
+}
+.lz-app[data-game="last-step"] .lz-modes button[aria-pressed="true"]::before { box-shadow: 0 0 0 2px #FFDA72, 0 0 18px 3px rgba(255, 205, 100, .6), 0 8px 14px rgba(0, 0, 0, .45); }
+.lz-app[data-game="last-step"] .lz-modes button[aria-pressed="true"] small { color: #FFE7A0; }
+.lz-app[data-game="last-step"] .lz-modes button::after {            /* the flag stands on the chosen tile */
+  content: ""; position: absolute; left: 6%; bottom: 50%; width: 30px; height: 58px; pointer-events: none; z-index: 1;
+  background: var(--ls-flag-img) left bottom / contain no-repeat; opacity: 0; transform: translateY(-14px) scale(.6); transform-origin: left bottom;
+  transition: opacity .15s, transform .35s cubic-bezier(.34, 1.8, .64, 1);
+}
+.lz-app[data-game="last-step"] .lz-modes button[aria-pressed="true"]::after { opacity: 1; transform: none; }
+.lz-app[data-game="last-step"] .lz-modes button:disabled { opacity: 1; }
+.lz-app[data-game="last-step"] .lz-modes button:disabled:not([aria-pressed="true"]) { filter: saturate(.3) brightness(.4); }
+
+/* --- the PLAY medallion (every layout) --- */
+.lz-app[data-game="last-step"] .lz-action {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 112px; height: 112px; min-height: 0; padding: 0; border-radius: 50%; isolation: isolate;
+  background: radial-gradient(circle at 50% 30%, #FFF0B8 0%, #F3C95A 32%, #D9A23A 62%, #9B6A1C 100%);
+  border: 3px solid #FFE49A; color: #2a1804;
+  box-shadow: 0 0 0 5px #0B231D, 0 0 0 7px #C9973A, 0 10px 26px rgba(0, 0, 0, .6), 0 0 34px rgba(255, 200, 90, .45), inset 0 -6px 12px rgba(120, 70, 10, .45), inset 0 4px 8px rgba(255, 255, 255, .55);
+  transition: transform .12s ease, filter .2s ease, box-shadow .2s ease;
+}
+.lz-app[data-game="last-step"] .lz-action::before {                 /* the sun-ray fan behind the label, turning slowly */
+  content: ""; position: absolute; inset: 9px; z-index: -1; border-radius: 50%; opacity: .32;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .9) 0deg 6deg, transparent 6deg 18deg);
+  -webkit-mask: radial-gradient(circle, transparent 30%, #000 31%, #000 70%, transparent 71%); mask: radial-gradient(circle, transparent 30%, #000 31%, #000 70%, transparent 71%);
+  animation: ls-spin 24s linear infinite;
+}
+.lz-app[data-game="last-step"] .lz-action::after {                  /* a shine that sweeps across now and then */
+  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .55) 48%, transparent 60%) -200% 0 / 300% 100% no-repeat;
+  animation: ls-shine 4.5s ease-in-out 1s infinite;
+}
+.lz-app[data-game="last-step"] .lz-action span { font: 400 23px/1 "Limelight", serif; letter-spacing: .06em; text-shadow: 0 1px 0 rgba(255, 240, 200, .8); }
+.lz-app[data-game="last-step"] .lz-action small { margin-top: 3px; font: 700 12px/1 "Jost", sans-serif; opacity: .8; letter-spacing: .02em; }
+.lz-app[data-game="last-step"] .lz-action:not(:disabled):hover { filter: brightness(1.08); box-shadow: 0 0 0 5px #0B231D, 0 0 0 7px #E9B949, 0 10px 26px rgba(0, 0, 0, .6), 0 0 48px rgba(255, 210, 110, .7), inset 0 -6px 12px rgba(120, 70, 10, .45), inset 0 4px 8px rgba(255, 255, 255, .55); }
+.lz-app[data-game="last-step"] .lz-action:not(:disabled):active { transform: scale(.94); }
+.lz-app[data-game="last-step"] .lz-action.busy { filter: saturate(.55) brightness(.78); }
+.lz-app[data-game="last-step"] .lz-action.busy span { font-size: 15px; }
+.lz-app[data-game="last-step"] .lz-action.busy::before { animation-duration: 3s; opacity: .45; }
+.lz-app[data-game="last-step"] .lz-action.auto { background: radial-gradient(circle at 50% 30%, #FFD2B0 0%, #FF8A4C 40%, #C2471A 100%); border-color: #FFC9A0; color: #2a0d02; filter: none; }
+.lz-app[data-game="last-step"] .lz-action.auto span { font-size: 15px; }
+@keyframes ls-spin { to { transform: rotate(360deg); } }
+@keyframes ls-shine { 0%, 70% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* --- the win, the amount, the icons, the Vaults (every layout) --- */
+.lz-app[data-game="last-step"] .lz-win { background: none; border: 0; box-shadow: none; }
+.lz-app[data-game="last-step"] .lz-win .lz-lbl, .lz-app[data-game="last-step"] .lz-field .lz-lbl {
+  display: block; font: 600 9.5px/1 "Jost", sans-serif; letter-spacing: .22em; text-transform: uppercase; color: #B79A57;
+}
+.lz-app[data-game="last-step"] .lz-win b { font: 400 26px/1.05 "Limelight", serif; color: #7F9D90; }
+.lz-app[data-game="last-step"] .lz-win.has b { color: var(--ls-gold-hi); text-shadow: 0 0 14px rgba(255, 210, 110, .45); }
+.lz-app[data-game="last-step"] .lz-stepper { grid-template-columns: 34px minmax(0, 1fr) 34px; gap: 6px; align-items: center; }
+.lz-app[data-game="last-step"] .lz-stepper > button {
+  width: 34px; height: 34px; min-height: 0; border-radius: 50%; padding: 0; display: grid; place-items: center;
+  border: 1.5px solid rgba(233, 185, 73, .75); background: radial-gradient(circle at 50% 35%, #1D4A3E, #0A2620); color: var(--ls-gold-hi);
+  font: 600 20px/1 "Jost", sans-serif; transition: transform .1s, border-color .2s, box-shadow .2s;
+}
+.lz-app[data-game="last-step"] .lz-stepper > button:not(:disabled):hover { border-color: #FFDA72; box-shadow: 0 0 10px rgba(255, 210, 110, .45); }
+.lz-app[data-game="last-step"] .lz-stepper > button:not(:disabled):active { transform: scale(.9); }
+.lz-app[data-game="last-step"] .lz-amount { height: 38px; min-height: 0; border-radius: 19px; border: 1px solid rgba(233, 185, 73, .35); background: rgba(0, 0, 0, .38); box-shadow: inset 0 2px 6px rgba(0, 0, 0, .5); }
+.lz-app[data-game="last-step"] .lz-amount b { font: 400 17px/1 "Limelight", serif; color: #F4E6C0; }
+.lz-app[data-game="last-step"] .lz-quick { display: flex; gap: 10px; }
+.lz-app[data-game="last-step"] .lz-quick button {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  width: 46px; height: 46px; min-height: 0; padding: 0 0 6px; border-radius: 50%;
+  border: 1.5px solid rgba(233, 185, 73, .55); background: radial-gradient(circle at 50% 35%, #1D4A3E, #0A2620); color: #CDB57A;
+  font: 700 7px/1 "Jost", sans-serif; letter-spacing: .06em; white-space: nowrap; transition: border-color .2s, box-shadow .2s, color .2s;
+}
+.lz-app[data-game="last-step"] .lz-quick button::before {
+  content: ""; position: absolute; left: 50%; top: 8px; width: 19px; height: 19px; transform: translateX(-50%); background: currentColor;
+  -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat;
+}
+.lz-app[data-game="last-step"] #lzFast { --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 2 4 14h7l-1 8 9-12h-7z'/%3E%3C/svg%3E"); }
+.lz-app[data-game="last-step"] #lzAuto { --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11a8 8 0 0 0-14.3-4.9L4 8'/%3E%3Cpath d='M4 3v5h5'/%3E%3Cpath d='M4 13a8 8 0 0 0 14.3 4.9L20 16'/%3E%3Cpath d='M20 21v-5h-5'/%3E%3C/svg%3E"); }
+.lz-app[data-game="last-step"] .lz-quick button:not(:disabled):hover { border-color: #FFDA72; color: #FFE7A0; box-shadow: 0 0 10px rgba(255, 210, 110, .4); }
+.lz-app[data-game="last-step"] .lz-quick button[aria-pressed="true"], .lz-app[data-game="last-step"] .lz-quick button.on {
+  color: #08201B; border-color: #FFE49A; background: radial-gradient(circle at 50% 35%, #FFE59A, #D9A23A); box-shadow: 0 0 14px rgba(255, 210, 110, .6);
+}
+.lz-app[data-game="last-step"] .lz-feats { display: flex; gap: 8px; }
+.lz-app[data-game="last-step"] .lz-feat {
+  position: relative; flex: 1 1 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px;
+  min-width: 0; height: 58px; padding: 0 10px 0 50px; border-radius: 10px; overflow: hidden;
+  border: 1.5px solid rgba(233, 185, 73, .7); color: var(--ls-gold-hi);
+  background: linear-gradient(180deg, rgba(255, 220, 130, .16), rgba(255, 220, 130, 0) 55%), linear-gradient(135deg, #154438, #0A2620);
+  box-shadow: inset 0 1px 0 rgba(255, 235, 170, .35), 0 4px 12px rgba(0, 0, 0, .35); transition: transform .15s, box-shadow .2s, border-color .2s;
+}
+.lz-app[data-game="last-step"] .lz-feat::before {
+  content: ""; position: absolute; left: 6px; top: 50%; width: 38px; height: 48px; transform: translateY(-50%);
+  background: var(--ls-feat-img) center / contain no-repeat; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
+}
+.lz-app[data-game="last-step"] .lz-feat[data-mode="vault"] { --ls-feat-img: var(--ls-rope-img); }
+.lz-app[data-game="last-step"] .lz-feat[data-mode="grand"] { --ls-feat-img: var(--ls-idol-img); border-color: #FFDA72; background: linear-gradient(180deg, rgba(255, 230, 150, .3), rgba(255, 220, 130, 0) 60%), linear-gradient(135deg, #5B3F10, #241606); }
+.lz-app[data-game="last-step"] .lz-feat span { font: 400 14px/1 "Limelight", serif; letter-spacing: .05em; white-space: nowrap; }
+.lz-app[data-game="last-step"] .lz-feat small { font: 700 12px/1 "Jost", sans-serif; color: #F4E6C0; opacity: .9; }
+.lz-app[data-game="last-step"] .lz-feat:not(:disabled):hover { transform: translateY(-2px); border-color: #FFE49A; box-shadow: inset 0 1px 0 rgba(255, 235, 170, .35), 0 0 16px rgba(255, 210, 110, .45); }
+.lz-app[data-game="last-step"] .lz-feat:disabled { filter: saturate(.4) brightness(.6); }
+
+/* --- wide screens: the strip over the bottom of the picture --- */
+@media (min-aspect-ratio: 1/1) and (min-height: 331px) {
+  .lz-app[data-layout][data-game="last-step"] { display: block; padding: 0; }
+  .lz-app[data-layout][data-game="last-step"] .lz-stage { position: absolute; inset: 0; border: 0; border-radius: 0; box-shadow: none; background: #061915; }
+  .lz-app[data-layout][data-game="last-step"] .lz-top { position: absolute; z-index: 3; top: 10px; left: 14px; right: 14px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-panel {
+    position: absolute; z-index: 3; left: 50%; bottom: 12px; width: 1400px; height: 86px;
+    transform: translateX(-50%) scale(var(--ls-k, 1)); transform-origin: 50% 100%;
+    display: flex; flex-direction: row; align-items: center; gap: 0; padding: 0 14px; overflow: visible;
+    background: linear-gradient(180deg, rgba(16, 48, 40, .96), rgba(5, 20, 17, .97));
+    border: 1.5px solid #C9973A; border-radius: 16px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 230, 160, .3), inset 0 0 0 4px rgba(5, 20, 17, .9), inset 0 0 0 5px rgba(233, 185, 73, .28);
+  }
+  .lz-app[data-layout][data-game="last-step"] .lz-panel::before, .lz-app[data-layout][data-game="last-step"] .lz-panel::after {
+    content: ""; position: absolute; bottom: calc(100% - 1px); width: 54px; height: 27px; background: var(--ls-fan) center bottom / contain no-repeat; opacity: .85; pointer-events: none;
+  }
+  .lz-app[data-layout][data-game="last-step"] .lz-panel::before { left: 28px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-panel::after { right: 28px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-panel > * { flex: none; }
+  .lz-app[data-layout][data-game="last-step"] .lz-win { order: 1; width: 140px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; padding: 0 6px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-modes { order: 2; display: flex; align-items: flex-end; gap: 7px; height: 100%; padding: 0 16px 6px; border-left: 1px solid rgba(233, 185, 73, .22); position: relative; }
+  .lz-app[data-layout][data-game="last-step"] .lz-modes::before { display: none; content: "FLAG ON TILE"; position: absolute; left: 16px; top: -16px; padding: 3px 8px; border-radius: 4px; background: rgba(5, 20, 17, .92); border: 1px solid rgba(233, 185, 73, .35); font: 600 9.5px/1 "Jost", sans-serif; letter-spacing: .22em; color: #B79A57; }
+  .lz-app[data-layout][data-game="last-step"] .lz-modes button { width: 70px; flex: none; }
+  .lz-app[data-layout][data-game="last-step"] .lz-action { order: 3; margin: -34px 22px 0; flex: none; }
+  .lz-app[data-layout][data-game="last-step"] .lz-field { order: 4; width: 184px; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 0 6px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-quick { order: 5; padding: 0 16px; height: 100%; align-items: center; border-left: 1px solid rgba(233, 185, 73, .22); border-right: 1px solid rgba(233, 185, 73, .22); }
+  .lz-app[data-layout][data-game="last-step"] .lz-feats { order: 6; flex: 1 1 auto; padding-left: 14px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-replay { order: 2; flex: 1 1 auto; }
+  .lz-app[data-layout][data-game="last-step"] :is(.lz-history, .lz-extra, .lz-stats, .lz-hint) { display: none; }
+  .lz-app[data-layout][data-game="last-step"] .lz-msg { position: absolute; left: 50%; bottom: calc(100% + 44px); transform: translateX(-50%); white-space: nowrap; z-index: 5; background: var(--lz-panel-solid); }
+}
+/* --- portrait: the controls under the stage, in rows around the medallion --- */
+@media (max-aspect-ratio: 1/1) {
+  .lz-app[data-layout][data-game="last-step"] .lz-stage { border: 0; border-radius: 6px; background: #061915; }
+  .lz-app[data-layout][data-game="last-step"] .lz-panel {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: "modes modes modes" "win action field" "quick action feats";
+    gap: 8px 10px; padding: 12px 10px 10px; margin-top: 4px; align-items: center;
+    background: linear-gradient(180deg, rgba(16, 48, 40, .96), rgba(5, 20, 17, .97)); border: 1.5px solid #C9973A; border-radius: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 230, 160, .3), inset 0 0 0 4px rgba(5, 20, 17, .9), inset 0 0 0 5px rgba(233, 185, 73, .28);
+  }
+  .lz-app[data-layout][data-game="last-step"] .lz-modes { padding-top: 8px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-modes button { height: 54px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-modes button b { font-size: 20px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-modes button::after { width: 20px; height: 34px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-action { grid-area: action; width: 96px; height: 96px; justify-self: center; }
+  .lz-app[data-layout][data-game="last-step"] .lz-action span { font-size: 19px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-win { padding: 0 4px; gap: 4px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-win b { font-size: 22px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-field { display: flex; flex-direction: column; gap: 4px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-field .lz-lbl { display: block; text-align: center; }
+  .lz-app[data-layout][data-game="last-step"] .lz-quick { justify-content: center; }
+  .lz-app[data-layout][data-game="last-step"] .lz-feats { flex-direction: column; gap: 5px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-feat { height: 38px; padding-left: 40px; flex: none; }
+  .lz-app[data-layout][data-game="last-step"] .lz-feat::before { width: 28px; height: 34px; left: 6px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-feat span { font-size: 12px; }
+  .lz-app[data-layout][data-game="last-step"] .lz-feat small { font-size: 10.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lz-app[data-game="last-step"] .lz-action::before, .lz-app[data-game="last-step"] .lz-action::after { animation: none; }
+}
+
+/* --- the 400 x 225 popout: the shell's narrow side column; everything small and flat, nothing rises out --- */
+@media (min-aspect-ratio: 1/1) and (max-height: 330px) {
+  .lz-app[data-game="last-step"] .lz-panel { gap: 4px; }
+  .lz-app[data-game="last-step"] .lz-win { padding: 0 2px; gap: 1px; }
+  .lz-app[data-game="last-step"] .lz-win .lz-lbl { font-size: 7px; letter-spacing: .14em; }
+  .lz-app[data-game="last-step"] .lz-win b { font-size: 14px; }
+  .lz-app[data-game="last-step"] .lz-modes { gap: 2px; }
+  .lz-app[data-game="last-step"] .lz-modes button { height: 22px; border-radius: 4px; }
+  .lz-app[data-game="last-step"] .lz-modes button::before { height: 100%; border-radius: 4px; background-size: 100% auto; }
+  .lz-app[data-game="last-step"] .lz-modes button b { height: 100%; font-size: 12px; }
+  .lz-app[data-game="last-step"] .lz-modes button small, .lz-app[data-game="last-step"] .lz-modes button::after { display: none; }
+  .lz-app[data-game="last-step"] .lz-modes button[aria-pressed="true"] { transform: none; }
+  .lz-app[data-game="last-step"] .lz-modes button[aria-pressed="true"]::before { box-shadow: 0 0 0 1.5px #FFDA72, 0 0 6px rgba(255, 205, 100, .7); }
+  .lz-app[data-game="last-step"] .lz-stepper { grid-template-columns: 22px minmax(0, 1fr) 22px; gap: 3px; }
+  .lz-app[data-game="last-step"] .lz-stepper > button { width: 22px; height: 22px; font-size: 14px; border-width: 1px; }
+  .lz-app[data-game="last-step"] .lz-amount { height: 22px; }
+  .lz-app[data-game="last-step"] .lz-amount b { font-size: 11px; }
+  .lz-app[data-game="last-step"] .lz-quick { gap: 4px; justify-content: center; }
+  .lz-app[data-game="last-step"] .lz-quick button { width: 22px; height: 22px; padding: 0; font-size: 0; border-width: 1px; }
+  .lz-app[data-game="last-step"] .lz-quick button::before { top: 50%; width: 12px; height: 12px; transform: translate(-50%, -50%); }
+  .lz-app[data-game="last-step"] .lz-action { width: auto; height: auto; min-height: 30px; flex: 1 1 30px; border-radius: 10px; border-width: 1.5px; box-shadow: 0 0 0 2px #0B231D, 0 0 0 3px #C9973A; }
+  .lz-app[data-game="last-step"] .lz-action::before { display: none; }
+  .lz-app[data-game="last-step"] .lz-action span { font-size: 13px; }
+  .lz-app[data-game="last-step"] .lz-action small { font-size: 9px; margin-top: 0; }
+  .lz-app[data-game="last-step"] .lz-feats { gap: 3px; }
+  .lz-app[data-game="last-step"] .lz-feat { height: 26px; padding: 0 3px 0 20px; border-radius: 6px; border-width: 1px; gap: 0; }
+  .lz-app[data-game="last-step"] .lz-feat::before { left: 2px; width: 16px; height: 22px; }
+  .lz-app[data-game="last-step"] .lz-feat span { font-size: 7.5px; letter-spacing: 0; }
+  .lz-app[data-game="last-step"] .lz-feat small { font-size: 8px; }
+}
