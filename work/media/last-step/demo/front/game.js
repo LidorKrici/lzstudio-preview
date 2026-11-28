@@ -28,6 +28,14 @@
   // outside the board: the hall, the frame, the explorer and the coins that fly from the board into his pack
   let outer, hallBg, hallFx, maskG, frameC, framePieces = [], hostC, hrig, topFx, WIN = { x: 0, y: 0, w: 1, h: 1 }, HS = 0.5, full, appEl;
   const motes = [];
+  // math v2 (2026-11-26): the relics on the bridge, the idol with blazing eyes, the rope the monkey carries
+  let relicS = [], gazeS = null, ropeTag = null, curGaze = 0, torchFlare = 0;
+  // 2026-11-28 (the user: "the amount of money should be on the screen, it is not the clearest"; catalog item 20): the round's
+  // running win in money rides over the monkey's head, and the plaque shows it in money with the × under it
+  let curCtx = null, moneyTag = null, hurryOn = false;
+  // the tension gauge (2026-11-28, the user: "there has to be a tension meter, building tension... it is a casino game")
+  const meter = { v: 0, to: 0, tier: -1, k: 0, shown: -1, near: false, vig: -1 };
+  let loadRest = () => {}, restLoaded = false;      // the clips and sounds that wait until after the first round
   // the frame image (board-frame, 1353 x 760 after the build): its opening and the size of a corner piece, in its px
   const FR = { l: 68, t: 71, r: 69, b: 72, edge: 12, c: 110 };
   // where the explorer stands in bg-hall: the top of the jade ledge (share of the image height) and its right end
@@ -80,6 +88,21 @@
 
   /* ---------------- the scene ---------------- */
   const fmtX = v => (v / 100).toFixed(2) + '×';
+  // The tile numbers must be readable in the smallest window (400 x 225, 2026-11-26): when a tile is small on screen its
+  // number grows to at least about 9 screen px (labelF), and on a tiny screen it drops the × so it still fits the tile.
+  let labelF = 1, tinyLbl = false;
+  const tileTxt = v => tinyLbl ? (v / 100).toFixed(2) : fmtX(v);
+  function fitTileLabels() {
+    const ppu = scene.scale.x * cam.scale.x; if (!ppu) return;
+    const f = Math.max(1, Math.min(1.7, 9 / ppu / 19)), tiny = f > 1.25;
+    if (Math.abs(f - labelF) < 0.02 && tiny === tinyLbl) return;
+    const retext = tiny !== tinyLbl; labelF = f; tinyLbl = tiny;
+    [...tiles, ...gtiles].forEach(t => {
+      if (!t || t.destroyed || !t.label_) return;
+      t.label_.children[0].scale.set(0.5 * labelF);
+      if (retext && t.val) { t.label_.str = tileTxt(t.val); t.label_.setColor(t.label_.col); }
+    });
+  }
   // Text: our Pixi bundle has no Text class, so numbers are drawn in Limelight on a canvas (2x) and cached.
   const textCache = new Map();
   function textTex(str, color, px) {
@@ -93,11 +116,34 @@
     g.fillStyle = color; g.fillText(str, c.width / 2, c.height / 2);
     const t = PIXI.Texture.from(c); textCache.set(key, t); return t;
   }
+  /* painted digits (2026-11-28, the user: "you draw some things in code... I want everything at the highest level"):
+   * one painted strip "0123456789$.,×+" (tools/build-digits.mjs prints these places, in px of the 309 px tall strip).
+   * paintNum writes a number into the DOM as painted glyphs (a character the strip has not got, like a currency code,
+   * stays text); paintTex draws one into a canvas for the stage (the money over the monkey). */
+  const DIGITS = { w: 2688, h: 309, g: {"0":[43,178],"1":[241,136],"2":[400,164],"3":[589,163],"4":[771,182],"5":[970,159],"6":[1142,171],"7":[1329,163],"8":[1500,171],"9":[1679,171],"$":[1868,171],".":[2062,76],",":[2165,79],"×":[2275,186],"+":[2469,177]} };
+  let DIGIMG = null;
+  const esc = c => c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === ' ' ? '&nbsp;' : c;
+  function paintNum(el, str) {
+    if (!el) return; str = String(str);
+    if (el._num === str) return; el._num = str;
+    if (!ART['ui-digits']) { el.textContent = str; return; }
+    let h = '<span class="dgw">';
+    for (const ch of str) { const g = DIGITS.g[ch]; h += g ? '<i class="dg" style="width:' + (g[1] / DIGITS.h).toFixed(3) + 'em;background-position:' + (-g[0] / DIGITS.h).toFixed(3) + 'em 0"></i>' : '<span class="dgx">' + esc(ch) + '</span>'; }
+    el.innerHTML = h + '</span>'; el.setAttribute('aria-label', str);
+  }
+  function paintTex(str, px) {
+    if (!DIGIMG || !DIGIMG.complete || !DIGIMG.naturalHeight || ![...str].every(c => DIGITS.g[c])) return null;
+    const sc = DIGIMG.naturalHeight / DIGITS.h, k = px / DIGITS.h, lap = px * 0.09, gl = [...str].map(c => DIGITS.g[c]);
+    const W = Math.ceil(gl.reduce((a, g) => a + g[1] * k - lap, lap)), cv = document.createElement('canvas'); cv.width = Math.max(2, W); cv.height = Math.ceil(px);
+    const c = cv.getContext('2d'); let x = 0;
+    gl.forEach(g => { c.drawImage(DIGIMG, g[0] * sc, 0, g[1] * sc, DIGIMG.naturalHeight, x, 0, g[1] * k, px); x += g[1] * k - lap; });
+    const t = PIXI.Texture.from(cv); t._painted = true; return t;
+  }
   function label(str, color, px) {
     const box = new PIXI.Container(), sp = new PIXI.Sprite(textTex(str, color, px));
     sp.anchor.set(0.5); sp.scale.set(0.5); box.addChild(sp);
-    box.str = str; box.px = px;
-    box.setColor = col => { sp.texture = textTex(box.str, col, box.px); };
+    box.str = str; box.px = px; box.col = color;
+    box.setColor = col => { box.col = col; sp.texture = textTex(box.str, col, box.px); };
     return box;
   }
   /* Tile effects (2026-11-25, the user: the tiles look great, their animation must be much better). Made once per tile
@@ -129,8 +175,8 @@
     const fx = tileFx[texName];
     const lit = new PIXI.Sprite(fx.lit); lit.anchor.set(0.5, 0.1); lit.scale.copyFrom(s.scale); lit.blendMode = 'add'; lit.alpha = 0;
     const sh = new PIXI.Sprite(fx.shine[0]); sh.anchor.set(0.5, 0.1); sh.scale.copyFrom(s.scale); sh.blendMode = 'add'; sh.visible = false;
-    const t = label(value ? fmtX(value) : '0×', color, px);   // before the flag a tile wins nothing, and says so
-    t.y = s.height * 0.37;
+    const t = label(value ? tileTxt(value) : '0×', color, px);   // before the flag a tile wins nothing, and says so
+    t.y = s.height * 0.37; t.children[0].scale.set(0.5 * labelF); c.val = value;
     c.addChild(s, lit, sh, t); c.sprite = s; c.lit = lit; c.shineS = sh; c.label_ = t; c.texName = texName;
     c.glow = 0; c.glowTo = 0; c.shineT = -1; c.sq = 1; c.baseS = s.scale.y;
     return c;
@@ -247,6 +293,12 @@
     idolGlow.anchor.set(0.5); idolGlow.x = IDOL_X; idolGlow.y = TOP - 110; idolGlow.blendMode = 'add'; idolGlow.scale.set(1.5);
     idolS = new PIXI.Sprite(tex.idol); idolS.anchor.set(0.5, 1); idolS.scale.set(190 / idolS.texture.height); idolS.x = IDOL_X; idolS.y = TOP + 6;
     world.addChild(idolGlow, idolS);
+    // the idol's gaze (math v2): the same idol with blazing eyes (art/prod/raw/idol-gaze.png lies exactly over idol.png),
+    // faded in over it for the rounds the gaze multiplies
+    gazeS = new PIXI.Sprite(tex['idol-gaze'] || tex.idol); gazeS.anchor.set(0.5, 1); gazeS.scale.copyFrom(idolS.scale);
+    gazeS.x = IDOL_X; gazeS.y = idolS.y; gazeS.lvl = { v: 0 }; gazeS.alpha = 0; gazeS.visible = false;
+    world.addChild(gazeS);
+    moneyTag = label('$0.00', '#FFF2C4', 30); moneyTag.visible = false;
     flagS = new PIXI.Sprite(tex.flag); flagS.anchor.set(0.1, 1); flagS.scale.set(FLAG_H / flagS.texture.height);
     world.addChild(flagS);
     // the monkey, who hops on the tiles
@@ -264,7 +316,7 @@
     rig.play('idle', { loop: true });
     rig.on('event', (name) => { if (name === 'land') sfx('land'); });
     beanie = new PIXI.Sprite(tex.beanie); beanie.anchor.set(0.5); beanie.visible = false; world.addChild(beanie);
-    fxLayer = new PIXI.Container(); cam.addChild(fxLayer);
+    fxLayer = new PIXI.Container(); cam.addChild(fxLayer); fxLayer.addChild(moneyTag);
     follow = new PIXI.Container(); cam.addChild(follow);           // mist and dust: they stay around the camera, even on the long vault bridge
     // mist puffs drifting under the bridge
     const puff = glowTexture(128, [[0, 'rgba(120,200,160,.30)'], [0.6, 'rgba(60,140,110,.10)'], [1, 'rgba(40,110,90,0)']]);
@@ -355,18 +407,21 @@
 
   function makeFlip(parent, rigObj, viewScale, { figRig, feetDx, map, clips, vchar }) {
     const sp = new PIXI.Sprite(PIXI.Texture.EMPTY); sp.visible = false; parent.addChild(sp);
-    const F = { sp, cur: null, name: '', t: 0, loop: false, queue: null, manual: false, on: false, vid: null };
+    const F = { sp, cur: null, name: '', t: 0, loop: false, queue: null, manual: false, on: false, vid: null, rate: 1 };
     const VC = vchar ? vidCanvas(vchar) : null;
     const scaleOf = c => c.video ? figRig / VC.C.fig : c.figH ? figRig / c.figH : c.videoPxPerFramePx / 2;
     F.has = n => !!clips[n] || vidOK(n);
+    F.hasVid = n => !!VC && vidOK(n);
+    // rate: how fast the clip plays (the hop sets it per part of the jump); the game speed (turbo) comes on top
+    const rateOf = () => Math.max(0.5, Math.min(8, F.rate / speedFn()));
     const stopVid = () => { if (F.vid) { F.vid.pause(); F.vid = null; } };
-    F.start = (n, loop) => {
+    F.start = (n, loop, at = 0) => {
       if (VC && vidOK(n)) {
-        // video: from its first frame (every clip starts on the rest pose)
+        // video: from its first frame (every clip starts on the rest pose), or from `at` seconds
         stopVid(); const v = VIDS[n];
-        F.cur = { video: true, dur: VIDMETA.clips[n].dur }; F.name = n; F.t = 0; F.loop = loop; F.queue = null; F.manual = false; F.on = true;
-        v.loop = loop; v.playbackRate = Math.max(0.5, Math.min(4, 1 / speedFn()));
-        try { v.currentTime = 0; } catch (e) {}
+        F.cur = { video: true, dur: VIDMETA.clips[n].dur }; F.name = n; F.t = 0; F.loop = loop; F.queue = null; F.manual = false; F.on = true; F.rate = 1;
+        v.loop = loop; v.playbackRate = rateOf();
+        try { v.currentTime = at; } catch (e) {}
         v.play().catch(() => {}); F.vid = v; F.fresh = true;
         sp.texture = VC.tex; sp.anchor.set(VC.C.ax / VC.C.w, VC.C.ay / VC.C.h);
         return true;
@@ -387,7 +442,7 @@
       const isIdle = move === 'idle';
       if (isIdle && F.on && F.cur && !F.loop && F.name !== n) { F.queue = n; return; }   // let the action finish
       if (F.on && F.name === n && (F.loop || move === 'winLoop')) return;               // already playing it
-      F.start(n, isIdle);
+      if (!F.start(n, isIdle)) return;                            // not loaded yet: keep the clip that plays (review 2: a see-through double)
     };
     // a hop (always a frame atlas: the round code drives it frame by frame), k = 0..1 within each part of the jump
     // begin = the first call of a hop; later calls only drive the frames while that hop still owns the Flip (a fright
@@ -403,7 +458,7 @@
     F.update = (s, speed) => {
       if (F.on && F.cur && F.cur.video && F.vid) {
         const v = F.vid;
-        v.playbackRate = Math.max(0.5, Math.min(4, 1 / speed));
+        v.playbackRate = Math.max(0.5, Math.min(8, F.rate / speed));
         if (!F.loop && (v.ended || v.currentTime >= F.cur.dur - 0.03)) next();
         else if (v.readyState >= 2 && !v.seeking && (F.fresh || !v.paused)) {
           // the first frame of a new clip only once the seek to 0 is done (until then the sprite keeps the last frame)
@@ -473,11 +528,15 @@ const homeCam = () => {
     const z = narrow() ? 1.3 : 1;
     return { x: HOST_X - 90 + VW / 2 / z, y: narrow() ? TOP - 70 : H / 2, z };
   };
-  const lead = () => Math.min(260, VW * 0.2);      // how far ahead of the explorer the camera looks
+  const lead = () => Math.min(260, VW * 0.2);
+  const vlead = () => Math.min(360, VW * 0.22);      // in the Vault: how far ahead of the monkey (a phone shows only ~450 px)      // how far ahead of the explorer the camera looks
+  // at rest the camera breathes: a slow drift, so every layer of the temple moves at its own depth (review 11.5: the
+  // background stood still for 8 s at rest)
+  const drift = { x: 0, y: 0, k: 0 };
   function applyCam() {
-    const z = camState.z, hw = VW / 2 / z, hh = VH / 2 / z;
+    const z = camState.z * (1 + 0.025 * drift.k) * (1 + 0.06 * meter.k), hw = VW / 2 / z, hh = VH / 2 / z;   // the gauge leans the camera in
     const maxX = inVault && gtiles.length ? gX(gtiles.length - 1) + GW : W;   // the vault bridge is longer than one screen
-    const cx = Math.max(hw, Math.min(maxX - hw, camState.x)), cy = Math.max(hh, Math.min(H - hh, camState.y));
+    const cx = Math.max(hw, Math.min(maxX - hw, camState.x + drift.x)), cy = Math.max(hh, Math.min(H - hh, camState.y + drift.y));
     cam.scale.set(z); cam.x = VW / 2 - cx * z; cam.y = VH / 2 - cy * z;
     if (inVault) {
       // the vault backdrop travels with the camera and only drifts a little, so it never runs out
@@ -508,7 +567,11 @@ const homeCam = () => {
     // the explorer at rest plays his idle clip; any other move (wave, peek, pump, fright, win) is a drawing, with a short cross-fade
     flipH.update(s, speedFn()); flipM.update(s, speedFn());
     motes.forEach(d => { d.v -= d.sp * s; if (d.v < -0.05) { d.v = 1.05; d.u = Math.random(); } d.x = (d.u + Math.sin(now * 0.7 + d.ph) * 0.02) * full.clientWidth; d.y = d.v * full.clientHeight; d.alpha = 0.25 + 0.35 * (0.5 + 0.5 * Math.sin(now * 2.3 + d.ph)); });
-    torches.forEach((g, i) => { g.alpha = 0.75 + Math.sin(now * 11 + i * 3) * 0.08 + Math.sin(now * 23 + i) * 0.06; g.scale.set(1.6 + Math.sin(now * 7 + i) * 0.05); });
+    torchFlare *= Math.exp(-s * 1.6);
+    meterTick(s); fallTick();
+    { const rest = api && !api.busy && !inVault && !skipBig ? 1 : 0; drift.k += (rest - drift.k) * Math.min(1, s * 0.8);
+      drift.x = drift.k * (Math.sin(now * 0.21) * 16 + Math.sin(now * 0.07) * 10); drift.y = drift.k * Math.sin(now * 0.17 + 1) * 7; }
+    torches.forEach((g, i) => { g.alpha = Math.min(1, 0.75 + Math.sin(now * 11 + i * 3) * 0.08 + Math.sin(now * 23 + i) * 0.06 + torchFlare * 0.3); g.scale.set((1.6 + Math.sin(now * 7 + i) * 0.05) * (1 + torchFlare * 0.7)); });
     idolGlow.scale.set(1.5 * (1 + 0.15 * (0.5 + 0.5 * Math.sin(now * Math.PI * 2 / 1.2)))); idolGlow.rotation = now * Math.PI * 2 / 4;
     mist.forEach(m => { m.x += m.vx * s; if (m.x > W + 260) m.x = -260; m.alpha = 0.42 + Math.sin(now * 0.5 + m.ph) * 0.12; });
     rays.forEach(r => { r.rotation = r.base + Math.sin(now * 0.22 + r.ph) * 0.045; r.alpha = 0.05 + 0.06 * (0.5 + 0.5 * Math.sin(now * 0.4 + r.ph)); });
@@ -542,7 +605,11 @@ const homeCam = () => {
         else { const fx = tileFx[t.texName]; t.shineS.visible = true; t.shineS.texture = fx.shine[Math.min(SHINE_N - 1, Math.floor(p * SHINE_N))]; t.shineS.alpha = 0.55 * Math.sin(p * Math.PI); }
       }
     };
-    tiles.forEach(tileTick); gtiles.forEach(tileTick);
+    tiles.forEach(tileTick); gtiles.forEach(tileTick); fitTileLabels();
+    if (moneyTag && moneyTag.visible) { const k = RIG_S_NOW() / RIG_S; moneyTag.x = monkey.x + 4; moneyTag.y = monkey.y - 205 * k; moneyTag.children[0].scale.set(0.5 * Math.max(1, labelF * 0.9)); }
+    // the relics waiting on the bridge float and glint over their tiles (standard 5.3)
+    relicS.forEach(r => { if (r.taken) return; r.y = r.baseY + Math.sin(now * 2.4 + r.ph) * 5; r.glow.alpha = 0.55 + 0.25 * Math.sin(now * 3.1 + r.ph); });
+    if (gazeS) { gazeS.alpha = gazeS.lvl.v * (0.88 + 0.12 * Math.sin(now * 5)); gazeS.y = idolS.y; gazeS.visible = idolS.visible && gazeS.lvl.v > 0; }
     // while waiting, now and then a gleam runs along the bridge from the start to the idol
     if (api && !api.busy && !inVault) { shimmerT += s; if (shimmerT > 5.5) { shimmerT = 0; tiles.forEach((t, i) => setTimeout(() => shineTile(t, 520), i * 70)); } } else shimmerT = 0;
     // shake: two sines, 18 Hz, exponential decay 12 (standard 5.4); the background moves 1.3x, the bridge 0.8x
@@ -567,6 +634,151 @@ const homeCam = () => {
     SND.setLevel(win / 100 >= m.p95 ? 2 : 1);
   }
 
+  /* ---------------- the tension gauge (2026-11-28) ----------------
+   * A painted pillar beside the board fills with molten gold as the round's win grows. Its five notches are the big-win
+   * lines (10x / 25x / 50x / 100x / 250x what the round cost); the scale between them is logarithmic, and below the first
+   * line it rises fast, so every tile moves it. Close to the next line it pulses; crossing a line flashes it, lights the
+   * notch and rings a chime. The fuller it is, the more the camera leans in and the darker the stage's edges get. A fall
+   * drains it. Before each hop past the flag the tile trembles and a heartbeat sounds (suspense), longer the further he is. */
+  const M_AT = [10, 25, 50, 100, 250], M_NOTCH = [0.219, 0.404, 0.581, 0.758, 0.925];
+  function meterLevel(r) {
+    if (r <= 0) return 0;
+    if (r < 1) return 0.02;
+    if (r < M_AT[0]) return Math.max(0.03, M_NOTCH[0] * Math.sqrt(Math.log10(r)));
+    for (let i = 0; i < 4; i++) if (r < M_AT[i + 1]) return M_NOTCH[i] + (M_NOTCH[i + 1] - M_NOTCH[i]) * Math.log(r / M_AT[i]) / Math.log(M_AT[i + 1] / M_AT[i]);
+    return Math.min(1, M_NOTCH[4] + (1 - M_NOTCH[4]) * Math.min(1, Math.log(r / 250) / Math.log(40)));
+  }
+  // win: the round's value in hundredths of the bet (as the plaque shows it)
+  function setMeter(win) {
+    const ctx = curCtx, r = win / 100 / Math.max(1, ctx ? ctx.cost : 1);
+    meter.to = Math.max(meter.to, meterLevel(r));
+    let t = -1; M_AT.forEach((a, i) => { if (r >= a) t = i; });
+    while (meter.tier < t) {
+      const i = ++meter.tier, m = ui.meterMarks && ui.meterMarks.children[i];
+      if (m) m.classList.add('hit');
+      if (ui.meter) retrigger(ui.meter, 'burst');
+      SND.emit('meterMark', 2 + i * 2); shake(0.22 + i * 0.06); SND.setLevel(2);
+      if (m) { const b = m.getBoundingClientRect(), f = full.getBoundingClientRect(); glints(b.left - f.left, b.top - f.top + b.height / 2, 10 + i * 3, U() * 4); }
+    }
+  }
+  function meterDrain() {
+    meter.to = 0; meter.tier = -1;
+    if (ui.meter) retrigger(ui.meter, 'drain');
+    if (ui.meterMarks) [...ui.meterMarks.children].forEach(m => m.classList.remove('hit'));
+  }
+  function meterReset() { meterDrain(); if (ui.meter) ui.meter.classList.remove('drain'); }
+  function meterTick(s) {
+    if (!ui.meter) return;
+    meter.v += (meter.to - meter.v) * Math.min(1, s * (meter.to < meter.v ? 2.5 : 5));
+    meter.k += (meter.v - meter.k) * Math.min(1, s * 1.5);
+    if (Math.abs(meter.v - meter.shown) > 0.0008) { meter.shown = meter.v; ui.meterFill.style.height = (meter.v * 67.1).toFixed(2) + '%'; }
+    const next = M_NOTCH.find(n => n > meter.v + 0.002), prev = [0, ...M_NOTCH].filter(n => n <= meter.v + 0.002).pop();
+    const near = !!next && meter.v > 0.02 && meter.v > prev + (next - prev) * 0.55;
+    if (near !== meter.near) { meter.near = near; ui.meter.classList.toggle('near', near); }
+    const vig = Math.round(Math.min(0.8, meter.k * 0.95) * 100) / 100;
+    if (vig !== meter.vig) { meter.vig = vig; ui.vig.style.opacity = vig; }
+  }
+  // the pause before a hop past the flag: the tile trembles, a heartbeat, the camera holds its breath
+  async function suspense(t, n) {
+    const sp = speedFn(), ms = Math.min(720, 200 + n * 80) * sp;
+    SND.heart(0.35 + Math.min(0.5, meter.v * 0.6));
+    if (ms > 420 * sp) setTimeout(() => SND.heart(0.3 + Math.min(0.5, meter.v * 0.6)), 380 * sp);
+    if (t) {
+      stopTweens(t.liftObj || (t.liftObj = {})); const o = t.liftObj; o.v = 0;
+      tween(o, { v: 1 }, ms / sp, 'lin', k => { t.lift = Math.sin(k * Math.PI * 9) * 2.2 * (0.4 + k); }).then(() => { t.lift = 0; });
+    }
+    rig.play('crouch', { mix: 0.08 });
+    await wait(ms / sp);
+  }
+
+  /* ---------------- the blessed fall (math v3, 2026-11-28, the user chose it) ----------------
+   * A tile gives way and, now and then, the idol blesses the fall: the screen turns gold, THE BLESSED FALL, and the
+   * monkey plunges down the painted chasm (fall-chasm) with his arms up (the monkey-fall clip, 60 fps). The chasm scrolls
+   * past him; at every ledge of treasure (fall-ledge) he swings to it, grabs it, coins burst, the plaque and the tension
+   * gauge climb; the deeper, the faster. When his hand slips he drops into the glowing river at the bottom, with all of it.
+   * The ledges are spread over the whole chasm, so every fall ends at the river, however many ledges it has. */
+  let deep = null, deepFg = null, fallSp = null, fallVC = null, fallOn = false;   // deep scrolls (chasm, ledges); deepFg holds him still on screen
+  async function fallTex() {
+    for (const k of ['fall-chasm', 'fall-ledge']) if (!tex[k] && ART[k]) tex[k] = await loadTex(k);
+    return tex['fall-chasm'] && tex['fall-ledge'];
+  }
+  function fallTick() {
+    if (!fallOn || !fallSp) return;
+    const v = VIDS['monkey-fall'];
+    if (fallVC && v && !v.failed && v.readyState >= 2) { if (v.paused) v.play().catch(() => {}); v.playbackRate = Math.max(0.5, Math.min(4, 1 / speedFn())); fallVC.draw(v); fallSp.texture = fallVC.tex; }
+  }
+  async function blessedFall(evs, ctx, from, gazeX = 1) {
+    const K = evs.filter(e => e.type === 'ledge').length, sp = speedFn();
+    vidLoad('monkey-fall');
+    const art = fallTex();
+    // the blessing: a gold wipe, the idol's eyes, the title
+    retrigger(ui.wipe, 'go'); SND.emit('fallStart'); torchFlare = 1;
+    if (gazeS) { stopTweens(gazeS.lvl); tween(gazeS.lvl, { v: 1 }, 260, 'outQuad'); }
+    const ready = await art;
+    if (!deep) { deep = new PIXI.Container(); deepFg = new PIXI.Container(); scene.addChild(deep, deepFg); }
+    deep.removeChildren(); deepFg.removeChildren(); deep.visible = deepFg.visible = true; deep.alpha = deepFg.alpha = 1; deepScroll.y = 0;
+    const ch = ready ? new PIXI.Sprite(tex['fall-chasm']) : new PIXI.Sprite(tex['bg-vault']);
+    const cs = Math.max(VW / ch.texture.width, VH * 1.6 / ch.texture.height); ch.scale.set(cs); ch.x = (VW - ch.texture.width * cs) / 2; deep.addChild(ch);
+    const span = Math.max(0, ch.texture.height * cs - VH), grabY = VH * 0.58;
+    // the ledges down the chasm, left and right in turn (ledge j at the scroll stop j / (K + 1))
+    const ledges = [];
+    for (let j = 1; j <= K; j++) {
+      const l = new PIXI.Sprite(ready ? tex['fall-ledge'] : tex.coin); l.anchor.set(0.5, 0.35);
+      const lw = Math.min(VW * 0.3, 260); l.scale.set(lw / l.texture.width); if (j % 2 === 0) l.scale.x *= -1;
+      l.x = j % 2 ? VW * 0.27 : VW * 0.73; l.y = span * j / (K + 1) + grabY; deep.addChild(l); ledges.push(l);
+    }
+    const C = window.LS_VID && window.LS_VID.chars.monkeyfall;
+    if (!fallVC && C) fallVC = vidCanvas('monkeyfall');
+    const fsp = fallSp = new PIXI.Sprite(fallVC && C ? fallVC.tex : tex['monkey-hop']);
+    if (C) fsp.anchor.set(0.5, 0.5); else fsp.anchor.set(0.5);
+    const figH = VH * 0.3, fs = C ? figH / C.fig : figH / fsp.texture.height; fsp.scale.set(fs);
+    fsp.x = VW / 2; fsp.y = -VH * 0.2; deepFg.addChild(fsp);
+    const v = VIDS['monkey-fall']; if (v && !v.failed) { v.loop = true; try { v.currentTime = 0; } catch (e) {} v.play().catch(() => {}); }
+    fallOn = true; appEl.classList.add('ls-in-fall');
+    await vaultCard(from === 0 && gazeX > 1 ? 'THE BLESSED FALL ×' + gazeX : 'THE BLESSED FALL', gazeX > 1 ? "THE IDOL'S GAZE: EVERY LEDGE ×" + gazeX : 'THE IDOL BLESSES HIS FALL · EVERY LEDGE HOLDS TREASURE', 1300);
+    // he drops in from the top
+    { const o = { t: 0 }; await tween(o, { t: 1 }, 520, 'outQuad', k => { fsp.y = -VH * 0.2 + (grabY - VH * 0.12 + VH * 0.2) * k; }); }
+    let win = from, k = 0;
+    for (const e of evs) {
+      if (e.type === 'ledge') {
+        k = e.k; const l = ledges[k - 1];
+        const target = span * k / (K + 1);
+        const ms = Math.max(360, 760 - k * 26);
+        SND.emit('fallWind');
+        await Promise.all([tween(deepScroll, { y: target }, ms, 'inOutSine'), tween(fsp, { x: VW / 2 + (l.x - VW / 2) * 0.15 }, ms * 0.6, 'inOutSine')]);
+        // he swings to the ledge and grabs it
+        await tween(fsp, { x: l.x + (l.x < VW / 2 ? 30 : -30), y: grabY - VH * 0.08 }, 200, 'outQuad');
+        win = e.win; setMeter(win); plaqueWin(win, 'LEDGE ' + k); SND.emit('ledge', Math.min(10, k)); shake(0.25 + Math.min(0.4, k * 0.03));
+        { const q = stagePt(deep, l.x, l.y - 20); coinBurst(q.x, q.y, 10 + k * 2, { up: 1.1, spread: 1.4 }); glints(q.x, q.y, 6 + k, U() * 5); }
+        stopTweens(l.scale); const lx = l.scale.x, ly = l.scale.y; l.scale.set(lx * 1.15, ly * 1.15); tween(l.scale, { x: lx, y: ly }, 260, 'outBack');
+        l.tint = 0xFFF2C4; floatMoney(l.x, l.y - 40, ctx.money(ctx.units(e.v)));
+        await wait(Math.max(160, 320 - k * 8));
+        await tween(fsp, { x: VW / 2, y: grabY - VH * 0.12 }, 200, 'inQuad');
+      } else if (e.type === 'river') {
+        win = e.win;
+        await tween(deepScroll, { y: span }, 700, 'inQuad');
+        await tween(fsp, { y: VH * 0.86 }, 360, 'inQuad');
+        SND.emit('river'); shake(0.55);
+        { const q = stagePt(deepFg, fsp.x, VH * 0.86); coinBurst(q.x, q.y, 26, { up: 1.5, spread: 1.6 }); glints(q.x, q.y, 18, U() * 8); }
+        plaqueWin(win, 'THE BLESSED FALL');
+        await vaultCard('SAFE IN THE RIVER', 'THE FALL ADDED ' + ctx.winMoney(ctx.units(win - from)), 1400);
+      }
+    }
+    // back on the bridge: the scene fades, he stands at the start again
+    fallOn = false; appEl.classList.remove('ls-in-fall'); { const v2 = VIDS['monkey-fall']; if (v2) v2.pause(); }
+    await Promise.all([tween(deep, { alpha: 0 }, 380, 'lin'), tween(deepFg, { alpha: 0 }, 380, 'lin')]); deep.visible = deepFg.visible = false; deep.removeChildren(); deepFg.removeChildren(); fallSp = null; deepScroll.y = 0;
+    monkey.alpha = 1; monkey.x = START_X; monkey.y = standY(); rig.play('idle', { loop: true, mix: 0.2 }); if (flipM) flipM.release();
+    return win;
+  }
+  // the chasm's scroll: the sprites of the deep layer move up by y
+  const deepScroll = { _y: 0, get y() { return this._y; }, set y(v) { this._y = v; if (deep) deep.y = -v; } };
+  // "+$1.42" rising from a ledge (DOM-free: a Pixi label in the deep layer)
+  function floatMoney(x, y, str) {
+    if (!deep) return;
+    const t = new PIXI.Sprite(paintTex(str, 64) || textTex(str, '#FFE7A0', 30)); t.anchor.set(0.5); t.scale.set(0.55); t.x = x; t.y = y; deep.addChild(t);
+    const o = { t: 0 }; tween(o, { t: 1 }, 900, 'outQuad', k => { t.y = y - 70 * k; t.alpha = 1 - Math.max(0, k - 0.6) * 2.5; }).then(() => { if (!t.destroyed) t.destroy(); });
+  }
+
   /* ---------------- moves ---------------- */
   const standY = () => TOP;
   // scared: the leap back after a trap keeps the fright drawing (bare head), because his beanie is still flying away;
@@ -576,6 +788,33 @@ const homeCam = () => {
     // arc in the air (the lean follows the arc's slope), and squashes on landing. Scaled around his feet (monkey's origin).
     const dir = Math.sign(x - monkey.x) || 1;
     stopTweens(monkey.scale); monkey.scale.set(1, 1); monkey.rotation = 0;
+    if (!scared && flipM && flipM.hasVid('monkey-hop')) {
+      // the hop as a 60 fps video (2026-11-28, the user: "not smooth"; the 24 fps atlas showed each pose for ~30 ms and the
+      // AI clip held some frames twice). Clip time (s): crouch 0.08-0.37, in the air 0.38-0.83, landing 0.83-1.04. The
+      // clip plays each part at the speed that fits the hop's timing, and his place on the bridge follows the clip's own
+      // clock, so his feet never slide ahead of the drawing. If the video falls behind, the place moves on anyway (at most a
+      // quarter of the flight behind the plan) and the hop never waits for it.
+      const H = 'monkey-hop', x0 = monkey.x, y0 = monkey.y, lift = height * 0.25, sp = speedFn();
+      const C0 = 0.08, A0 = 0.38, A1 = 0.83, E = 1.04, tC = 120, tA = ms * 1.15, tL = 170;
+      rig.play('crouch', { mix: 0.05 });
+      flipM.start(H, false, C0); flipM.rate = (A0 - C0) / (tC / 1000);
+      const v = VIDS[H], tStart = performance.now(); let up = false;
+      await new Promise(res => {
+        const o = { t: 0 };
+        tween(o, { t: 1 }, 60000, 'lin', () => {
+          const own = flipM.name === H, ct = own ? v.currentTime : E, el = performance.now() - tStart;
+          const kV = Math.max(0, Math.min(1, (ct - A0) / (A1 - A0))), kT = Math.max(0, Math.min(1, (el - tC * sp) / (tA * sp)));
+          const k = Math.max(kV, kT - 0.25);
+          if (!up && (ct >= A0 - 0.02 || k > 0)) { up = true; sfx('hop'); rig.play('hop', { mix: 0.04, fadeSwap: 0.05 }); if (own) flipM.rate = (A1 - A0) / (tA / 1000); }
+          monkey.x = x0 + (x - x0) * k; monkey.y = y0 + (y - y0) * k - Math.sin(k * Math.PI) * lift;
+          if (k >= 1) { stopTweens(o); res(); }
+        });
+      });
+      monkey.x = x; monkey.y = y;
+      if (flipM.name === H) flipM.rate = (E - A1) / (tL / 1000);
+      rig.play('land', { mix: 0.03, fadeSwap: 0.05, then: 'idle', thenMix: 0.2 });
+      return;
+    }
     if (!scared && flipM && flipM.has('monkey-hop')) {
       // monkey-hop clip (24 fps): crouch 0.08-0.37 s, in the air 0.38-0.83 s, landing 0.83-1.04 s
       const H = 'monkey-hop', o = { t: 0 }, x0 = monkey.x, y0 = monkey.y, lift = height * 0.25;
@@ -668,9 +907,25 @@ const homeCam = () => {
     t.setColor(color); t.scale.set(0.5);
     tween(t.scale, { x: 1.18, y: 1.18 }, 83, 'outQuad').then(() => tween(t.scale, { x: 1, y: 1 }, 250, 'outBack'));
   }
-  function setPlaque(text, sub) { ui.plaqueVal.textContent = text; ui.plaqueSub.textContent = sub || ''; ui.plaque.classList.remove('pop'); void ui.plaque.offsetWidth; ui.plaque.classList.add('pop'); }
+  // the plaque in money: "$3.52" with "3.52× · TILE 5" under it (without a round, the × alone)
+  // one amount in money on the screen at a time (review 11.5: up to four amounts that disagreed): the plaque shows the ×,
+  // the money rides on the monkey during the round and is the banner's during a celebration
+  function plaqueWin(v, sub) { setPlaque(fmtX(v), sub || ''); }
+  function heroMoney(v) {
+    if (!moneyTag || !curCtx) return;
+    if (!v) { moneyTag.visible = false; moneyTag.v = 0; return; }
+    const str = curCtx.winMoney(curCtx.units(v));
+    if (moneyTag.str !== str) {
+      moneyTag.str = str; const sp = moneyTag.children[0], t = paintTex(str, 64);
+      if (t) { const old = sp.texture; sp.texture = t; if (old && old._painted) old.destroy(true); } else moneyTag.setColor('#FFF2C4');
+    }
+    if (!moneyTag.visible) { moneyTag.visible = true; moneyTag.alpha = 1; }
+    if (v > (moneyTag.v || 0)) { stopTweens(moneyTag.scale); moneyTag.scale.set(1.35); tween(moneyTag.scale, { x: 1, y: 1 }, 280, 'outBack'); }
+    moneyTag.v = v;
+  }
+  function setPlaque(text, sub) { paintNum(ui.plaqueVal, text); ui.plaqueSub.textContent = sub || ''; ui.plaque.classList.remove('pop'); void ui.plaque.offsetWidth; ui.plaque.classList.add('pop'); }
 
-  async function trapAt(i, kind) {
+  async function trapAt(i, kind, blessed = false) {
     const t = tiles[i - 1]; if (!t) return;
     const trapT0 = performance.now();
     const retex = n => { t.sprite.texture = tex[n]; t.texName = n; t.lit.texture = tileFx[n].lit; };
@@ -689,8 +944,11 @@ const homeCam = () => {
       const b = { t: 0 }, bx = beanie.x, by = beanie.y;
       tween(b, { t: 1 }, 900, 'lin', k => { beanie.x = bx - 140 * k; beanie.y = by - 120 * Math.sin(k * Math.PI) + 260 * k * k; beanie.rotation = -4 * k; beanie.alpha = 1 - Math.max(0, k - 0.75) * 4; });
     };
-    // the clip's own clock decides (a video can take a moment to start): his head is bare from 0.4 s into the clip
-    if (flipM && flipM.name === 'monkey-fright') (async () => {
+    // the clip's own clock decides (a video can take a moment to start): his head is bare from 0.4 s into the clip.
+    // No fright clip yet and a rest clip still playing (the first round): no flying beanie at all (review 2: two beanies)
+    const bareHead = !flipM || !flipM.on || flipM.name === 'monkey-fright';
+    if (!bareHead) { /* the rest clip keeps its beanie on */ }
+    else if (flipM && flipM.name === 'monkey-fright') (async () => {
       const t0 = performance.now(), at = () => (flipM.vid ? flipM.vid.currentTime : flipM.t);
       while (flipM.name === 'monkey-fright' && at() < 0.4 && performance.now() - t0 < 1500) await new Promise(r => requestAnimationFrame(r));
       launch();
@@ -701,12 +959,150 @@ const homeCam = () => {
     await tween(o, { t: 1 }, 260, 'lin', k => { t.x = t.home.x + Math.sin(k * 46) * 5 * (1 - k); t.rotation = Math.sin(k * 33) * 0.035 * (1 - k); });
     t.rotation = 0; t.falling = true; t.lit.tint = 0xFFFFFF;
     splitTile(t, i);
+    if (blessed) {
+      // the blessed fall (v3): he does not scramble back, he drops into the chasm after the halves of the tile
+      const fo = { t: 0 }, fx = monkey.x, fy = monkey.y; t.falling = true;
+      await tween(fo, { t: 1 }, 520, 'inQuad', k => { monkey.x = fx + (tileX(i) - fx) * Math.min(1, k * 2); monkey.y = fy + 520 * k * k; monkey.alpha = 1 - Math.max(0, k - 0.6) * 2.5; });
+      beanie.visible = false; return;
+    }
     // he scrambles back to safety
     const back = i - 1 >= 1 ? tileX(i - 1) : START_X;
     await hopTo(back, standY(), { height: 40, ms: 280, scared: true });
     // the flying beanie is gone after 900 ms; the idle drawing (beanie on) only comes back after that
     await wait(Math.max(500, 940 - (performance.now() - trapT0)));
-    rig.play('idle', { loop: true, mix: 0.25 });
+    if (bareHead) await beanieBack(); else rig.play('idle', { loop: true, mix: 0.25 });
+  }
+  // the beanie falls back onto his head, and only then is he at rest (the idle clip and drawing wear it)
+  async function beanieBack() {
+    const pop = window.LS_MONKEY.beanie, ms = RIG_S_NOW(), hx = monkey.x + pop.x * ms, hy = monkey.y + pop.y * ms;
+    beanie.scale.set(pop.w * ms / beanie.texture.width); beanie.alpha = 1; beanie.visible = true;
+    if (beanie.parent !== monkey.parent) monkey.parent.addChild(beanie); else beanie.parent.setChildIndex(beanie, beanie.parent.children.length - 1);
+    const o = { t: 0 };
+    await tween(o, { t: 1 }, 300, 'inQuad', k => { beanie.x = hx - 36 * (1 - k); beanie.y = hy - 170 * (1 - k); beanie.rotation = 0.6 * (1 - k); });
+    rig.play('idle', { loop: true, mix: 0.04 });
+    if (flipM && flipM.has('monkey-idle')) flipM.start('monkey-idle', true); else if (flipM) flipM.stop();
+    beanie.visible = false;
+    burst(hx, hy + 6, 6, { color: 0xFFB070, speed: 140, life: 380, grav: 400, size: 0.6 });
+    sfx('land');
+  }
+
+  /* ---------------- math v2 (2026-11-26): the idol's gaze and the relics ----------------
+   * Both are decided before the first hop and shown at once (the book's bridge event): the gaze multiplies every tile
+   * of the round, a relic is picked up when the monkey reaches its tile. Nothing here decides anything: the values come
+   * from the events (bridge.tiles, hop.win, relic.win, save.win). */
+  const RELIC_TAG = { mask: '×2', rope: 'ROPE' };
+  const RELIC_GLOW = { coin: 'rgba(255,214,110,', mask: 'rgba(120,255,180,', rope: 'rgba(255,190,120,' };
+  function clearRelics() {
+    relicS.forEach(r => { [r, r.scale, r.glow].forEach(stopTweens); r.destroy({ children: true }); }); relicS = [];
+    if (ropeTag) { stopTweens(ropeTag); ropeTag.destroy(); ropeTag = null; }
+    if (gazeS) { stopTweens(gazeS.lvl); gazeS.lvl.v = 0; } curGaze = 0;
+  }
+  function relicSprite(kind, coin) {
+    const c = new PIXI.Container(), g = RELIC_GLOW[kind];
+    const glow = new PIXI.Sprite(glowTexture(64, [[0, g + '.75)'], [0.55, g + '.22)'], [1, g + '0)']])); glow.anchor.set(0.5); glow.blendMode = 'add'; glow.scale.set(1.6);
+    const s = new PIXI.Sprite(tex[kind]); s.anchor.set(0.5); s.scale.set((kind === 'rope' ? 92 : 78) / s.texture.height);
+    const tag = label(kind === 'coin' ? '+' + fmtX(coin) : RELIC_TAG[kind], kind === 'mask' ? '#B8FFD8' : '#FFE7A0', kind === 'coin' ? 21 : 24);
+    tag.y = 58; tag.children[0].scale.set(0.5 * labelF);
+    c.addChild(glow, s, tag); c.glow = glow; c.icon = s; c.kind = kind;
+    return c;
+  }
+  // before the first hop: the relics drop onto their tiles; then, in a gaze round, the idol opens its eyes
+  async function showSetup(e) {
+    tiles.forEach((t, i) => {                 // the tile values of this round (with the gaze, when it multiplies)
+      const v = e.tiles[i]; if (!v) return;
+      t.val = v; t.label_.str = tileTxt(v); t.label_.setColor(numColor(i + 1, e.flag));
+    });
+    for (const [n, r] of (e.relics || []).entries()) {
+      const c = relicSprite(r.kind, e.coin); c.i = r.i; c.x = tileX(r.i); c.baseY = c.y = TOP - 78; c.ph = r.i * 1.7; c.scale.set(0.01);
+      if (narrow()) await camTo(c.x, TOP - 110, camState.z, 360);   // a portrait phone shows a few tiles: the camera goes to each relic
+      world.addChild(c); relicS.push(c);
+      SND.emit('relicShow', 3 + n * 2);
+      tween(c.scale, { x: 1, y: 1 }, 320, 'outBack');
+      burst(c.x, c.y, 12, { color: r.kind === 'mask' ? JADE : GOLD, speed: 220, life: 600, grav: 300, size: 0.7 });
+      await wait(170);
+    }
+    if (e.relics && e.relics.length) await wait(220);
+    curGaze = e.gaze > 1 ? e.gaze : 0;
+    if (e.gaze > 1) await gazeMoment(e);
+  }
+  async function gazeMoment(e) {
+    const x = '×' + e.gaze;
+    if (narrow()) await camTo(IDOL_X - 120, TOP - 120, camState.z, 420);   // on a portrait phone the idol is out of view: look at it
+    SND.emit('gaze'); shake(0.35);
+    stopTweens(gazeS.lvl); tween(gazeS.lvl, { v: 1 }, 260, 'outQuad');
+    burst(IDOL_X, TOP - 135, 30, { color: 0xFFE7A0, speed: 420, life: 900, grav: 200 });
+    setPlaque(x, "THE IDOL'S GAZE");
+    // the light runs back along the bridge from the idol, and every tile shows its new value
+    for (let i = N; i >= 1; i--) {
+      const t = tiles[i - 1];
+      setTimeout(() => { if (t.destroyed) return; flashTile(t, 0.9, i >= e.flag ? 0.12 : 0); shineTile(t, 360); if (i >= e.flag) popText(t.label_, NUM.gold); }, (N - i) * 45 * speedFn());
+    }
+    const big = label(x, '#FFE7A0', 64); big.x = narrow() ? IDOL_X - 170 : (X0 + X1) / 2; big.y = TOP - 190; big.scale.set(0.3); fxLayer.addChild(big);
+    tween(big.scale, { x: 1.25, y: 1.25 }, 220, 'outBack');
+    await wait(760);
+    await tween(big, { y: big.y - 40, alpha: 0 }, 360, 'inQuad');
+    big.destroy({ children: true });
+    tiles.forEach((t, i) => { if (i + 1 >= e.flag) t.label_.setColor(NUM.bronze); });
+  }
+  // the monkey picks up the relic on the tile he just reached
+  async function takeRelic(e, coinValue) {
+    const r = relicS.find(k => k.i === e.i && !k.taken); if (!r) return;
+    r.taken = true;
+    burst(r.x, r.y, 16, { color: e.kind === 'mask' ? JADE : GOLD, speed: 300, life: 700, grav: 400 });
+    if (e.kind === 'coin') {
+      SND.emit('relicCoin', 6);
+      floatUp('+' + fmtX(coinValue));
+      coinTo(r.x, r.y, () => setPile(Math.max(pileLevel, 1) + 1));
+      await tween(r.scale, { x: 0.01, y: 0.01 }, 200, 'inQuad');
+    } else if (e.kind === 'mask') {
+      SND.emit('relicMask'); shake(0.3);
+      floatUp('×2');
+      tiles.forEach(t => { if (!t.falling && t.glowTo > 0) { flashTile(t, 1, 0.3); shineTile(t, 420); } });
+      await tween(r, { y: monkey.y - 150, x: monkey.x }, 260, 'outQuad');
+      tween(r.scale, { x: 1.8, y: 1.8 }, 200, 'outQuad');
+      await tween(r, { alpha: 0 }, 260, 'inQuad');
+    } else {
+      SND.emit('relicRope');
+      // the coil goes onto the monkey's back: he carries it until a tile gives way
+      await tween(r, { x: monkey.x, y: monkey.y - 70 }, 220, 'outQuad');
+      r.visible = false;
+      ropeTag = new PIXI.Sprite(tex.rope); ropeTag.anchor.set(0.5); ropeTag.scale.set(30 / ropeTag.texture.height);
+      ropeTag.x = -26; ropeTag.y = -58 * (RIG_S_NOW() / RIG_S); monkey.addChild(ropeTag);
+      floatUp('ROPE');
+    }
+    r.visible = false;
+  }
+  // a tile gives way but the rope catches him: he swings under the gap and a fresh tile rises under his feet
+  async function saveAt(i) {
+    const t = tiles[i - 1]; if (!t) return;
+    const n0 = t.texName, retex = n => { t.sprite.texture = tex[n]; t.texName = n; t.lit.texture = tileFx[n].lit; };
+    retex('tile-cracked');
+    SND.emit('ropeSave'); shake(0.7);
+    rig.play('fright', { mix: 0.02, fadeSwap: 0.04 });
+    hrig.play('fright', { mix: 0.02, fadeSwap: 0.04, then: 'idle', thenMix: 0.3 });
+    t.glow = 0; t.glowTo = 0; t.lit.tint = 0xFFB070; flashTile(t, 0.7, 0);
+    const o = { t: 0 };
+    await tween(o, { t: 1 }, 240, 'lin', k => { t.x = t.home.x + Math.sin(k * 46) * 5 * (1 - k); t.rotation = Math.sin(k * 33) * 0.035 * (1 - k); });
+    t.rotation = 0; t.falling = true; t.lit.tint = 0xFFFFFF;
+    splitTile(t, i);
+    if (ropeTag) ropeTag.visible = false;
+    // the rope, from a beam high above the gap down to the monkey
+    const ax = tileX(i), ay = TOP - 330, line = new PIXI.Graphics(); world.addChild(line);
+    const draw = () => { line.clear(); line.moveTo(ax, ay).lineTo(monkey.x, monkey.y - 70 * (RIG_S_NOW() / RIG_S)).stroke({ width: 5, color: 0xC8923C }); line.moveTo(ax, ay).lineTo(monkey.x, monkey.y - 70 * (RIG_S_NOW() / RIG_S)).stroke({ width: 2, color: 0xFFE2A0, alpha: 0.7 }); };
+    const x0 = monkey.x, y0 = monkey.y, x1 = tileX(i), s = { t: 0 };
+    await tween(s, { t: 1 }, 640, 'inOutSine', k => { monkey.x = x0 + (x1 - x0) * k; monkey.y = y0 + Math.sin(k * Math.PI) * 95; monkey.rotation = Math.sin(k * Math.PI * 2) * 0.12; draw(); });
+    monkey.rotation = 0;
+    // the fresh tile rises under him
+    if (t.halves) mendTile(t, i - 1);
+    retex(n0); t.falling = true; t.x = t.home.x; t.y = t.home.y + 70; t.alpha = 0;
+    tween(t, { y: t.home.y, alpha: 1 }, 300, 'outBack').then(() => { t.falling = false; shineTile(t, 400); });
+    await wait(120);
+    monkey.y = standY(); rig.play('land', { mix: 0.03, fadeSwap: 0.05, then: 'idle', thenMix: 0.2 });
+    landTile(t, 1.3);
+    burst(x1, TOP - 10, 14, { color: GOLD, speed: 260, life: 600, grav: 500 });
+    tween(line, { alpha: 0 }, 320, 'lin').then(() => line.destroy());
+    if (ropeTag) { ropeTag.destroy(); ropeTag = null; }
+    await wait(200);
   }
 
   /* ---------------- the vault ---------------- */
@@ -716,7 +1112,8 @@ const homeCam = () => {
     gtiles.forEach(dropTile); gtiles = [];
     const vals = R.vault[kind].values, show = Math.min(vals.length, 60);
     for (let k = 0; k < show; k++) {
-      const c = makeTile('tile-gold', Math.min(vals[k], R.cap), NUM.gold, 26); c.sprite.scale.set((GW * 1.0) / c.sprite.texture.width); c.baseS = c.sprite.scale.y; c.label_.y = c.sprite.height * 0.37;
+      const c = makeTile('tile-gold', Math.min(vals[k], R.cap), NUM.gold, 26);
+      if (k > 0 && c.label_) { c.label_.str = '+' + c.label_.str; c.label_.setColor(NUM.gold); } c.sprite.scale.set((GW * 1.0) / c.sprite.texture.width); c.baseS = c.sprite.scale.y; c.label_.y = c.sprite.height * 0.37;
       c.x = gX(k); c.y = GTOP; c.home = { x: c.x, y: c.y };
       vaultWorld.addChild(c); gtiles.push(c);
     }
@@ -733,19 +1130,30 @@ const homeCam = () => {
     vaultWorld.addChild(monkey); monkey.x = gX(0); monkey.y = GTOP; rig.view.scale.set(RIG_S_VAULT); setPile(Math.max(pileLevel, 4));
     vaultWorld.addChildAt(hostC, vaultWorld.children.length - 1); hostC.x = gX(0) - 190; hostC.y = GTOP; hrig.play('pump', { mix: 0.05, fadeSwap: 0.05, then: 'idle', thenMix: 0.2 });
     templeFx.visible = false; fore.visible = false; ground.visible = false; bgMid.visible = false;
-    camState = { x: monkey.x + 360, y: GTOP - 90, z: 1.1 }; applyCam();
-    ui.ropes.hidden = false; ui.vaultTitle.hidden = false;
-    setPlaque(fmtX(R.vault[kind].values[0] + (fromIdol || 0)), 'THE VAULT');
-    await wait(900);
-    ui.vaultTitle.hidden = true;
+    camState = { x: monkey.x + vlead(), y: GTOP - 90, z: 1.1 }; applyCam();
+    ui.ropes.hidden = false; appEl.classList.add('ls-in-vault');
+    plaqueWin(R.vault[kind].values[0] + (fromIdol || 0), 'THE VAULT');
+    // the entry card (review 11.5: there was none): the name, the ropes, the rule, held 1.5 s (a tap skips)
+    await vaultCard(kind === 'grand' ? 'THE GRAND VAULT' : 'THE VAULT', R.vault[kind].ropes + ' ROPES · EVERY GOLDEN TILE PAYS MORE', 1500);
   }
   function leaveVault() {
     inVault = false; world.visible = true; vaultWorld.visible = false; bg.visible = true; bgV.visible = false; torches.forEach(g => { g.visible = true; });
     world.addChildAt(monkey, world.children.length - 1); rig.view.scale.set(RIG_S);
     world.addChildAt(hostC, world.children.indexOf(monkey)); hostC.x = HOST_X; hostC.y = TOP;
     templeFx.visible = true; fore.visible = true; ground.visible = true; bgMid.visible = true;
-    ui.ropes.hidden = true; ui.vaultTitle.hidden = true;
+    ui.ropes.hidden = true; ui.vaultTitle.hidden = true; appEl.classList.remove('ls-in-vault');
     gtiles.forEach(dropTile); gtiles = [];
+  }
+  // the Vault's entry and end cards: a title and a line under it, held for ms (the spin button or Space skips)
+  async function vaultCard(title, line, ms) {
+    const el = ui.vaultTitle; el.innerHTML = ''; el.append(document.createTextNode(title));
+    const sm = document.createElement('small'); sm.textContent = line; el.append(sm);
+    el.hidden = false; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
+    SND.emit('flag'); shake(0.3);
+    { const r = el.getBoundingClientRect(), b = full.getBoundingClientRect(); coinBurst(r.left - b.left + r.width / 2, r.top - b.top + r.height / 2, 18, { up: 1.2, spread: 1.6 }); }
+    let done = false; const prev = skipBig; skipBig = () => { done = true; };
+    const t0 = performance.now(); while (!done && performance.now() - t0 < ms * speedFn()) await tick();
+    skipBig = prev; el.hidden = true;
   }
 
   /* ---------------- win celebrations (2026-11-26, the user: many more animations and cool things when he wins more than
@@ -776,7 +1184,7 @@ const homeCam = () => {
   // coins thrown up from a point (stage px): they flip on their axis, fall, and fade
   function coinBurst(x, y, n, { up = 1, spread = 1, size = 1 } = {}) {
     const u = U();
-    for (let i = 0; i < n && CF.parts.length < 320; i++) {
+    for (let i = 0; i < n && CF.parts.length < 480; i++) {
       const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.5 * spread, v = u * (50 + Math.random() * 50) * up;
       CF.parts.push({ k: 0, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: u * 170, s: u * (2.3 + Math.random() * 1.5) * size,
         spin: Math.random() * 6, vs: 7 + Math.random() * 11, rot: (Math.random() - 0.5) * 0.7, life: 2.8, max: 2.8 });
@@ -785,7 +1193,7 @@ const homeCam = () => {
   // coins falling from above the stage
   function coinRain(n, size = 1) {
     const u = U();
-    for (let i = 0; i < n && CF.parts.length < 320; i++) CF.parts.push({ k: 0, x: Math.random() * CF.w, y: -u * (4 + Math.random() * 12),
+    for (let i = 0; i < n && CF.parts.length < 480; i++) CF.parts.push({ k: 0, x: Math.random() * CF.w, y: -u * (4 + Math.random() * 12),
       vx: (Math.random() - 0.5) * u * 10, vy: u * (18 + Math.random() * 30), g: u * 95, s: u * (2.1 + Math.random() * 1.8) * size,
       spin: Math.random() * 6, vs: 5 + Math.random() * 9, rot: (Math.random() - 0.5) * 0.7, life: 5, max: 5 });
   }
@@ -848,110 +1256,155 @@ const homeCam = () => {
     await tween(o, { t: 1 }, 400, 'lin', k => { const a = Math.sin(k * Math.PI); monkey.y = y0 - a * h; monkey.scale.set(1 - 0.05 * a, 1 + 0.07 * a); });
     monkey.y = y0; monkey.scale.set(1.13, 0.86); await tween(monkey.scale, { x: 1, y: 1 }, 220, 'outBack');
   }
-  const WIN_LV = ['WIN', 'NICE WIN', 'GREAT WIN', 'SUPERB WIN'];
+  // the win tiers (review 11.5: WIN / NICE / GREAT / SUPERB were one template with generic names): the smallest win has
+  // no title, the others have painted titles from the temple, and every tier adds to the one before it (lvFx)
+  const WIN_LV = ['', 'BOLD STEP', 'GOLDEN STEP', 'GIANT LEAP'], WIN_ART = ['', 'title-bold', 'title-golden', 'title-giant'];
+  // the bar counts with a celebration, in the amount's own display steps (cents for $, more for BTC)
+  function barCount(ctx, u, units) {
+    const dec = ((ctx.winMoney(units).match(/[.,](d+)/) || [, '00'])[1]).length, step = 1e6 / Math.pow(10, Math.min(6, dec));
+    ctx.setWin(Math.min(units, Math.round(u / step) * step), false);
+  }
+  function setTitle(el, text, art) {
+    if (art && ART[art]) el.innerHTML = '<img class="ls-ttl" alt="' + text + '" src="' + ART[art] + '">';
+    else el.textContent = text;
+    el.hidden = !text;
+  }
+  // what each tier adds: 1 the explorer cheers and the rays turn; 2 a rain of coins, the torches flare, a flash;
+  // 3 the idol opens its eyes, the temple shakes in pulses
+  function lvFx(lv, sp) {
+    if (lv >= 1) hrig.play('win', { mix: 0.03, fadeSwap: 0.04, then: 'idle', thenMix: 0.3 });
+    if (lv >= 2) { coinRain(14 + (lv - 2) * 18); retrigger(ui.flash, 'go'); torchFlare = 1; }
+    if (lv >= 3 && gazeS) {
+      stopTweens(gazeS.lvl); tween(gazeS.lvl, { v: 1 }, 220, 'outQuad');
+      burst(IDOL_X, TOP - 135, 30, { color: 0xFFE7A0, speed: 460, life: 900, grav: 200 });
+      (async () => { for (let i = 0; i < 3; i++) { await wait(520 * sp); shake(0.3); } })();
+    }
+  }
   const fmtMul = x => (Math.round(x * 100) / 100).toFixed(2) + '×';
   // every win above the play amount, under the big-win line
   async function winShow(ctx, x, lap) {
-    const tu = MODE[ctx.mode].tuning.tiers || []; let lv = 0; for (let i = 0; i < 3; i++) if (x >= tu[i]) lv = i + 1;
+    const tu = MODE[ctx.mode].tuning.tiers || []; let lv = 0; for (let i = 0; i < 3; i++) if (x >= (i === 0 ? Math.min(2, tu[0] || 2) : tu[i])) lv = i + 1;
     const sp = speedFn(), units = ctx.winUnits;
     let done = false; skipBig = () => { done = true; };
     rig.play('win', { mix: 0.03, fadeSwap: 0.04, then: 'idle', thenMix: 0.3 });
     hrig.play('win', { mix: 0.03, fadeSwap: 0.04, then: 'idle', thenMix: 0.3 });
     SND.emit('winSmall');
-    ui.plaque.classList.add('hot');
-    // the smallest wins (under the first tier) take half a second in all (2026-11-26, the user: "half a second, simply"):
-    // the tiles flash together, the banner stamps in with the final amount, a few coins, one hop, gone
-    if (lv === 0) {
-      victoryLap(lap, 25);
-      const w = ui.win; w.dataset.lv = '0'; w.classList.remove('land', 'out');
-      ui.winT.textContent = WIN_LV[0]; ui.winAmt.textContent = ctx.winMoney(units); ui.winX.textContent = fmtMul(x);
-      w.hidden = false; void w.offsetWidth;
-      const m = monkeyPt(); coinBurst(m.x, m.y, 7); glints(m.x, m.y, 5, U() * 5);
-      shake(0.14); joyHop(30);
-      const t0 = performance.now();
-      while (!done && performance.now() - t0 < 340 * sp) await tick();
-      skipBig = null; w.classList.add('out'); ui.plaque.classList.remove('hot');
-      await new Promise(r => setTimeout(r, 120 * sp));
-      w.hidden = true; w.classList.remove('out');
-      return;
-    }
-    const lapMs = victoryLap(lap), l0 = performance.now();
-    while (!done && performance.now() - l0 < Math.min(lapMs, 560) * sp) await tick();
+    ui.plaque.classList.add('hot'); heroMoney(0);
+    // Every win above the play gets a real show (2026-11-28, the user: "a more serious celebration when the prize is bigger
+    // than the play, and the money on the screen"; catalog item 3: about 1.6 s under the first tier, and 650 / 2100 / 2100 ms
+    // before / count / hold from the first tier of a big win). The half second of 2026-11-26 is only for wins under the play,
+    // which this game does not have. Tap skips, TURBO halves it all.
+    const lapMs = victoryLap(lap, lv ? 80 : 45), l0 = performance.now();
+    while (!done && performance.now() - l0 < Math.min(lapMs, lv ? 650 : 300) * sp) await tick();
     // the banner stamps in, the coins fly
     const w = ui.win; w.dataset.lv = String(lv); w.classList.remove('land', 'out');
-    ui.winT.textContent = WIN_LV[lv]; ui.winAmt.textContent = ctx.money(0); ui.winX.textContent = fmtMul(x);
-    w.hidden = false; void w.offsetWidth;
+    setTitle(ui.winT, WIN_LV[lv], WIN_ART[lv]); paintNum(ui.winAmt, ctx.money(0)); ui.winX.textContent = fmtMul(x);
+    w.hidden = false; void w.offsetWidth; lvFx(lv, sp);
     const m = monkeyPt(); coinBurst(m.x, m.y, 8 + lv * 9, { up: 1 + lv * 0.12 }); glints(m.x, m.y, 6 + lv * 3, U() * 6);
     const pp = packPt(); glints(pp.x, pp.y, 4 + lv * 2, U() * 3);
     if (lv >= 2) coinRain(10 + (lv - 2) * 16);
     shake(0.16 + lv * 0.1);
     (async () => { for (let i = 0; i < (lv >= 2 ? 2 : 1); i++) await joyHop(34 + lv * 8); })();
-    const dur = (520 + lv * 420) * sp, stop = lv ? SND.count(dur / 1000, lv - 1) : null, t0 = performance.now();
+    const dur = [520, 1500, 1800, 2100][lv] * sp, stop = SND.count(dur / 1000, Math.max(0, lv - 1)), t0 = performance.now();
     while (!done) {
       const p = Math.min(1, (performance.now() - t0) / dur);
-      ui.winAmt.textContent = ctx.money(Math.round(units * (1 - Math.pow(1 - p, 3))));
+      { const u = Math.round(units * (1 - Math.pow(1 - p, 3))); paintNum(ui.winAmt, ctx.money(u)); barCount(ctx, u, units); }
       if (lv && Math.random() < 0.18 + lv * 0.1) { const q = monkeyPt(); coinBurst(q.x, q.y, 1, { up: 0.9 }); }
       if (p >= 1) break;
       await tick();
     }
-    ui.winAmt.textContent = ctx.winMoney(units); if (stop) stop(); SND.emit('countEnd');
+    paintNum(ui.winAmt, ctx.winMoney(units)); ctx.setWin(units, false); if (stop) stop(); SND.emit('countEnd');
     w.classList.add('land');
+    // the second hit when the amount lands: coins out of it, a shake, the monkey jumps again
+    { const r = ui.winAmt.getBoundingClientRect(), b = full.getBoundingClientRect(); coinBurst(r.left - b.left + r.width / 2, r.top - b.top + r.height / 2, 10 + lv * 8, { up: 1.1, spread: 1.2 }); }
+    shake(0.12 + lv * 0.08); joyHop(30 + lv * 6);
     { const r = ui.winAmt.getBoundingClientRect(), b = full.getBoundingClientRect(); glints(r.left - b.left + r.width / 2, r.top - b.top + r.height / 2, 6 + lv * 2, r.width * 0.5); }
-    done = false; const end = performance.now() + (480 + lv * 260) * sp;
+    done = false; const end = performance.now() + [800, 1000, 1600, 2100][lv] * sp;
     while (!done && performance.now() < end) await tick();
     skipBig = null; w.classList.add('out'); ui.plaque.classList.remove('hot');
     await new Promise(r => setTimeout(r, 200));
     w.hidden = true; w.classList.remove('land', 'out');
+    if (lv >= 3 && gazeS && !curGaze) { stopTweens(gazeS.lvl); tween(gazeS.lvl, { v: 0 }, 500, 'inQuad'); }
   }
   /* the big-win card (own, so tiers follow each mode's threshold from the math) */
-  const TIERS = [{ k: 1, label: 'FINE FIND' }, { k: 5, label: 'TREASURE HAUL' }, { k: 25, label: 'TEMPLE FORTUNE' }];
+  // the tiers of the big-win card, from the mode's threshold (10x in a flag mode): 10x / 18x / 27x, so the top one comes
+  // about once in 450 rounds (catalog item 3: the top tier at least once in 500; it was 250x, once in 10,858)
+  /* the big win (rebuilt 2026-11-28, the user: "the wins are really lame, I won about 150 and it was pathetic... it is a
+   * casino game"). Before, the top tier began at 27x, so 30x and 150x got the same show. Now five tiers, by what the round
+   * cost: BIG 10x, MEGA 25x, EPIC 50x, LEGENDARY 100x, MYTHIC 250x (the max win keeps LEGEND OF THE VAULT). The stage goes
+   * dark and the whole screen is the win: a huge number in the middle, the painted title over it. The count climbs tier by
+   * tier, each tier its own stretch: the number runs up to the next line, the title slams in, a flash, a fountain of coins,
+   * the temple shakes and the chord rises; then on to the next. 150x passes four titles in about 10 s. */
+  const TIERS = [{ r: 10, label: 'BIG WIN', art: 'title-big' }, { r: 25, label: 'MEGA WIN', art: 'title-mega' }, { r: 50, label: 'EPIC WIN', art: 'title-epic' },
+    { r: 100, label: 'LEGENDARY WIN', art: 'title-legendary' }, { r: 250, label: 'MYTHIC WIN', art: 'title-mythic' }];
+  const BIG_AT = TIERS[0].r;
   function cardPt() { const r = ui.bigCard.getBoundingClientRect(), b = full.getBoundingClientRect(); return { x: r.left - b.left + r.width / 2, y: r.top - b.top + r.height / 2, w: r.width, h: r.height }; }
   function retrigger(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
-  // the count passed the next line: the title slams in, a flash, coins out of the card, the temple shakes
+  // coins shot up from the bottom of the screen (the middle and both corners)
+  function fountain(n) {
+    const w = CF.w, h = CF.h;
+    coinBurst(w * 0.5, h + U() * 2, n, { up: 2.0, spread: 0.55, size: 1.15 });
+    coinBurst(w * 0.12, h + U() * 2, Math.round(n * 0.5), { up: 1.8, spread: 0.4 });
+    coinBurst(w * 0.88, h + U() * 2, Math.round(n * 0.5), { up: 1.8, spread: 0.4 });
+  }
+  // the count passed the next line: the title slams in, a flash, coins everywhere, the temple shakes, the chord rises
   function tierUp(i) {
-    ui.bigLabel.textContent = TIERS[i].label; ui.big.dataset.tier = String(i);
-    retrigger(ui.bigCard, 'up'); retrigger(ui.flash, 'go');
-    const c = cardPt(); coinBurst(c.x, c.y, 16 + i * 10, { up: 1.25, spread: 1.7 }); glints(c.x, c.y, 10 + i * 4, c.w * 0.6);
-    shake(0.4 + i * 0.15); SND.emit('flag');
+    setTitle(ui.bigLabel, TIERS[i].label, TIERS[i].art); ui.big.dataset.tier = String(i); lvFx(Math.min(3, i + 1), speedFn());
+    retrigger(ui.bigCard, 'up'); retrigger(ui.flash, 'go'); retrigger(ui.big, 'boom');
+    const c = cardPt(); coinBurst(c.x, c.y, 22 + i * 12, { up: 1.4, spread: 1.9 }); glints(c.x, c.y, 14 + i * 5, c.w * 0.6);
+    fountain(16 + i * 10); shake(0.45 + i * 0.12); SND.emit('tierUp', Math.min(10, i * 2)); SND.setLevel(2);
+    rig.play('win', { mix: 0.03, fadeSwap: 0.04, then: 'winLoop', thenMix: 0.05 });
+    hrig.play('pump', { mix: 0.04, fadeSwap: 0.04, then: 'winLoop', thenMix: 0.05 });
   }
   async function bigWin(ctx, x, lap) {
-    const at = MODE[ctx.mode].tuning.bigWinAt;
-    if (x < at && !ctx.capped) return;
-    let tier = 0; TIERS.forEach((t, i) => { if (x >= t.k * at) tier = i; });
+    const cost = Math.max(1, ctx.cost), r = x / cost;
+    if (r < BIG_AT && !ctx.capped) return;
+    let tier = 0; TIERS.forEach((t, i) => { if (r >= t.r) tier = i; });
     const sp = speedFn(), units = ctx.winUnits, card = ui.big;
     if (lap && lap.length) victoryLap(lap);
+    heroMoney(0);
     let cur = 0; card.dataset.tier = '0'; card.classList.remove('land'); ui.bigCard.classList.remove('up'); card.hidden = false;
-    ui.bigLabel.textContent = TIERS[0].label; ui.bigAmt.textContent = ctx.money(0);
+    setTitle(ui.bigLabel, TIERS[0].label, TIERS[0].art); paintNum(ui.bigAmt, ctx.money(0)); lvFx(1, sp);
     rig.play('win', { mix: 0.03, fadeSwap: 0.04, then: 'winLoop', thenMix: 0.05 });
     hrig.play('win', { mix: 0.03, fadeSwap: 0.04, then: 'winLoop', thenMix: 0.05 });
-    SND.emit('bigWin'); SND.hold(0.05);
-    const dur = (2000 + tier * 1500) * sp;
-    const stopCount = SND.count(dur / 1000, ctx.capped ? 4 : tier);
-    retrigger(ui.flash, 'go'); shake(0.5);
-    await tick(); { const c = cardPt(); coinBurst(c.x, c.y + c.h * 0.4, 24, { up: 1.3, spread: 1.5 }); glints(c.x, c.y, 12, c.w * 0.6); }
-    let hopping = true; (async () => { while (hopping) { await joyHop(50); await wait(110); } })();
+    SND.emit('bigWin'); SND.hold(0.05); SND.setLevel(2);
+    // the stretches of the count: up to each next line, then to the win. The max win counts 12 s in all.
+    const ends = []; for (let i = 0; i < tier; i++) ends.push(TIERS[i + 1].r / r); ends.push(1);
+    const segMs = i => (ctx.capped ? 12000 / ends.length : i === ends.length - 1 ? 2300 : 1700) * sp;
+    const total = ends.reduce((a, _, i) => a + segMs(i), 0);
+    const stopCount = SND.count(total / 1000, ctx.capped ? 4 : Math.min(4, tier));
+    retrigger(ui.flash, 'go'); shake(0.55); retrigger(card, 'boom');
+    await tick(); { const c = cardPt(); coinBurst(c.x, c.y + c.h * 0.4, 30, { up: 1.4, spread: 1.6 }); glints(c.x, c.y, 14, c.w * 0.6); fountain(18); }
+    let hopping = true; (async () => { while (hopping) { await joyHop(56); await wait(90); } })();
     let done = false; skipBig = () => { done = true; };
-    const t0 = performance.now(); let rainAt = 0, glintAt = 0;
+    let seg = 0, t0 = performance.now() + 700 * sp, from = 0, rainAt = 0, glintAt = 0, fountAt = 0;   // BIG WIN first, 0.7 s
+    card.classList.toggle('max', !!ctx.capped);
     while (!done) {
-      const now = performance.now(), p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
-      ui.bigAmt.textContent = ctx.money(Math.round(units * e));
-      while (cur < tier && x * e >= TIERS[cur + 1].k * at) tierUp(++cur);       // the title climbs with the count
-      if (now - rainAt > 110) { rainAt = now; coinRain(1 + cur * 2); }
-      if (now - glintAt > 260) { glintAt = now; const c = cardPt(); glints(c.x, c.y, 2, c.w * 0.65); }
-      if (p >= 1) break;
+      const now = performance.now();
+      if (now < t0) { await tick(); continue; }
+      const p = Math.min(1, (now - t0) / segMs(seg)), e = seg === ends.length - 1 ? 1 - Math.pow(1 - p, 3) : p * (2 - p);
+      const f = from + (ends[seg] - from) * e;
+      paintNum(ui.bigAmt, ctx.money(Math.round(units * f))); barCount(ctx, Math.round(units * f), units);
+      if (now - rainAt > 100) { rainAt = now; coinRain(2 + cur * 3); }
+      if (now - glintAt > 220) { glintAt = now; const c = cardPt(); glints(c.x, c.y, 3, c.w * 0.65); }
+      if (cur >= 2 && now - fountAt > 650) { fountAt = now; fountain(6 + cur * 3); }
+      if (p >= 1) {
+        if (seg === ends.length - 1) break;
+        from = ends[seg]; seg++; tierUp(++cur); t0 = performance.now() + 750 * sp;   // the new title has its moment
+      }
       await tick();
     }
     while (cur < tier) tierUp(++cur);                                            // skipped: straight to the top title
-    ui.bigAmt.textContent = ctx.winMoney(units); stopCount(); SND.emit('countEnd');
-    if (ctx.capped) { ui.bigLabel.textContent = 'LEGEND OF THE VAULT'; card.dataset.tier = '3'; retrigger(ui.bigCard, 'up'); }
-    // the last number lands
-    retrigger(card, 'land'); retrigger(ui.flash, 'go'); shake(0.6);
-    { const c = cardPt(); coinBurst(c.x, c.y, 30 + tier * 12, { up: 1.45, spread: 2 }); glints(c.x, c.y, 18, c.w * 0.7); }
+    paintNum(ui.bigAmt, ctx.winMoney(units)); ctx.setWin(units, false); stopCount(); SND.emit('countEnd');
+    if (ctx.capped) { setTitle(ui.bigLabel, 'LEGEND OF THE VAULT', 'title-legend'); card.dataset.tier = '4'; retrigger(ui.bigCard, 'up'); lvFx(3, sp); }
+    // the last number lands: the biggest flash, a last fountain
+    retrigger(card, 'land'); retrigger(ui.flash, 'go'); retrigger(card, 'boom'); shake(0.7);
+    { const c = cardPt(); coinBurst(c.x, c.y, 36 + tier * 14, { up: 1.55, spread: 2.1 }); glints(c.x, c.y, 22, c.w * 0.7); fountain(24 + tier * 8); }
     const pp = packPt(); glints(pp.x, pp.y, 10, U() * 4);
     done = false; skipBig = () => { done = true; };
-    const end = performance.now() + 1800 * sp;
-    while (!done && performance.now() < end) { if (Math.random() < 0.35) coinRain(1); await tick(); }
-    hopping = false; skipBig = null; card.hidden = true; card.classList.remove('land'); SND.hold(1);
+    const end = performance.now() + (2600 + tier * 450) * sp;   // hold: 2.6 to 4.4 s
+    while (!done && performance.now() < end) { if (Math.random() < 0.45) coinRain(1 + (tier >> 1)); await tick(); }
+    hopping = false; skipBig = null; card.hidden = true; card.classList.remove('land', 'boom'); SND.hold(1);
     hrig.play('idle', { loop: true, mix: 0.3, fadeSwap: 0.08 });
   }
 
@@ -969,10 +1422,12 @@ const homeCam = () => {
 
   /* ---------------- the round ---------------- */
   function reset() {
-    tweens.clear(); skipBig = null;
+    tweens.clear(); skipBig = null; meterReset();
+    if (deep) { deep.visible = deepFg.visible = false; deep.removeChildren(); deepFg.removeChildren(); fallSp = null; fallOn = false; deepScroll.y = 0; } monkey.alpha = 1; if (appEl) appEl.classList.remove('ls-in-fall');
     if (inVault) leaveVault();
     monkey.x = START_X; monkey.y = standY(); monkey.rotation = 0; monkey.scale.set(1, 1);
     beanie.visible = false; idolS.visible = true; idolS.y = TOP + 6; idolS.alpha = 1; setPile(0); idleT = 0;
+    clearRelics(); heroMoney(0);
     buildBridge();
     camState = homeCam(); applyCam();
     rig.play('idle', { loop: true, mix: 0.15 });
@@ -982,49 +1437,89 @@ const homeCam = () => {
     ui.win.hidden = true; ui.plaque.classList.remove('hot'); CF.parts.length = 0;
   }
 
+  let roundOn = false, roundsPlayed = 0;   // a round is being shown (the late loading waits for its end)
   async function play(events, ctx) {
-    speedFn = ctx.speed;
+    roundOn = true; roundsPlayed++; try { return await playRound(events, ctx); } finally { roundOn = false; }
+  }
+  async function playRound(events, ctx) {
+    curCtx = ctx; hurryOn = false;
+    speedFn = () => ctx.speed() * (hurryOn ? 0.35 : 1);
+    // standard 1.5 (2026-11-28, the user: "nothing, only turbo"): a tap on the screen does nothing and the round is never
+    // shortened (the tap-to-hurry layer is gone). Over the spin button a layer only skips a celebration (5.8, 8.1)
+    if (ui.hurryMedal) ui.hurryMedal.hidden = false;
     if (MODE[ctx.mode] && MODE[ctx.mode].flag) mode = ctx.mode;
     reset();
     const flag = MODE[ctx.mode].flag;
     let win = 0, reach = 0, vaultKind = null, from = 0, ropes = 0, gk = 0;
     SND.wake(); SND.playMusic('temple', 0); SND.setLevel(1);
+    // math v2: the relics and the idol's gaze are shown before he sends the monkey off (the whole bridge is in view)
+    const setup = flag && events.find(e => e && e.type === 'bridge');
+    if (setup) await showSetup(setup);
     if (flag) {
       hrig.play('wave', { mix: 0.08, fadeSwap: 0.06, then: 'idle', thenMix: 0.25 });   // he sends his monkey off across the bridge
       await camTo(monkey.x + lead(), TOP - 110, 1.32, 520);
     }
+    // the monkey stands on tile i with the round now worth w (from the event): the tile pays, the coin flies to the pack
+    const reached = (i, w) => {
+      const t = tiles[i - 1];
+      if (i < flag || !t) return;
+      const prev = win; win = w; setMeter(win);
+      {
+          popText(t.label_, NUM.gold); t.label_.alpha = 1; flashTile(t, i === flag ? 0.85 : 0.6, 0.2); shineTile(t, 360);
+          musicFor(ctx, win); heroMoney(win);
+          const lvl = i - flag + 1;
+          coinTo(t.x, t.y + 26, () => setPile(lvl));
+          if (i === flag) {
+            hrig.play('pump', { mix: 0.05, fadeSwap: 0.05, then: 'idle', thenMix: 0.2 });
+            sfx('flag'); burst(flagS.x + 10, flagS.y - 80, 26, { color: GOLD, speed: 380, life: 900, grav: 700 });
+            tween(flagS.scale, { x: flagS.scale.x * 1.15, y: flagS.scale.y * 1.15 }, 120).then(() => tween(flagS.scale, { x: FLAG_H / flagS.texture.height, y: FLAG_H / flagS.texture.height }, 300, 'outBack'));
+            plaqueWin(win, 'SECURED AT THE FLAG');
+          } else { sfx('step', i - flag); plaqueWin(win, 'TILE ' + i); }
+      }
+    };
     for (const e of events) {
       if (!e || !e.type) continue;
       if (e.type === 'hop') {
         if (e.i >= 10) await peek();
+        if (flag && e.i > flag && win > 0) await suspense(tiles[e.i - 1], e.i - flag);   // the tension before each step past the flag
         anticipate(tiles[e.i - 1]);
         await hopTo(tileX(e.i), standY());
         reach = e.i;
-        const t = tiles[e.i - 1];
-        landTile(t, e.i >= flag ? 1.2 : 1);
+        landTile(tiles[e.i - 1], e.i >= flag ? 1.2 : 1);
         camTo(Math.min(monkey.x + lead(), W), TOP - 110, e.i >= 9 ? 1.42 : 1.32, 420);
-        if (e.i >= flag) {
-          const prev = e.i > flag ? R.ladder[ctx.mode][e.i - 2] : 0;
-          win = R.ladder[ctx.mode][e.i - 1];
-          popText(t.label_, NUM.gold); t.label_.alpha = 1; flashTile(t, e.i === flag ? 0.85 : 0.6, 0.2); shineTile(t, 360);
-          ctx.setWin(ctx.units(win), true); musicFor(ctx, win);
-          floatUp('+' + fmtX(win - prev));
-          const lvl = e.i - flag + 1;
-          coinTo(t.x, t.y + 26, () => setPile(lvl));
-          if (e.i === flag) {
-            hrig.play('pump', { mix: 0.05, fadeSwap: 0.05, then: 'idle', thenMix: 0.2 });
-            sfx('flag'); burst(flagS.x + 10, flagS.y - 80, 26, { color: GOLD, speed: 380, life: 900, grav: 700 });
-            tween(flagS.scale, { x: flagS.scale.x * 1.15, y: flagS.scale.y * 1.15 }, 120).then(() => tween(flagS.scale, { x: FLAG_H / flagS.texture.height, y: FLAG_H / flagS.texture.height }, 300, 'outBack'));
-            setPlaque(fmtX(win), 'SECURED AT THE FLAG');
-          } else { sfx('step', e.i - flag); setPlaque(fmtX(win), 'TILE ' + e.i); }
-        }
+        reached(e.i, e.win);
         if (e.i === N - 1) SND.tension(true);          // one tile from the idol: the music holds its breath (6.4)
         await wait(90);
+      } else if (e.type === 'save') {           // math v2: the rope catches him on a tile that gives way
+        if (e.i >= 10) await peek();
+        await saveAt(e.i);
+        reach = e.i;
+        camTo(Math.min(monkey.x + lead(), W), TOP - 110, e.i >= 9 ? 1.42 : 1.32, 420);
+        if (e.i >= flag) reached(e.i, e.win); else setPlaque('—', 'SAVED BY THE ROPE');
+        if (e.i === N - 1) SND.tension(true);
+        await wait(90);
+      } else if (e.type === 'relic') {          // math v2: he picks up the relic on this tile
+        const coin = setup ? setup.coin : 0;
+        await takeRelic(e, e.win > win ? e.win - win : coin);   // past the flag: what it really adds (a mask doubles the coin too)
+        if (e.win > win) {
+          win = e.win; musicFor(ctx, win); heroMoney(win); setMeter(win);
+          plaqueWin(win, e.kind === 'mask' ? 'THE MASK DOUBLES IT' : 'A GOLD COIN');
+          tiles.forEach(t => { if (t.glowTo > 0 && !t.falling) shineTile(t, 380); });
+        } else if (e.kind === 'rope') { if (win) plaqueWin(win, 'ROPE: SAVES ONE FALL'); else setPlaque('—', 'THE ROPE SAVES ONE FALL'); }
+        else if (win) plaqueWin(win, e.kind === 'mask' ? 'MASK ×2' : 'COIN'); else setPlaque('—', e.kind === 'mask' ? 'MASK: ×2 FROM THE FLAG' : 'COIN: PAID FROM THE FLAG');
+        await wait(120);
       } else if (e.type === 'trap') {
         if (e.i >= 10) await peek();
         SND.tension(false);
-        await trapAt(e.i, e.kind);
-        if (reach < flag) { setPlaque('—', 'THE FLAG WAS NOT REACHED'); SND.emit('lose'); }
+        const blessed = events[events.indexOf(e) + 1]?.type === 'fall';
+        if (reach < flag && !blessed) meterDrain();   // a fall before the flag empties the gauge; after it the win is kept
+        await trapAt(e.i, e.kind, blessed);
+        if (reach < flag && !blessed) { setPlaque('—', 'THE FLAG WAS NOT REACHED'); SND.emit('lose'); }
+      } else if (e.type === 'fall') {
+        const at = events.indexOf(e), rest = []; for (let j = at + 1; j < events.length && (events[j].type === 'ledge' || events[j].type === 'river'); j++) rest.push(events[j]);
+        win = await blessedFall(rest, ctx, e.from, e.gaze || 1);   // e.gaze: only in the FREE FALL buy
+      } else if (e.type === 'ledge' || e.type === 'river') {
+        /* played by blessedFall */
       } else if (e.type === 'idol') {
         win = e.win;
         await camTo(IDOL_X - 120, TOP - 110, 1.32, 400);
@@ -1034,22 +1529,28 @@ const homeCam = () => {
         burst(IDOL_X, TOP - 120, 40, { color: JADE, speed: 520, life: 1100, grav: 600 });
         rig.play('win', { mix: 0.03, fadeSwap: 0.04 });
         hrig.play('win', { mix: 0.03, fadeSwap: 0.04, then: 'winLoop', thenMix: 0.05 });
-        setPlaque(fmtX(win), 'THE IDOL');
-        await wait(700);
+        plaqueWin(win, 'THE IDOL'); heroMoney(win); setMeter(win);
+        // the idol wakes (review 2: the peak had no tension): its eyes blaze, the temple trembles, the light pours out
+        if (gazeS) { stopTweens(gazeS.lvl); tween(gazeS.lvl, { v: 1 }, 260, 'outQuad'); }
+        torchFlare = 1; retrigger(ui.flash, 'go');
+        await camTo(IDOL_X - 60, TOP - 140, 1.6, 520);
+        for (let i = 0; i < 3; i++) { shake(0.35 + i * 0.15); burst(IDOL_X, TOP - 135, 18 + i * 10, { color: 0xFFE7A0, speed: 380 + i * 80, life: 900, grav: 200 }); await wait(260); }
+        await wait(300);
       } else if (e.type === 'vault') {
         vaultKind = e.kind; from = e.from; ropes = e.ropes; gk = 0;
         await enterVault(e.kind, from);
-        ctx.setWin(ctx.units(Math.min(R.cap, from + R.vault[e.kind].values[0])), true);
+        heroMoney(Math.min(R.cap, from + R.vault[e.kind].values[0]));
       } else if (e.type === 'gold') {
         anticipate(gtiles[e.k]);
-        await hopTo(gX(e.k), GTOP, { height: 80, ms: 280 });
+        await hopTo(gX(e.k), GTOP, { height: 60 + (e.k % 3) * 18, ms: Math.max(150, 290 - e.k * 6) });   // faster deeper in, not all alike
         gk = e.k; const t = gtiles[e.k];
         landTile(t, 1.2); flashTile(t, 0.7, 0.22); if (t) coinTo(t.x, t.y + 30, () => setPile(Math.min(6, 4 + Math.floor(e.k / 4))), vaultWorld);
         if (t) { popText(t.label_, '#FFF2B8'); burst(t.x, t.y, 10, { color: GOLD, speed: 260, life: 600, grav: 500 }); }
         const run = Math.min(R.cap, from + e.v);             // a round never shows more than the max win
-        sfx('gold', e.k); ctx.setWin(ctx.units(run), true);
-        setPlaque(fmtX(run), run >= R.cap ? 'MAX WIN' : 'GOLDEN TILE ' + e.k);
-        camTo(monkey.x + 360, GTOP - 90, 1.1, 360);
+        sfx('gold', e.k);
+        if (e.k % 5 === 0) { shake(0.35); retrigger(ui.flash, 'go'); if (t) burst(t.x, t.y - 20, 30, { color: 0xFFE7A0, speed: 480, life: 900, grav: 300 }); setPile(Math.min(6, 4 + Math.floor(e.k / 5))); }
+        plaqueWin(run, run >= R.cap ? 'MAX WIN' : 'GOLDEN TILE ' + e.k); heroMoney(run); setMeter(run);
+        camTo(monkey.x + vlead(), GTOP - 90, 1.1, 360);
         await wait(60);
       } else if (e.type === 'snap') {
         await hopTo(gX(e.k), GTOP, { height: 80, ms: 280 });
@@ -1071,17 +1572,72 @@ const homeCam = () => {
         if (t) { stopTweens(t); mendTile(t, 99); t.label_.alpha = 1; t.y = t.home.y + 60; t.rotation = 0; t.alpha = 0; tween(t, { y: t.home.y, alpha: 1 }, 420, 'outBack').then(() => { t.falling = false; shineTile(t, 400); }); }
         await wait(220);
       } else if (e.type === 'final') {
-        if (ropes === 0 && vaultKind) { setPlaque(fmtX(e.payout), 'THE VAULT CLOSES'); await wait(400); }
+        if (ropes === 0 && vaultKind) { plaqueWin(e.payout, 'THE VAULT CLOSES'); await vaultCard('THE VAULT CLOSES', 'TOTAL ' + ctx.winMoney(ctx.units(e.payout)), 1300); }
+        else if (vaultKind) await vaultCard('THE VAULT IS EMPTIED', 'TOTAL ' + ctx.winMoney(ctx.units(e.payout)), 1300);
       }
     }
     // after the run: every win above the play amount gets its show, the card for a big one (winShow / bigWin)
     const x = ctx.winX;
     const lap = (vaultKind ? gtiles.slice(0, gk + 1) : tiles.slice(flag ? flag - 1 : 0, reach)).filter(t => t && !t.falling).slice(-9);
-    if (x >= Math.max(1, ctx.cost) && x < MODE[ctx.mode].tuning.bigWinAt && !ctx.capped) await winShow(ctx, x, lap);
+    if (x >= Math.max(1, ctx.cost) && x / Math.max(1, ctx.cost) < BIG_AT && !ctx.capped) await winShow(ctx, x, lap);
     await bigWin(ctx, x, lap);
     if (flag && !inVault) { const h = homeCam(); await camTo(narrow() ? monkey.x + VW * 0.1 : h.x, h.y, h.z, 520); }
     if (vaultKind) SND.playMusic('temple', 0); else SND.setLevel(0);
+    if (ui.hurry) ui.hurry.hidden = true; if (ui.hurryMedal) ui.hurryMedal.hidden = true;
+    heroMoney(0); ctx.setWin(ctx.winUnits, false); appEl.classList.remove('ls-in-vault');
+    setTimeout(() => loadRest(), 2500);             // the first round is over: the rest of the clips and the Vault's music
     return { feature: !!vaultKind };
+  }
+
+  /* ---------------- the control bar, "bar B" (2026-11-28, bar.css) ----------------
+   * − PLAY + in one low painted row with the win and the two icons. The flag tiles and the two Vaults go to the dock on
+   * the stage, just above the bar; on a portrait phone TURBO and AUTO join them (the strip has room only around PLAY). */
+  function barB(a) {
+    const $ = id => document.getElementById(id), panel = $('lzPanel'), st = $('lzStage');
+    if (!panel || !st || appEl.classList.contains('ls-barB')) return;
+    const stepper = document.querySelector('#lzField .lz-stepper');
+    if (!a.replay && stepper && $('lzAction') && $('lzPlus')) {
+      // the medallion sits between − and +; during a round the layer over it skips a celebration (standard 1.5: never the round)
+      const medal = a.h('div', { class: 'ls-medal' }); stepper.insertBefore(medal, $('lzPlus')); medal.append($('lzAction'));
+      const amt = stepper.querySelector('.lz-amount'); if (amt) medal.append(amt);      // the amount: a badge on the medallion's foot
+      ui.hurryMedal = a.h('div', { class: 'ls-hurry-medal', hidden: '', 'aria-hidden': 'true' }); medal.append(ui.hurryMedal);
+      ui.hurryMedal.addEventListener('pointerdown', () => skipBig && skipBig());      // standard 1.5: the spin button skips a celebration, never the round
+    }
+    const dock = a.h('div', { class: 'ls-dock' });
+    if ($('lzModes')) dock.append($('lzModes'));
+    if ($('lzFeats')) dock.append($('lzFeats'));
+    st.append(dock);
+    const quick = $('lzQuick');
+    const put = () => {
+      if (!quick) return;
+      const port = innerWidth < innerHeight;
+      if (port && quick.parentNode !== dock) dock.append(quick);
+      else if (!port && quick.parentNode !== panel) panel.append(quick);
+    };
+    put(); addEventListener('resize', () => requestAnimationFrame(put));
+    appEl.classList.add('ls-barB');
+  }
+
+  /* The replay card in Stake's own words (fixed item 18, 2026-11-28): the shell's card says Mode / Amount / Cost multiplier
+   * / Real cost / Result; Stake's example says Base Bet, Total Bet Cost, Payout Multiplier and Total Win (on Stake.us:
+   * Base Play, Feature Multiplier, Total Play Worth, Final Multiplier, Total Win). The labels are renamed here and a Total
+   * Win line (amount x result) is added. (The shell is shared: _shared/core/lz-core.js; this belongs there in time.) */
+  function replayCard(a) {
+    const dl = document.querySelector('#lzReplay .lz-facts'); if (!dl || dl.dataset.ls) return; dl.dataset.ls = '1';
+    const lab = a.social
+      ? { lzRpAmount: 'Base Play', lzRpX: 'Feature Multiplier', lzRpCost: 'Total Play Worth', lzRpMult: 'Final Multiplier' }
+      : { lzRpAmount: 'Base Bet', lzRpX: 'Cost Multiplier', lzRpCost: 'Total Bet Cost', lzRpMult: 'Payout Multiplier' };
+    for (const [id, t] of Object.entries(lab)) { const dd = document.getElementById(id); if (dd && dd.previousElementSibling) dd.previousElementSibling.textContent = t; }
+    const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = 'Total Win'; dd.id = 'lsRpWin'; dd.textContent = '–'; dl.append(dt, dd);
+    const amt = document.getElementById('lzRpAmount'), mul = document.getElementById('lzRpMult');
+    const upd = () => {
+      const t = amt ? amt.textContent : '', m = parseFloat(String(mul ? mul.textContent : '').replace(/[^d.]/g, '')), n = t.match(/[d,]+(.d+)?/);
+      if (!n || !Number.isFinite(m)) return;
+      const v = parseFloat(n[0].replace(/,/g, '')) * m, dec = (n[1] || '.00').length - 1;
+      dd.textContent = t.replace(n[0], v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }));
+    };
+    for (const el of [amt, mul]) if (el) new MutationObserver(upd).observe(el, { childList: true, characterData: true, subtree: true });
+    upd();
   }
 
   /* ---------------- rules text (built from rules-data.js) ---------------- */
@@ -1090,24 +1646,35 @@ const homeCam = () => {
     const head = '<tr><th>Tile</th>' + flags.map(m => `<th>Flag ${m.flag}</th>`).join('') + '</tr>';
     const rows = Array.from({ length: N }, (_, i) => '<tr><td>' + (i + 1) + (i >= 9 ? ' (cracked)' : '') + '</td>' +
       flags.map(m => `<td>${i + 1 < m.flag ? '0×' : fmtX(R.ladder[m.name][i])}</td>`).join('') + '</tr>').join('');
-    const v = R.vault.vault, g = R.vault.grand;
+    const v = R.vault.vault, g = R.vault.grand, gz = R.gaze || [];
     return `<h3>How to play</h3>
       <p>Twelve stone tiles cross the chasm. Before the round, choose where the explorer plants his <b>flag</b>: on tile 2, 3, 4, 5 or 6. Press PLAY and his monkey hops from tile to tile on his own until a tile gives way or he reaches the idol.</p>
-      <p>If a tile gives way before the flag, the round wins nothing. From the flag on, the round wins the value on the farthest tile he stood on. Tiles 10, 11 and 12 are cracked and give way more often.</p>
+      <p>If a tile gives way before the flag, the round wins nothing (unless the fall is blessed, below). From the flag on, the round wins the value on the farthest tile he stood on, plus what his relics add (below). Tiles 10, 11 and 12 are cracked and give way more often.</p>
       <p>Everything is decided when the round starts. The flag is the only choice, and it is made before the round.</p>
       <h3>Tile values</h3><table><thead>${head}</thead><tbody>${rows}</tbody></table>
+      <p>These are the values of a round without the idol's gaze.</p>
+      <h3>The idol's gaze</h3>
+      <p>When a round starts, the idol may open its eyes. Then every tile of that round is worth ${gz.filter(g => g.x > 1).map(g => '×' + g.x).join(' or ')} its value, and the tiles show the new values before the first hop. The gaze comes in about ${(gz.filter(g => g.x > 1).reduce((a, g) => a + g.pct, 0)).toFixed(1)}% of rounds (${gz.filter(g => g.x > 1).map(g => '×' + g.x + ' in ' + g.pct + '%').join(', ')}).</p>
+      <h3>Relics</h3>
+      <p>When a round starts, up to two relics of different kinds may lie on tiles 2 to 11, in view before the first hop. The monkey picks a relic up when he reaches its tile.</p>
+      <p><b>Gold coin</b>: adds the value of the flag tile (shown on the coin) to the round's value.<br><b>Mask</b>: doubles the round's value.<br><b>Rope</b>: the next tile that gives way after he has it does not end the run. The rope catches him, he lands on that tile and goes on. One rope saves one fall.</p>
+      <p>Relics count only once the flag is reached: a round that ends before the flag wins nothing. The round's value is (tile value + coin) × mask × gaze. Coin values by flag: ${flags.map(m => 'flag ' + m.flag + ' ' + fmtX(R.relics.coin[m.name])).join(', ')}.</p>
       <h3>The idol and the Vault</h3>
-      <p>Tile 12 holds the idol. Reaching it wins the value of tile 12 and opens <b>the Vault</b> at once.</p>
+      <h3>The blessed fall</h3>
+      <p>When a tile gives way and ends the run, the idol may bless the fall (${R.fall ? R.fall.blessPct : ''}% of falls, on any tile, before the flag too). The monkey drops into the chasm and catches ledges of treasure on the way down: the first ledge always, and each next one in ${R.fall ? R.fall.deepHoldPct : ''}% of cases, up to ${R.fall ? R.fall.deep.length : ''} ledges. The fall wins the value of the deepest ledge he caught, times the idol's gaze, on top of what the bridge won. Ledge values: ${R.fall ? R.fall.deep.slice(0, 8).map(v => fmtX(v)).join(', ') + ' … ' + fmtX(R.fall.deep[R.fall.deep.length - 1]) : ''}. Relics do not change the fall.</p>
+      <h3>Free Fall</h3>
+      <p>FREE FALL costs ${MODE.fall ? MODE.fall.cost : 30}× the play amount and starts a blessed fall straight away. The idol's gaze is drawn first (×1, ×2 or ×3, as in a round). The ledges are worth ${R.fall ? R.fall.buyScale : ''} times their value in a round: ${R.fall ? R.fall.buyDeep.slice(0, 6).map(v => fmtX(v)).join(', ') + ' …' : ''}, times the gaze, up to the max win.</p>
+      <p>Tile 12 holds the idol. Reaching it wins the value of the round on tile 12 (with the gaze and the relics) and opens <b>the Vault</b> at once. The gaze and the relics do not change the golden tiles.</p>
       <p>In the Vault the monkey crosses a golden bridge with ${v.ropes} ropes. Each golden tile he reaches is worth more (about +15% a tile, from ${fmtX(v.values[0])}). When a golden tile gives way a rope catches him and he tries again from where he was. When the last rope is used, the Vault wins the value of the farthest golden tile, added to the idol's value.</p>
       <p>The Vault cannot be triggered again from inside the Vault.</p>
       <h3>Golden tile values</h3>
       <table><thead><tr><th>Golden tile</th><th>The Vault (idol and VAULT)</th><th>GRAND VAULT</th></tr></thead><tbody>${Array.from({ length: Math.max(v.values.length, g.values.length) }, (_, k) => '<tr><td>' + k + (k === 0 ? ' (start)' : '') + '</td><td>' + (k < v.values.length ? fmtX(Math.min(v.values[k], R.cap)) : '—') + '</td><td>' + (k < g.values.length ? fmtX(Math.min(g.values[k], R.cap)) : '—') + '</td></tr>').join('')}</tbody></table>
-      <p>After the idol, the Vault adds the golden tile value to the value of tile 12.</p>
+      <p>After the idol, the Vault adds the golden tile value to the round's value on tile 12.</p>
       <h3>Features</h3>
       <p><b>VAULT</b> is played for ${feats[0].cost}× the play amount and starts straight in the Vault with ${v.ropes} ropes, from ${fmtX(v.values[0])}.</p>
       <p><b>GRAND VAULT</b> is played for ${feats[1].cost}× the play amount and starts in the Vault with ${g.ropes} ropes, from ${fmtX(g.values[0])}.</p>
       <h3>In the game</h3>
-      <p>The plaque at the top of the board shows the value the monkey holds right now; every tile from the flag on sends a coin to the explorer's pack. Tap the win card, or press Space, to skip its count; tap again to close it.</p>
+      <p>The plaque at the top of the board shows the value the monkey holds right now; every tile from the flag on sends a coin to the explorer's pack. Press the spin button, or Space, to skip its count; press again to close it.</p>
       <h3>Max win</h3><p>Every round wins at most ${(R.cap / 100).toLocaleString('en')}× the play amount. The round ends when it gets there.</p>`;
   }
 
@@ -1156,6 +1723,15 @@ const homeCam = () => {
     const gap = a.h('div', { class: 'ls-igap' });
     document.getElementById('lzIntroTag').after(gap);
     const btn = document.getElementById('lzIntroPlay'), bar = document.getElementById('lzIntroBar');
+    // standard 8.3 (review 11.5): the volatility rating, and "don't show again" (the notes are skipped next time)
+    let skipNotes = false; try { skipNotes = localStorage.getItem('ls-intro-skip') === '1'; } catch (e) { /* no storage */ }
+    const pips = a.h('span', { class: 'ls-vpips', 'aria-hidden': 'true' }); for (let i = 0; i < 5; i++) pips.append(a.h('i', { class: i < 4 ? 'on' : '' }));
+    const chk = a.h('input', { type: 'checkbox', id: 'lsIntroSkip' }); chk.checked = skipNotes;
+    chk.addEventListener('change', () => { try { localStorage.setItem('ls-intro-skip', chk.checked ? '1' : '0'); } catch (e) { /* no storage */ } });
+    const opts = a.h('div', { class: 'ls-iopts' }, a.h('span', { class: 'ls-vol' }, a.h('b', { text: 'VOLATILITY' }), pips, a.h('small', { text: 'HIGH' })),
+      a.h('label', { class: 'ls-iskip', for: 'lsIntroSkip' }, chk, a.h('span', { text: "DON'T SHOW AGAIN" })));
+    btn.after(opts);
+    if (skipNotes) notes.forEach(n => { n.style.display = 'none'; });
 
     let M = null, P = [], cum = [0], glints = [], fires = [], idolGlow = null, F = { x: 0, y: 0 }, R0 = 100, RR = 80, S = 1;
     function build(kind) {
@@ -1258,10 +1834,12 @@ const homeCam = () => {
   }
 
   /* ---------------- boot ---------------- */
+  // the intro's painted pieces are needed before the game's own setup sets them on the app (2026-11-28)
+  for (const [v, k] of [['--ls-button-img', 'ui-button'], ['--ls-coin-img', 'coin'], ['--ls-knob-img', 'ui-knob'], ['--ls-tag-img', 'ui-tag']]) if (ART[k]) document.documentElement.style.setProperty(v, 'url("' + ART[k] + '")');
   const card = (img, title, text) => ({ art: `<img src="${ART[img]}" alt="">`, title, text });
   LZ.boot({
     id: 'last-step', title: 'Last Step', tagline: 'Plant your flag. Cross the temple bridge. Reach the idol.', rtp: '96.30', layout: 'bar',
-    logo: '<span class="ls-logo">LAST STEP</span>',
+    logo: ART['ui-logo'] ? '<img class="ls-logo-img" alt="LAST STEP" src="' + ART['ui-logo'] + '">' : '<span class="ls-logo">LAST STEP</span>',   // painted (2026-11-28)
     modes: [
       ...R.modes.filter(m => m.flag).map(m => ({ name: m.name, label: 'TILE ' + m.flag, cost: 1, maxWin: m.maxWin,
         note: fmtX(R.ladder[m.name][m.flag - 1]) })),
@@ -1269,9 +1847,13 @@ const homeCam = () => {
         blurb: `Start straight in the Vault with ${R.vault.vault.ropes} ropes.`, confirmTitle: 'Open the Vault?', confirmLabel: 'Open' },
       { name: 'grand', kind: 'feature', label: 'GRAND VAULT', cost: MODE.grand.cost, maxWin: MODE.grand.maxWin,
         blurb: `Start in the Vault with ${R.vault.grand.ropes} ropes and higher golden tiles.`, confirmTitle: 'Open the Grand Vault?', confirmLabel: 'Open' },
+      // v4 (2026-11-28, the user: a FREE FALL to buy, price 30): a blessed fall straight away, treasures x${R.fall ? R.fall.buyScale : ''}
+      { name: 'fall', kind: 'feature', label: 'FREE FALL', cost: MODE.fall.cost, maxWin: MODE.fall.maxWin,
+        blurb: 'A blessed fall straight away: the monkey drops into the chasm and catches ledges of treasure, worth more than in the round.', confirmTitle: 'Start a Free Fall?', confirmLabel: 'Fall' },
     ],
     modeGroupLabel: 'Flag on',
     featureName: 'the Vault', statLabel: 'Vaults',
+    shell: 2,                 // the shell's <select> stays hidden (fixed item 14); the game draws its own bar and banners
     celebrate: false,
     introCards: [
       card('flag', 'PLANT THE FLAG', 'Choose tile 2 to 6. From the flag on, every tile wins more.'),
@@ -1290,7 +1872,9 @@ const homeCam = () => {
       stage.append(full);
       appEl = document.getElementById('lzApp');
       // the control bar (bar.css) draws with the game's own pictures: the jade tile, the flag, the rope, the idol
-      for (const [v, k] of [['--ls-tile-img', 'tile'], ['--ls-flag-img', 'flag'], ['--ls-rope-img', 'rope'], ['--ls-idol-img', 'idol']]) appEl.style.setProperty(v, `url("${ART[k]}")`);
+      for (const [v, k] of [['--ls-tile-img', 'tile'], ['--ls-flag-img', 'flag'], ['--ls-rope-img', 'rope'], ['--ls-idol-img', 'idol'], ['--ls-bar-img', 'ui-strip'], ['--ls-medal-img', 'ui-medal'], ['--ls-knob-img', 'ui-knob'], ['--ls-coin-img', 'coin'], ['--ls-gfill-img', 'ui-gauge-fill'], ['--ls-plaque-img', 'ui-plaque'], ['--ls-winpanel-img', 'ui-winpanel'], ['--ls-tag-img', 'ui-tag'], ['--ls-digits-img', 'ui-digits'], ['--ls-button-img', 'ui-button'], ['--ls-loadbar-img', 'ui-loadbar'], ['--ls-loadfill-img', 'ui-loadfill'], ['--ls-logo-img', 'ui-logo']]) if (ART[k]) appEl.style.setProperty(v, `url("${ART[k]}")`);
+      if (ART['ui-digits']) { DIGIMG = new Image(); DIGIMG.src = ART['ui-digits']; }
+      barB(a); replayCard(a);
       // the flag buttons read as a tile: a small TILE over a big number, the value under it
       document.querySelectorAll('#lzModes button[data-mode]').forEach(b => {
         const m = MODE[b.dataset.mode]; if (!m || !m.flag) return;
@@ -1301,7 +1885,8 @@ const homeCam = () => {
       const rb = document.getElementById('lzRulesBody');
       if (rb) rb.querySelectorAll('li').forEach(li => { if (/\bMIN\b/.test(li.textContent)) li.innerHTML = '<b>− / +</b> and the amount itself change the play amount. Tap the amount to pick any amount from the list.'; });
       await document.fonts.load('40px Limelight').catch(() => {});
-      for (const k of Object.keys(ART)) tex[k] = await loadTex(k);
+      // the bar's pictures and the win titles are DOM images (CSS / <img>): no texture, and a title loads only when it shows
+      for (const k of Object.keys(ART)) if (!/^(title-|ui-|fall-)/.test(k)) tex[k] = await loadTex(k);   // the fall's pictures: fallTex() (first-load budget)
       ['tile', 'tile-cracked', 'tile-gold'].forEach(prepTileFx);
       // the motion clips (natural motion, 2026-11-25): the two rest clips before the first screen; the actions load right
       // after it (the first-load budget, standard: 8MB), and until each one arrives the rig's drawing plays that move
@@ -1310,17 +1895,31 @@ const homeCam = () => {
       const FIRST = ['explorer-idle', 'monkey-idle'];
       if (!vidBlocked) {
         FIRST.forEach(vidLoad);
+        // the monkey's joy and fright from the start (small since 2026-11-28, crf 27): the first rounds already cheer, and the
+        // fright's bare head matches the flying beanie (the user: "sometimes he jumps for joy, sometimes not")
+        ['monkey-cheer', 'monkey-fright'].forEach(vidLoad);
         const t0 = performance.now();
         while (performance.now() - t0 < 4000 && !FIRST.every(n => vidOK(n) || (VIDS[n] && VIDS[n].failed))) await new Promise(r => setTimeout(r, 50));
       }
       for (const n of FIRST) if (!vidOK(n) && (window.LS_ANIM || {})[n]) ANIMS[n] = await flipbook(n);
-      setTimeout(async () => {
-        Object.keys(VIDMETA.clips).forEach(vidLoad);
-        if ((window.LS_ANIM || {})['monkey-hop']) ANIMS['monkey-hop'] = await flipbook('monkey-hop');
+      // the action clips (about 5MB) load after the first round, or 20 s after the first screen (standard 9.2: at most 8MB
+      // until the end of the first round). Until a clip arrives, the rig's drawing plays that move. The hop atlas loads now.
+      // the hop: a 60 fps video from the start (2026-11-28); its atlas only where video cannot be used (from disk)
+      if (!vidBlocked) vidLoad('monkey-hop');
+      else setTimeout(async () => { if ((window.LS_ANIM || {})['monkey-hop']) ANIMS['monkey-hop'] = await flipbook('monkey-hop'); }, 300);
+      loadRest = async () => {
+        if (restLoaded) return; restLoaded = true;
+        // one clip at a time, 700 ms apart, so no frame waits for several decoders at once (review 11.5: a 0.4 s stall
+        // in the second round while all the clips loaded together); the Vault's music after them
+        for (const n of Object.keys(VIDMETA.clips)) { if (!VIDS[n]) { vidLoad(n); await new Promise(r => setTimeout(r, 700)); } }
+        if (SND.loadRest) SND.loadRest();
+        for (const k of Object.keys(ART)) if (/^title-/.test(k)) { const im = new Image(); im.src = ART[k]; im.decode && im.decode().catch(() => {}); await new Promise(r => setTimeout(r, 120)); }
         await new Promise(r => setTimeout(r, 4000));
         // an atlas for every clip whose video cannot be used (from disk: all of them; a video still loading is just awaited)
         for (const n of Object.keys(window.LS_ANIM || {})) if (!ANIMS[n] && (vidBlocked || !VIDS[n] || VIDS[n].failed)) { try { ANIMS[n] = await flipbook(n); } catch (e) {} }
-      }, 300);
+      };
+      // 20 s at the first screen with no round played; a round that is running (a long blessed fall) waits for its end
+      setTimeout(function idleLoad() { if (roundOn) setTimeout(idleLoad, 1000); else if (!roundsPlayed) loadRest(); }, 20000);   // after a round its own timer does it
       app = new PIXI.Application();
       await app.init({ resizeTo: full, backgroundAlpha: 0, antialias: true, resolution: Math.min(2, window.devicePixelRatio || 1), autoDensity: true, preference: 'webgl' });
       full.append(app.canvas, box);
@@ -1331,7 +1930,7 @@ const homeCam = () => {
       // portrait: the board on top, the explorer under its left corner (the shell puts the controls below the stage).
       const layout = () => {
         // the tiny landscape popout (400 x 225) has no room for a bar under the board: there the shell's side panel returns
-        const want = innerHeight <= 330 && innerWidth >= innerHeight ? 'side' : 'bar';
+        const want = 'bar';      // bar B (2026-11-28): the same low strip at every size, also in the 400 x 225 popout
         if (appEl.dataset.layout !== want) appEl.dataset.layout = want;
         const sw = full.clientWidth, sh = full.clientHeight; if (!sw || !sh) return;
         app.resize && app.resize();
@@ -1339,6 +1938,8 @@ const homeCam = () => {
         hallBg.visible = false; hallFx.visible = false;    // the hall was the room around the framed board (dropped 2026-11-21)
         let win;
         // the bar (bar.css) is drawn 1400 px wide and rises 34 px above itself; on smaller screens it shrinks as one piece
+        // bar B: the strip and the dock shrink on short or narrow landscape screens (a phone on its side)
+        appEl.style.setProperty('--ls-z', land ? Math.max(0.5, Math.min(1, innerHeight / 700, innerWidth / 1100)).toFixed(3) : '1');
         if (land) appEl.style.setProperty('--ls-k', Math.min(1, (sw - 24) / 1400, Math.max(0.5, sh * 0.16 / 118)).toFixed(3));
         win = { x: 0, y: 0, w: sw, h: sh };
         WIN = win; cfResize(win.w, win.h);
@@ -1356,23 +1957,27 @@ const homeCam = () => {
       ui.vaultTitle = a.h('div', { class: 'ls-title', hidden: '', text: 'THE VAULT' });
       ui.wipe = a.h('div', { class: 'ls-wipe' });
       ui.big = a.h('div', { class: 'ls-big', hidden: '' }, a.h('div', { class: 'ls-rays' }), ui.flash = a.h('div', { class: 'ls-flash' }),
-        ui.bigCard = a.h('div', { class: 'ls-big-card' }, a.h('img', { class: 'ls-portrait', src: ART.portrait, alt: '' }), ui.bigLabel = a.h('b', { text: '' }), ui.bigAmt = a.h('strong', { text: '' }), a.h('small', { text: 'tap to continue' })));
+        ui.bigCard = a.h('div', { class: 'ls-big-card' }, a.h('img', { class: 'ls-portrait', src: ART.portrait, alt: '' }), ui.bigLabel = a.h('b', { text: '' }), ui.bigAmt = a.h('strong', { text: '' })));
       // the banner for every win above the play amount (winShow) and the canvas of coins and glints over everything
       ui.win = a.h('div', { class: 'ls-win', hidden: '' }, a.h('div', { class: 'ls-rays' }),
         a.h('div', { class: 'ls-win-in' }, ui.winT = a.h('b', { class: 'ls-win-t', text: 'WIN' }), ui.winAmt = a.h('strong', { class: 'ls-win-amt', text: '' }), ui.winX = a.h('small', { class: 'ls-win-x', text: '' })));
       ui.fxc = a.h('canvas', { class: 'ls-fxc' });
-      box.append(ui.plaque, ui.ropes, ui.vaultTitle, ui.wipe, ui.win, ui.big, ui.fxc);
+      ui.vig = a.h('div', { class: 'ls-vig' });
+      ui.meter = a.h('div', { class: 'ls-meter', 'aria-hidden': 'true' }, a.h('img', { class: 'ls-meter-frame', src: ART['ui-gauge'] || '', alt: '' }),
+        ui.meterFill = a.h('i', { class: 'ls-meter-fill' }), ui.meterMarks = a.h('div', { class: 'ls-meter-marks' }));
+      M_AT.forEach((x, i) => { const b = a.h('b'); paintNum(b, x + '×'); b.style.bottom = (12.15 + M_NOTCH[i] * 67.1).toFixed(2) + '%'; ui.meterMarks.append(b); });
+      // tap anywhere on the stage during a round: the rest of the round runs faster (under the win banners, which skip)
+      ui.hurry = a.h('div', { class: 'ls-hurry', hidden: '' });
+      box.append(ui.vig, ui.hurry, ui.meter, ui.plaque, ui.ropes, ui.vaultTitle, ui.wipe, ui.win, ui.big, ui.fxc);
       cfInit(ui.fxc); cfResize(WIN.w, WIN.h);
       setTimeout(layout, 0);
-      ui.big.addEventListener('pointerdown', () => skipBig && skipBig());
-      ui.win.addEventListener('pointerdown', () => skipBig && skipBig());
       window.addEventListener('keydown', ev => { if ((ev.code === 'Space' || ev.code === 'Enter') && skipBig) { ev.preventDefault(); skipBig(); } }, true);
       // a frame that throws must not stop the clock (Pixi skips its next tick after an error): log it and go on
       { let errs = 0; app.ticker.add(tk => { try { frame(tk); } catch (e) { if (errs++ < 5) console.error("FRAME error:", e); } }); }
       document.addEventListener('visibilitychange', () => { if (document.hidden) app.ticker.stop(); else app.ticker.start(); });
       reset();
     },
-    reset,
+    reset() { reset(); if (ui.hurry) ui.hurry.hidden = true; if (ui.hurryMedal) ui.hurryMedal.hidden = true; },     // the shell calls this after a round that failed
     play,
     idle() {
       if (inVault) { setTimeout(() => { if (!api.busy && inVault) { ui.wipe.classList.remove('go'); void ui.wipe.offsetWidth; ui.wipe.classList.add('go'); setTimeout(() => { if (!api.busy) reset(); }, 380); } }, 1400); return; }

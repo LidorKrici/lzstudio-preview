@@ -195,3 +195,118 @@ body { background: #061915; }
   .ls-rays, .ls-win-in, .ls-win-t, .ls-big-card b, .ls-big-card.up b, .ls-plaque.hot, .ls-win.land .ls-win-amt, .ls-big.land .ls-big-card strong { animation: none !important; }
   .ls-flash.go { animation-duration: .01s; }
 }
+
+/* 2026-11-28: a tap on the stage during a round speeds it up (catalog item 13); under the win banners, which skip */
+.ls-box .ls-hurry { position: absolute; inset: 0; pointer-events: auto; cursor: pointer; }
+.ls-hurry[hidden] { display: none; }
+/* the 400 x 225 popout: the plaque keeps the amount, the line under it is too small to read there (catalog item 7) */
+@media (min-aspect-ratio: 1/1) and (max-height: 330px) { .ls-plaque small { display: none; } }
+/* the line under the plaque's amount: at least 16px on a wide screen (catalog item 7) */
+@media (min-aspect-ratio: 1/1) and (min-height: 331px) { .ls-plaque small { font-size: max(16px, calc(var(--u) * 1.05)); } }
+
+/* 2026-11-28 (independent review): painted titles per tier, and each big-win tier looks different */
+.ls-ttl { display: block; width: auto; height: calc(var(--u) * 8); margin: 0 auto; pointer-events: none; }
+.ls-win[data-lv="2"] .ls-ttl { height: calc(var(--u) * 9.5); }
+.ls-win[data-lv="3"] .ls-ttl { height: calc(var(--u) * 11); }
+.ls-win-t[hidden] { display: none; }
+.ls-big-card b .ls-ttl { height: calc(var(--u) * 9); }
+.ls-big[data-tier="1"] .ls-big-card b .ls-ttl { height: calc(var(--u) * 10.5); }
+.ls-big[data-tier="2"] .ls-big-card b .ls-ttl, .ls-big[data-tier="3"] .ls-big-card b .ls-ttl { height: calc(var(--u) * 12); }
+.ls-big[data-tier="1"] .ls-big-card { border-color: #FFDA72; }
+.ls-big[data-tier="2"] .ls-big-card, .ls-big[data-tier="3"] .ls-big-card { border-color: #FFF2C4; }
+.ls-big[data-tier="2"] .ls-portrait, .ls-big[data-tier="3"] .ls-portrait { animation: ls-portrait-jump .6s cubic-bezier(.34, 1.56, .64, 1) infinite alternate; }
+@keyframes ls-portrait-jump { from { translate: 0 0; } to { translate: 0 calc(var(--u) * -1.4); } }
+@media (prefers-reduced-motion: reduce) { .ls-portrait { animation: none !important; } }
+/* the Vault's entry and end cards: the line under the title (2026-11-28) */
+.ls-title small { display: block; margin-top: calc(var(--u) * 1); font: 600 max(13px, calc(var(--u) * 1.5))/1.2 "Jost", sans-serif; letter-spacing: .18em; color: #FFF2C4; }
+
+/* review 2 (2026-11-28) */
+/* the Vault's title stays on one line and fits a phone */
+.ls-title { white-space: nowrap; font-size: min(calc(var(--u) * 7), 10vw); top: 34%; text-align: center; }
+/* the max win has its own card: the gold one, larger, with the rays turning fast */
+.ls-big.max .ls-big-card { border-color: #FFF6D6; outline: calc(var(--u) * .3) solid #FFDA72; outline-offset: calc(var(--u) * .5); scale: 1.12; }
+.ls-big.max .ls-rays { animation-duration: .5s, 3s; opacity: 1; }
+.ls-big.max .ls-big-card b .ls-ttl { height: calc(var(--u) * 14); }
+/* a phone: the win card stands over the bridge, not on the monkey */
+@media (max-aspect-ratio: 1/1) { .ls-big { place-items: start center; padding-top: 12%; } }
+
+/* ---------------- the tension gauge (2026-11-28, the user: "a tension meter, building tension... a casino game") ----------------
+ * the painted pillar (ui-gauge) beside the board; the molten gold (ui-gauge-fill) rises in its channel; the five notches
+ * are the big-win lines. Channel in the picture: x 35.2%..64.6%, y from 12.15% (bottom) over 67.1% of the height. */
+.ls-vig { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse 78% 72% at 50% 45%, rgba(0, 0, 0, 0) 52%, rgba(12, 3, 0, .88) 100%); }
+.ls-meter { position: absolute; left: calc(var(--u) * 1.1); top: calc(var(--u) * 29.5); height: calc(var(--u) * 24); aspect-ratio: 576 / 2578; pointer-events: none; transform-origin: 50% 100%; filter: drop-shadow(0 calc(var(--u) * .3) calc(var(--u) * .5) rgba(0, 0, 0, .65)); }
+.ls-meter-frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ls-meter-fill { position: absolute; left: 35.2%; width: 29.4%; bottom: 12.15%; height: 0; background: var(--ls-gfill-img) center top / 100% auto no-repeat; box-shadow: 0 0 calc(var(--u) * .9) rgba(255, 186, 60, .55); }
+.ls-meter-marks b { position: absolute; left: 96%; transform: translateY(50%); padding: calc(var(--u) * .25) calc(var(--u) * .45); border-radius: calc(var(--u) * .3); background: rgba(5, 20, 15, .82); border: 1px solid rgba(233, 185, 73, .55); font: 400 calc(var(--u) * 1.35)/1 "Limelight", serif; color: rgba(255, 226, 150, .8); text-shadow: 0 calc(var(--u) * .12) calc(var(--u) * .25) #000; white-space: nowrap; transition: color .2s, scale .2s; }
+.ls-meter-marks b.hit { color: #FFF6D8; scale: 1.25; background: rgba(120, 76, 8, .92); border-color: #FFE08A; text-shadow: 0 0 calc(var(--u) * .9) rgba(255, 210, 100, .95), 0 calc(var(--u) * .12) calc(var(--u) * .25) #000; }
+.ls-meter.near .ls-meter-fill { animation: ls-mnear .42s ease-in-out infinite alternate; }
+@keyframes ls-mnear { from { filter: brightness(1); box-shadow: 0 0 calc(var(--u) * .9) rgba(255, 186, 60, .55); } to { filter: brightness(1.45); box-shadow: 0 0 calc(var(--u) * 2.4) rgba(255, 210, 90, .95); } }
+.ls-meter.near { animation: ls-mshake .16s linear infinite; }
+@keyframes ls-mshake { 0%, 100% { translate: 0 0; } 25% { translate: calc(var(--u) * -.08) 0; } 75% { translate: calc(var(--u) * .08) 0; } }
+.ls-meter.burst { animation: ls-mburst .55s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes ls-mburst { 0% { scale: 1; filter: brightness(1) drop-shadow(0 0 0 rgba(255, 220, 120, 0)); } 35% { scale: 1.18; filter: brightness(1.8) drop-shadow(0 0 calc(var(--u) * 2) rgba(255, 220, 120, .95)); } 100% { scale: 1; filter: brightness(1) drop-shadow(0 0 0 rgba(255, 220, 120, 0)); } }
+.ls-meter.drain .ls-meter-fill { animation: ls-mdrain .8s ease-out; }
+@keyframes ls-mdrain { 0% { filter: sepia(1) saturate(4) hue-rotate(-35deg) brightness(1.3); } 100% { filter: none; } }
+@media (max-aspect-ratio: 1/1) { .ls-meter { top: calc(var(--u) * 24); height: calc(var(--u) * 36); } .ls-meter-marks b { font-size: calc(var(--u) * 2.3); padding: calc(var(--u) * .35) calc(var(--u) * .6); } }
+
+/* ---------------- the big win over the whole screen (2026-11-28) ---------------- */
+.ls-big { background: radial-gradient(ellipse at 50% 45%, rgba(6, 26, 20, .74), rgba(1, 7, 5, .93)); }
+.ls-big .ls-big-card { background: none; border: 0; outline: 0; box-shadow: none !important; padding: 0; margin-top: calc(var(--u) * -3); }
+.ls-big .ls-big-card::before, .ls-big .ls-portrait, .ls-big .ls-big-card small { display: none; }
+.ls-big .ls-big-card b { background: none; padding: 0; filter: drop-shadow(0 0 calc(var(--u) * 2) rgba(255, 200, 90, .35)); }
+.ls-big .ls-big-card b .ls-ttl { height: calc(var(--u) * 17) !important; }
+.ls-big[data-tier="1"] .ls-big-card b .ls-ttl { height: calc(var(--u) * 19) !important; }
+.ls-big[data-tier="2"] .ls-big-card b .ls-ttl { height: calc(var(--u) * 21) !important; }
+.ls-big[data-tier="3"] .ls-big-card b .ls-ttl { height: calc(var(--u) * 23) !important; }
+.ls-big[data-tier="4"] .ls-big-card b .ls-ttl { height: calc(var(--u) * 25) !important; }
+.ls-big .ls-big-card strong {
+  font-size: calc(var(--u) * 10); margin-top: calc(var(--u) * .2); color: #FFF1C2;
+  text-shadow: 0 calc(var(--u) * .35) 0 #5a3a08, 0 0 calc(var(--u) * 1.8) rgba(255, 196, 80, .85), 0 0 calc(var(--u) * 4) rgba(255, 160, 40, .45);
+}
+.ls-big[data-tier="3"] .ls-big-card strong, .ls-big[data-tier="4"] .ls-big-card strong { font-size: calc(var(--u) * 11.5); }
+.ls-big .ls-rays { width: calc(var(--u) * 170) !important; height: calc(var(--u) * 170) !important; }
+.ls-big.boom .ls-big-card { animation: ls-boom .55s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes ls-boom { 0% { scale: 1.3; } 100% { scale: 1; } }
+@media (max-aspect-ratio: 1/1) {
+  .ls-big { padding-top: 22%; }
+  .ls-big .ls-big-card b .ls-ttl { height: calc(var(--u) * 23) !important; }
+  .ls-big[data-tier="1"] .ls-big-card b .ls-ttl { height: calc(var(--u) * 25) !important; }
+  .ls-big[data-tier="2"] .ls-big-card b .ls-ttl, .ls-big[data-tier="3"] .ls-big-card b .ls-ttl, .ls-big[data-tier="4"] .ls-big-card b .ls-ttl { height: calc(var(--u) * 27) !important; }
+  .ls-big .ls-big-card strong { font-size: calc(var(--u) * 11); }
+  .ls-big[data-tier="3"] .ls-big-card strong, .ls-big[data-tier="4"] .ls-big-card strong { font-size: calc(var(--u) * 12); }
+}
+@media (prefers-reduced-motion: reduce) { .ls-meter, .ls-meter.near, .ls-meter.burst, .ls-meter.near .ls-meter-fill, .ls-big.boom .ls-big-card { animation: none !important; } }
+
+/* ---------------- painted HUD (2026-11-28, the user: "you draw some things in code, I really don't like it, I want
+ * everything at the highest level"): the plaque, the win panel, the tags and the numbers are painted (GPT Image 2.6,
+ * art/יומן-יצירה.md); no CSS boxes, borders or gradients for them any more ---------------- */
+/* painted digits (ui-digits): one glyph = an inline box 1em tall cut from the strip (game.js paintNum) */
+.dg { display: inline-block; height: 1em; vertical-align: middle; background: var(--ls-digits-img) no-repeat 0 0 / auto 1em; margin: 0 -.045em; }
+.dgx { display: inline-block; vertical-align: middle; font: 400 .62em/1 "Limelight", serif; color: #FFE7A0; text-shadow: 0 .06em 0 #3a2606, 0 0 .2em rgba(255, 200, 90, .6); margin: 0 .06em; }
+.ls-plaque {
+  top: calc(var(--u) * .4); min-width: 0; width: calc(var(--u) * 30); aspect-ratio: 2688 / 1010; padding: calc(var(--u) * 3.9) 0 0;
+  background: var(--ls-plaque-img) center / 100% 100% no-repeat; border: 0; outline: 0; border-radius: 0; box-shadow: none;
+}
+.ls-plaque::before, .ls-plaque::after { display: none; }
+.ls-plaque b { font-size: calc(var(--u) * 4.1); height: 1em; letter-spacing: 0; white-space: nowrap; }
+.ls-plaque small { margin-top: calc(var(--u) * .15); color: #DDEFE6; text-shadow: 0 1px 2px #000; }
+.ls-plaque.hot { animation: ls-hot2 .55s ease-in-out infinite alternate; }
+@keyframes ls-hot2 { from { filter: brightness(1) drop-shadow(0 0 0 rgba(255, 205, 100, 0)); } to { filter: brightness(1.18) drop-shadow(0 0 calc(var(--u) * 1.6) rgba(255, 215, 120, .85)); } }
+@media (max-aspect-ratio: 1/1) { .ls-plaque { width: calc(var(--u) * 36); padding-top: calc(var(--u) * 4.6); } .ls-plaque b { font-size: calc(var(--u) * 4.8); } }
+/* the small win's amount on the painted win panel */
+.ls-win-amt {
+  display: inline-grid; place-items: center; width: calc(var(--u) * 34); aspect-ratio: 2688 / 1057; padding: 0; margin-top: calc(var(--u) * .2);
+  background: var(--ls-winpanel-img) center / 100% 100% no-repeat; border: 0; outline: 0; border-radius: 0; box-shadow: none;
+  font-size: calc(var(--u) * 5.2); line-height: 1; white-space: nowrap;
+}
+.ls-win-amt > span { display: inline-block; height: 1em; line-height: 1; translate: 0 .06em; }
+@keyframes ls-land { 0% { scale: 1; filter: brightness(1); } 30% { scale: 1.2; filter: brightness(1.5) drop-shadow(0 0 calc(var(--u) * 2) rgba(255, 225, 140, .95)); } 100% { scale: 1; filter: brightness(1); } }
+/* the big win's number in painted gold */
+.ls-big .ls-big-card strong { color: inherit; text-shadow: none; filter: drop-shadow(0 0 calc(var(--u) * 2.2) rgba(255, 190, 70, .55)); height: 1em; line-height: 1; white-space: nowrap; }
+.ls-big .ls-big-card strong .dg { margin: 0 -.06em; }
+/* the gauge's marks on painted tags, in painted digits */
+.ls-meter-marks b { padding: 0; border: 0; border-radius: 0; background: var(--ls-tag-img) center / 100% 100% no-repeat; width: calc(var(--u) * 5.4); aspect-ratio: 2285 / 698; display: grid; place-items: center; font-size: calc(var(--u) * 1.25); text-shadow: none; }
+.ls-meter-marks b > span { display: inline-block; height: 1em; line-height: 1; }
+.ls-meter-marks b.hit { background: var(--ls-tag-img) center / 100% 100% no-repeat; filter: brightness(1.35) drop-shadow(0 0 calc(var(--u) * .8) rgba(255, 210, 100, .95)); text-shadow: none; }
+@media (max-aspect-ratio: 1/1) { .ls-meter-marks b { width: calc(var(--u) * 8.5); font-size: calc(var(--u) * 2); padding: 0; } }
+.dgw { display: inline-block; height: 1em; line-height: 1; white-space: nowrap; vertical-align: top; }

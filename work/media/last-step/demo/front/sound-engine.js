@@ -27,13 +27,20 @@ window.LSSound = (() => {
     const amb = ctx.createGain(); amb.gain.value = 0.2; amb.connect(master);
     bus = { master, fx, music: musicOut, duck, lp, amb };
     // Opus (webm) first; a browser that cannot decode it (older Safari) gets the AAC copy, fetched only then
-    loading = decodeAll(SND).then(ok => (ok ? null : loadAac().then(() => decodeAll(window.LS_SND_AAC || {}))))
+    // the Vault's music waits until after the first round (loadRest), so the first load stays under 8MB (standard 9.2)
+    let aac = false;
+    loading = decodeAll(SND, k => !LATER.test(k)).then(ok => (ok ? null : loadAac().then(() => { aac = true; return decodeAll(window.LS_SND_AAC || {}, k => !LATER.test(k)); })))
       .then(() => { startAmbience(); if (wantMusic) playMusic(wantMusic, wantLevel); });
+    loadRest = () => { if (restLoading) return restLoading; restLoading = loading.then(() => decodeAll(aac ? (window.LS_SND_AAC || {}) : SND, k => LATER.test(k))).then(joinLate); return restLoading; };
     return true;
   }
 
-  function decodeAll(map) {
-    let fails = 0; const list = Object.entries(map);
+  // after the first round: the Vault's music and the temple's top layer (2026-11-28, first-load budget with the blessed fall);
+  // a layer that arrives later joins the music that already plays, in time (joinLate)
+  const LATER = /^music_vault_|^music_temple_2$/;
+  let loadRest = () => null, restLoading = null;
+  function decodeAll(map, keep = () => true) {
+    let fails = 0; const list = Object.entries(map).filter(([k]) => keep(k));
     // a data URI (front/, works from file://) or a file next to the page (publish/front, tools/split-publish.mjs)
     const bytes = uri => uri.startsWith('data:') ? Promise.resolve(b64(uri)) : fetch(uri).then(r => r.arrayBuffer());
     return Promise.all(list.map(([k, uri]) => bytes(uri).then(b => ctx.decodeAudioData(b)).then(buf => { buffers[k] = buf; }).catch(() => { fails++; })))
@@ -85,20 +92,22 @@ window.LSSound = (() => {
   function playMusic(name, level = 0) {
     wantMusic = name; wantLevel = level;
     if (!setup() || !loading) return;
-    const M = CFG.music[name]; if (!M || !M.layers.every(l => buffers[l])) return;
+    const M = CFG.music[name]; if (!M || !buffers[M.layers[0]]) return;
     if (music && music.name === name) { setLevel(level); return; }
     const t = ctx.currentTime;
     if (music) {                                    // the old music fades over 2 s (6.3)
-      const old = music; old.nodes.forEach(n => { n.gain.gain.setTargetAtTime(0, t, 0.6); n.src.stop(t + 2.5); });
+      const old = music; old.nodes.forEach(n => { if (!n) return; n.gain.gain.setTargetAtTime(0, t, 0.6); n.src.stop(t + 2.5); });
     }
     const start = t + (music ? 0.4 : 0.4);          // music starts 0.4 s after the cue
     const nodes = M.layers.map((l, i) => {
+      if (!buffers[l]) return null;                  // not loaded yet: joins later (joinLate)
       const src = ctx.createBufferSource(); src.buffer = buffers[l]; src.loop = true;
+      if (M.bars) { src.loopStart = 0; src.loopEnd = Math.min(buffers[l].duration, M.bars * 240 / M.bpm); }   // the exact loop, not the codec's padding
       const g = ctx.createGain(); g.gain.value = i === level ? 1 : 0;
       src.connect(g); g.connect(bus.music); src.start(start);
       return { src, gain: g };
     });
-    music = { name, start, bpm: M.bpm, nodes, level };
+    music = { name, start, bpm: M.bpm, nodes, level: Math.min(level, topLayer(nodes)), M };
   }
   function nextBeat(after = 0) {
     const beat = 60 / music.bpm, t = ctx.currentTime + after;
@@ -106,8 +115,25 @@ window.LSSound = (() => {
   }
   // full mixes of one timeline: a 200 ms crossfade at the same point in time (6.3, the Dojo method)
   function crossTo(level, at) {
-    music.nodes.forEach((n, i) => { const g = n.gain.gain; g.cancelScheduledValues(at); g.setValueAtTime(g.value, at); g.linearRampToValueAtTime(i === level ? 1 : 0, at + 0.2); });
+    level = Math.min(level, topLayer(music.nodes));
+    music.nodes.forEach((n, i) => { if (!n) return; const g = n.gain.gain; g.cancelScheduledValues(at); g.setValueAtTime(g.value, at); g.linearRampToValueAtTime(i === level ? 1 : 0, at + 0.2); });
     music.level = level;
+  }
+  const topLayer = nodes => { let k = 0; nodes.forEach((n, i) => { if (n) k = i; }); return k; };
+  // a layer decoded after the music started: started now at the same point of the loop, silent until its level comes
+  function joinLate() {
+    if (!music || !ctx) return;
+    const M = music.M, t = ctx.currentTime + 0.05;
+    music.nodes.forEach((n, i) => {
+      if (n || !buffers[M.layers[i]]) return;
+      const src = ctx.createBufferSource(); src.buffer = buffers[M.layers[i]]; src.loop = true;
+      const end = M.bars ? Math.min(src.buffer.duration, M.bars * 240 / M.bpm) : src.buffer.duration;
+      src.loopStart = 0; src.loopEnd = end;
+      const g = ctx.createGain(); g.gain.value = 0; src.connect(g); g.connect(bus.music);
+      src.start(t, Math.max(0, (t - music.start) % end));
+      music.nodes[i] = { src, gain: g };
+    });
+    if (wantLevel > music.level) setLevel(wantLevel);
   }
   function setLevel(level) {
     wantLevel = level;
@@ -131,6 +157,19 @@ window.LSSound = (() => {
     const g = bus.duck.gain, t = ctx.currentTime;
     g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(level, t + (level < 1 ? 0.15 : 0.6));
   }
+  // a heartbeat (2026-11-28, the tension gauge): two low thumps, made here (no file, no AI sound), on the fx bus
+  function heart(v = 0.5) {
+    if (!setup()) return;
+    const t = ctx.currentTime + 0.01;
+    [[0, 1], [0.19, 0.65]].forEach(([d, a]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(86, t + d); o.frequency.exponentialRampToValueAtTime(44, t + d + 0.15);
+      g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(Math.max(0.001, v * a), t + d + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.24);
+      o.connect(g); g.connect(bus.fx); o.start(t + d); o.stop(t + d + 0.28);
+    });
+    duckFx(0.25);
+  }
   // the count of a big win: ticks whose pitch climbs to countRise[tier] cents; returns a stop function
   function count(seconds, tier) {
     if (!setup()) return () => {};
@@ -143,7 +182,8 @@ window.LSSound = (() => {
   return {
     init(api) { shell = api.sound; },
     wake() { setup(); },
-    emit, playMusic, setLevel, tension, hold, count,
+    emit, playMusic, setLevel, tension, hold, count, heart,
+    loadRest() { return loadRest(); },              // after the first round: the Vault's music
     get level() { return music ? music.level : 0; },
     stats() { return { ctx: !!ctx, state: ctx && ctx.state, decoded: Object.keys(buffers).length, files: Object.keys(SND).length, music: music && music.name, level: music ? music.level : null, voices }; },
   };

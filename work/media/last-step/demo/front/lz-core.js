@@ -100,6 +100,10 @@
     baseMode: null, costs: {}, resume: null, lastOutcome: null
   };
   let G = null;                                // the game config passed to boot()
+  // Shell generation. shell: 2 (production standard 1.1, 2026-11-26) = the shell gives mechanism only: no browser
+  // <select> for the amount, no 3 intro cards, no BIG/MEGA/EPIC banner. The elements stay in the DOM, hidden, as hooks
+  // for the game's own picker, intro and celebration. A game without `shell` keeps the old defaults until it moves.
+  const std = () => !!G && (G.shell || 1) >= 2;
   const speed = () => (S.fast ? 0.45 : 1) / HACK;
   const sleep = ms => new Promise(r => setTimeout(r, Math.max(0, Math.round(ms * speed()))));
   const modeOf = name => G.modes.find(m => m.name === String(name || '').toLowerCase());
@@ -237,12 +241,14 @@
   function buildShell() {
     const feats = G.modes.filter(m => m.kind === 'feature'), bases = G.modes.filter(m => m.kind !== 'feature');
     document.body.append(
-      h('div', { class: 'lz-intro' + (G.introCards && G.introCards.length ? ' has-cards' : ''), id: 'lzIntro' },
+      h('div', { class: 'lz-intro' + (!std() && G.introCards && G.introCards.length ? ' has-cards' : ''), id: 'lzIntro' },
         h('div', { class: 'lz-intro-in' },
           h('div', { class: 'lz-intro-logo', html: G.logo || '' }),
           h('p', { class: 'lz-intro-tag', id: 'lzIntroTag', text: G.tagline || '' }),
-          // Optional feature preview: introCards: [{ art: '<svg…>', title, text }] (2 or 3 cards)
-          G.introCards && G.introCards.length ? h('div', { class: 'lz-intro-cards', id: 'lzIntroCards' }, G.introCards.slice(0, 3).map(c => h('div', { class: 'lz-intro-card' }, h('div', { class: 'lz-ic-art', html: c.art || '' }), h('b', { text: c.title || '' }), h('span', { text: c.text || '' })))) : null,
+          // shell 2: an empty, hidden box where the game builds its own intro (its features come from G.introCards).
+          // Older games: the optional feature preview, introCards: [{ art: '<svg…>', title, text }] (2 or 3 cards).
+          std() ? h('div', { class: 'lz-intro-cards', id: 'lzIntroCards', hidden: true })
+            : G.introCards && G.introCards.length ? h('div', { class: 'lz-intro-cards', id: 'lzIntroCards' }, G.introCards.slice(0, 3).map(c => h('div', { class: 'lz-intro-card' }, h('div', { class: 'lz-ic-art', html: c.art || '' }), h('b', { text: c.title || '' }), h('span', { text: c.text || '' })))) : null,
           h('div', { class: 'lz-intro-load', 'aria-hidden': 'true' }, h('i', { id: 'lzIntroBar' })),
           h('p', { class: 'lz-intro-err', id: 'lzIntroErr', hidden: true }),
           h('button', { class: 'lz-intro-play', id: 'lzIntroPlay', type: 'button', disabled: true, text: 'Loading' }),
@@ -271,7 +277,9 @@
             h('span', { class: 'lz-lbl', text: 'Play amount' }),
             h('div', { class: 'lz-stepper' },
               h('button', { type: 'button', id: 'lzMinus', 'aria-label': 'Lower play amount', text: '−' }),
-              h('div', { class: 'lz-amount' }, h('b', { id: 'lzAmt', text: '–' }), h('select', { id: 'lzAmtSel', 'aria-label': 'Play amount' })),
+              // shell 2: the <select> only holds the amounts (hidden, never opened): the game's own picker reads its
+              // options and sets its value + a 'change' event. Older games: a transparent select over the amount.
+              h('div', { class: 'lz-amount' }, h('b', { id: 'lzAmt', text: '–' }), h('select', { id: 'lzAmtSel', 'aria-label': 'Play amount', hidden: std(), tabindex: std() ? '-1' : null, 'aria-hidden': std() ? 'true' : null })),
               h('button', { type: 'button', id: 'lzPlus', 'aria-label': 'Raise play amount', text: '+' }))),
           h('div', { class: 'lz-quick', id: 'lzQuick' },
             h('button', { type: 'button', id: 'lzMin', text: 'MIN' }),
@@ -518,7 +526,8 @@
     catch (e) { if (isTestHost) console.error('playback failed', e); if (G.reset) try { G.reset(); } catch (e2) { /* keep going */ } }
     setWin(winUnits, true);
     // No fanfare for a round that returns less than it was played for (a feature mode costs more than 1x).
-    if (G.celebrate !== false && winX >= cost) await bigWin(winUnits, winX, ctx.capped);
+    // shell 2: the banner is off unless the game asks for it (celebrate: true); older games: on unless celebrate: false
+    if ((std() ? G.celebrate === true : G.celebrate !== false) && winX >= cost) await bigWin(winUnits, winX, ctx.capped);
     return { winX, winUnits, feature: !!(out && out.feature) };
   }
   async function finishRound(round, t0, mode) {

@@ -187,3 +187,34 @@
   #lzIntro #lzIntroTag { font-size: 10px; line-height: 1.25; margin: 0; }
   #lzIntro .lz-intro-in { width: min(900px, 100%, calc(100vw - 46vh)); }
 }
+/* the volatility rating and "don't show again" under PLAY (standard 8.3, 2026-11-28) */
+.ls-iopts { position: relative; z-index: 6; display: flex; align-items: center; justify-content: center; gap: 22px; flex-wrap: wrap; margin-top: 10px; font: 600 13px/1 "Jost", sans-serif; letter-spacing: .16em; color: #E9D49A; }
+.ls-vol { display: inline-flex; align-items: center; gap: 8px; }
+.ls-vol b { font-weight: 700; }
+.ls-vpips { display: inline-flex; gap: 4px; }
+.ls-vpips i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #C9973A; }
+.ls-vpips i.on { background: #FFDA72; border-color: #FFDA72; }
+.ls-iskip { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.ls-iskip input { width: 18px; height: 18px; margin: 0; accent-color: #C9973A; cursor: pointer; }
+@media (max-height: 330px) { .ls-iopts { gap: 10px; margin-top: 4px; font-size: 12px; letter-spacing: .08em; } .ls-iskip input { width: 14px; height: 14px; } }
+/* a phone: PLAY covered the first note; the notes are for wide screens (review 2) */
+@media (max-aspect-ratio: 1/1) { .ls-note, .ls-narrows { display: none !important; } }
+
+/* ---------------- painted intro (2026-11-28, the user: nothing drawn in code) ---------------- */
+#lzIntro .ls-logo-img { display: block; height: clamp(90px, 24vh, 230px); width: auto; max-width: 92vw; object-fit: contain; filter: drop-shadow(0 8px 22px rgba(0, 0, 0, .55)); animation: ls-logo-in .9s cubic-bezier(.34, 1.4, .64, 1) both; }
+#lzIntro .lz-intro-tag::before, #lzIntro .lz-intro-tag::after { height: clamp(12px, 2.2vh, 18px); flex-basis: clamp(26px, 4vw, 44px); background: var(--ls-fan) center / contain no-repeat; }
+#lzIntro .lz-intro-tag::after { background: var(--ls-fan) center / contain no-repeat; }
+#lzIntro .lz-intro-play {
+  overflow: visible; min-width: 0; width: clamp(230px, 27vw, 340px); height: auto; aspect-ratio: 2502 / 850; padding: 0 0 2px;
+  background: var(--ls-button-img) center / 100% 100% no-repeat; border: 0; border-radius: 0; box-shadow: none;
+  color: #FFF2C4; text-shadow: 0 2px 0 #0d2a1c, 0 0 12px rgba(255, 220, 140, .65);
+}
+#lzIntro .lz-intro-play::after { display: none; }
+#lzIntro .lz-intro-play:not(:disabled) { animation: ls-play-glow2 2.4s ease-in-out infinite; }
+@keyframes ls-play-glow2 { 0%, 100% { filter: brightness(1) drop-shadow(0 10px 18px rgba(0, 0, 0, .5)); } 50% { filter: brightness(1.12) drop-shadow(0 0 26px rgba(255, 210, 110, .75)); } }
+.ls-vpips i { width: 15px; height: 15px; border: 0; border-radius: 0; background: var(--ls-coin-img) center / contain no-repeat; filter: grayscale(1) brightness(.4); }
+.ls-vpips i.on { background: var(--ls-coin-img) center / contain no-repeat; filter: none; }
+.ls-iskip input { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; background: var(--ls-knob-img) center / contain no-repeat; border: 0; }
+.ls-iskip input:checked { background: var(--ls-coin-img) center / 62% no-repeat, var(--ls-knob-img) center / contain no-repeat; }
+@media (max-height: 330px) { #lzIntro .ls-logo-img { height: 26vh; } .ls-iskip input { width: 18px; height: 18px; } }
+#lzIntro .lz-intro-play:focus-visible { outline: none; filter: brightness(1.15) drop-shadow(0 0 18px rgba(255, 220, 130, .95)); }
