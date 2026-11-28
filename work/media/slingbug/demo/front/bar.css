@@ -1,0 +1,359 @@
+/* Slingbug: the control bar in the meadow's language (art/סגנון.md: twig tied with amber fibre, leaves with a dew drop).
+ * Standard 8.1 / fixed item 1: one low row, at most 7 controls (WIN, -, amount, +, TURBO, AUTO, LAUNCH), no MIN/MAX, the round
+ * launch button about twice the next button, every button 44 px or more on a phone, -/+ hidden while flying on a phone.
+ * The three pulls (also chosen on the slingshot) and the two night features sit on the board, not in the bar (8.1: the feature
+ * button is outside the bar, next to the board). game.js moves #lzModes and #lzFeats into #lzStage.
+ * No CSS shadows or code-drawn circles (fixed items 4 and 9): text is outlined with a stroke, round things are pictures.
+ * Pictures arrive as CSS variables set by game.js (--sb-spin, --sb-leaf, --sb-panel, --sb-plus, --sb-minus, --sb-bar, --sb-wing,
+ * --sb-tag-hop/glide/fullsend), because the art lives in assets.js as data URIs. */
+:root { --lz-shadow: none; }
+.lz-app[data-game="sling-plane"] :is(#lzMin, #lzMax) { display: none; }
+.lz-app[data-game="sling-plane"] .lz-lbl { font-size: 0; }
+.lz-app[data-game="sling-plane"] .lz-tag { font-size: 16px; }
+.lz-app[data-game="sling-plane"] .lz-wallet b { font-size: 18px; }
+.lz-app[data-game="sling-plane"] :is(#lzInfo, #lzSound) { width: 44px; height: 44px; min-width: 44px; }
+
+/* the strip: moss with a twig along its top edge */
+.lz-app[data-game="sling-plane"] .lz-panel {
+  background: #3a4b2c; border: 0; border-radius: 0; position: relative; padding: 10px 10px 6px; align-items: center;
+}
+.lz-app[data-game="sling-plane"] .lz-panel::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -6px; height: 16px; pointer-events: none;
+  background: var(--sb-bar) center / auto 100% repeat-x;
+}
+
+/* win and play amount on leaf plates, outlined numbers */
+.lz-app[data-game="sling-plane"] :is(.lz-win, .lz-amount) { background: var(--sb-panel) center / 100% 100% no-repeat; border: 0; color: #fff8e6; }
+.lz-app[data-game="sling-plane"] .lz-win { justify-content: center; align-items: center; min-height: 52px; }
+.lz-app[data-game="sling-plane"] .lz-win b { font-size: 22px; color: #ffe066; -webkit-text-stroke: 4px #2c4512; paint-order: stroke fill; }
+.lz-app[data-game="sling-plane"] .lz-amount b { font-size: 18px; color: #fff8e6; -webkit-text-stroke: 4px #2c4512; paint-order: stroke fill; }
+.lz-app[data-game="sling-plane"] :is(#lzMinus, #lzPlus) { width: 44px; min-width: 44px; height: 44px; min-height: 44px; border: 0; font-size: 0; background: center / contain no-repeat; }
+.lz-app[data-game="sling-plane"] #lzMinus { background-image: var(--sb-minus); }
+.lz-app[data-game="sling-plane"] #lzPlus { background-image: var(--sb-plus); }
+.lz-app[data-game="sling-plane"].busy :is(#lzMinus, #lzPlus) { opacity: .35; }
+
+/* TURBO and AUTO: leaves with outlined words */
+.lz-app[data-game="sling-plane"] .lz-quick { display: flex; flex-direction: row; gap: 6px; flex: 0 0 auto; }
+.lz-app[data-game="sling-plane"] :is(#lzFast, #lzAuto) {
+  width: 64px; height: 44px; min-height: 44px; background: var(--sb-leaf) center / 100% 100% no-repeat; border: 0;
+  color: #fff8e6; font-size: 16px; font-weight: 700; letter-spacing: 0; -webkit-text-stroke: 3px #2c4512; paint-order: stroke fill;
+}
+.lz-app[data-game="sling-plane"] #lzFast[aria-pressed="true"] { filter: hue-rotate(-60deg) saturate(1.6); }
+
+/* LAUNCH: the round poppy, the largest control */
+.lz-app[data-game="sling-plane"] .lz-action {
+  background: var(--sb-spin) center / contain no-repeat; border: 0; aspect-ratio: 1 / 1; flex: 0 0 auto;
+  width: 92px; height: 92px; min-height: 0; max-width: none; padding: 0; color: transparent; position: relative; justify-self: center; align-self: center;
+  transition: transform .15s ease, filter .2s ease;
+}
+.lz-app[data-game="sling-plane"] .lz-action:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.12); }
+.lz-app[data-game="sling-plane"] .lz-action:active:not(:disabled) { transform: scale(.94); }
+.lz-app[data-game="sling-plane"] .lz-action :is(span, small) { font-size: 0; }
+.lz-app[data-game="sling-plane"] .lz-action.busy { filter: saturate(.5) brightness(.85); }
+
+/* on the board: the three pulls (top left) and the night features (top right) */
+.sb-over { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.sb-over > * { pointer-events: auto; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes {
+  position: absolute; left: 1.2%; top: 2%; display: flex; gap: 2px; background: none; border: 0; padding: 0; flex: none;
+}
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes button {
+  width: clamp(56px, 9vw, 104px); height: clamp(44px, 7vw, 66px); padding: 0; background: center / contain no-repeat; font-size: 0; border-radius: 0;
+  filter: saturate(.5) brightness(.85); opacity: .85; transition: filter .2s ease, transform .25s cubic-bezier(.34, 1.56, .64, 1), opacity .2s ease;
+}
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes :is(b, small) { font-size: 0; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes button[data-mode="hop"] { background-image: var(--sb-tag-hop); }
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes button[data-mode="glide"] { background-image: var(--sb-tag-glide); }
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes button[data-mode="fullsend"] { background-image: var(--sb-tag-fullsend); }
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes button[aria-pressed="true"] { filter: none; opacity: 1; transform: scale(1.1); background-color: transparent; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-feats { position: absolute; right: 1.2%; top: 2%; display: flex; flex-direction: column; gap: 6px; flex: none; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-feat {
+  display: grid; grid-template-columns: 34px auto; grid-template-rows: auto auto; align-items: center; column-gap: 6px; min-height: 44px;
+  padding: 4px 12px 4px 6px; background: #1e2a4a; border: 2px solid #f2a531; border-radius: 14px; color: #ffe8a8; text-align: left;
+}
+.lz-app[data-game="sling-plane"] .sb-over .lz-feat::before { content: ""; grid-row: 1 / 3; width: 34px; height: 38px; background: var(--sb-wing) center / contain no-repeat; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-feat span { font-size: 16px; font-weight: 700; white-space: nowrap; letter-spacing: 0; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-feat small { font-size: 16px; color: #f2c66b; }
+.lz-app[data-game="sling-plane"].busy .sb-over :is(.lz-modes, .lz-feats) { opacity: .4; }
+
+/* the price window in the same language */
+#lzBuy .lz-sheet, #lzAutoPanel .lz-sheet { background: #33452a; border: 3px solid #f2a531; }
+#lzBuyYes { background: #e8452c; color: #fff8e6; border: 0; }
+
+/* phone, upright: one row (WIN | - amount + | TURBO AUTO | LAUNCH), the bar stays under 12 % of the height */
+@media (max-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-panel { display: flex !important; flex-direction: row; flex-wrap: nowrap; gap: 4px; padding: 8px 6px 4px; }
+  .lz-app[data-game="sling-plane"] .lz-win { flex: 1 1 0; min-width: 0; min-height: 48px; }
+  .lz-app[data-game="sling-plane"] .lz-win b { font-size: 16px; }
+  .lz-app[data-game="sling-plane"] .lz-field { flex: 0 0 auto; }
+  .lz-app[data-game="sling-plane"] .lz-stepper { grid-template-columns: 44px 62px 44px; gap: 2px; }
+  .lz-app[data-game="sling-plane"] .lz-amount { height: 44px; }
+  .lz-app[data-game="sling-plane"] .lz-amount b { font-size: 16px; }
+  .lz-app[data-game="sling-plane"] .lz-quick { flex-direction: column; gap: 2px; }
+  .lz-app[data-game="sling-plane"] :is(#lzFast, #lzAuto) { width: 56px; height: 44px; font-size: 13px; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 88px; height: 88px; }
+  .lz-app[data-game="sling-plane"].busy :is(#lzMinus, #lzPlus) { visibility: hidden; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feat span, .lz-app[data-game="sling-plane"] .sb-over .lz-feat small { font-size: 13px; }
+}
+/* the tiny popout (400 x 225): 12 px is the smallest text */
+@media (max-height: 260px) {
+  .lz-app[data-game="sling-plane"] .lz-panel { gap: 4px; padding: 6px 4px 2px; }
+  .lz-app[data-game="sling-plane"] .lz-win { min-height: 34px; }
+  .lz-app[data-game="sling-plane"] .lz-win b, .lz-app[data-game="sling-plane"] .lz-amount b { font-size: 12px; }
+  .lz-app[data-game="sling-plane"] :is(#lzMinus, #lzPlus) { width: 30px; min-width: 30px; height: 30px; min-height: 30px; }
+  .lz-app[data-game="sling-plane"] :is(#lzFast, #lzAuto) { width: 46px; height: 28px; min-height: 28px; font-size: 12px; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 60px; height: 60px; }
+  .lz-app[data-game="sling-plane"] .lz-tag { font-size: 12px; }
+  .lz-app[data-game="sling-plane"] .lz-wallet b { font-size: 12px; }
+  .lz-app[data-game="sling-plane"] :is(#lzInfo, #lzSound) { width: 30px; height: 30px; min-width: 30px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-modes button { width: 46px; height: 30px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feat { min-height: 30px; padding: 2px 6px 2px 2px; grid-template-columns: 20px auto; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feat::before { width: 20px; height: 24px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feat span, .lz-app[data-game="sling-plane"] .sb-over .lz-feat small { font-size: 12px; }
+}
+
+/* fixes from the station run (2026-11-26): mode tags apart, amount never under the -/+ buttons, lower bars */
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes { gap: 12px; }
+.lz-app[data-game="sling-plane"] .lz-stepper { display: flex; align-items: center; gap: 4px; }
+.lz-app[data-game="sling-plane"] .lz-amount { flex: 0 0 auto; min-width: 72px; padding: 0 6px; display: flex; align-items: center; justify-content: center; }
+.lz-app[data-game="sling-plane"] .lz-win b { white-space: nowrap; }
+@media (max-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-panel { padding: 6px 4px 2px; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 80px; height: 80px; }
+  .lz-app[data-game="sling-plane"] .lz-amount { min-width: 60px; }
+  .lz-app[data-game="sling-plane"] :is(#lzFast, #lzAuto) { height: 38px; min-height: 38px; }
+}
+@media (max-height: 260px) {
+  .lz-app[data-game="sling-plane"] .lz-panel { padding: 3px 4px 1px; gap: 3px; }
+  .lz-app[data-game="sling-plane"] .lz-panel::before { height: 8px; top: -3px; }
+  .lz-app[data-game="sling-plane"] .lz-win { min-height: 30px; flex: 1 1 auto; min-width: 0; }
+  .lz-app[data-game="sling-plane"] .lz-amount { min-width: 50px; height: 28px; }
+  .lz-app[data-game="sling-plane"] :is(#lzMinus, #lzPlus) { width: 26px; min-width: 26px; height: 26px; min-height: 26px; }
+  .lz-app[data-game="sling-plane"] .lz-quick { flex-direction: column; gap: 1px; }
+  .lz-app[data-game="sling-plane"] :is(#lzFast, #lzAuto) { width: 44px; height: 18px; min-height: 18px; font-size: 12px; -webkit-text-stroke: 2px #2c4512; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 40px; height: 40px; }
+}
+/* round 2: phone buttons 44 px side by side; the tiny popout keeps LAUNCH twice the other buttons and the bar under 20 % */
+@media (max-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-quick { flex-direction: row; gap: 2px; }
+  .lz-app[data-game="sling-plane"] :is(#lzFast, #lzAuto) { width: 48px; height: 44px; min-height: 44px; font-size: 12px; }
+  .lz-app[data-game="sling-plane"] .lz-stepper { gap: 1px; }
+  .lz-app[data-game="sling-plane"] .lz-amount { min-width: 54px; }
+}
+@media (max-height: 260px) {
+  .lz-app[data-game="sling-plane"] .lz-panel { flex-wrap: nowrap; }
+  .lz-app[data-game="sling-plane"] :is(.lz-field, .lz-quick, .lz-action) { flex: 0 0 auto; }
+  .lz-app[data-game="sling-plane"] .lz-stepper { gap: 2px; }
+  .lz-app[data-game="sling-plane"] :is(#lzMinus, #lzPlus) { width: 22px; min-width: 22px; height: 22px; min-height: 22px; }
+  .lz-app[data-game="sling-plane"] .lz-amount { height: 22px; min-width: 50px; }
+  .lz-app[data-game="sling-plane"] .lz-quick { flex-direction: row; gap: 2px; }
+  .lz-app[data-game="sling-plane"] :is(#lzFast, #lzAuto) { width: 44px; height: 22px; min-height: 22px; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 44px; height: 44px; }
+  .lz-app[data-game="sling-plane"] .lz-win { min-height: 22px; }
+}
+@media (max-height: 260px) {
+  .lz-app[data-game="sling-plane"] .lz-panel { padding: 2px 4px 0; }
+  .lz-app[data-game="sling-plane"] :is(.lz-amount, #lzMinus, #lzPlus, #lzFast, #lzAuto) { min-height: 0 !important; max-height: 21px; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 42px; height: 42px; }
+}
+@media (max-aspect-ratio: 1/1) { .lz-app[data-game="sling-plane"] .lz-action { width: 90px; height: 90px; } .lz-app[data-game="sling-plane"] .lz-panel { padding-top: 4px; padding-bottom: 1px; } }
+/* round 3 (full station, 33 sizes) */
+@media (max-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-panel { padding-top: 0; padding-bottom: 0; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 88px; height: 88px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feats { top: calc(2% + clamp(44px, 7vw, 66px) + 8px); }
+}
+/* short landscape windows (480x270, 560x315, 600x280, 667x375 ...): the compact bar, features in a row */
+@media (max-height: 380px) and (min-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-panel { flex-wrap: nowrap; padding: 2px 4px 0; gap: 3px; }
+  .lz-app[data-game="sling-plane"] :is(.lz-field, .lz-quick, .lz-action) { flex: 0 0 auto; }
+  .lz-app[data-game="sling-plane"] .lz-win { min-height: 24px; flex: 1 1 auto; min-width: 0; }
+  .lz-app[data-game="sling-plane"] .lz-win b, .lz-app[data-game="sling-plane"] .lz-amount b { font-size: 13px; }
+  .lz-app[data-game="sling-plane"] :is(.lz-amount, #lzMinus, #lzPlus, #lzFast, #lzAuto) { min-height: 0 !important; max-height: 24px; }
+  .lz-app[data-game="sling-plane"] :is(#lzMinus, #lzPlus) { width: 24px; min-width: 24px; height: 24px; }
+  .lz-app[data-game="sling-plane"] .lz-amount { height: 24px; min-width: 56px; }
+  .lz-app[data-game="sling-plane"] .lz-quick { flex-direction: row; gap: 2px; }
+  .lz-app[data-game="sling-plane"] :is(#lzFast, #lzAuto) { width: 48px; height: 24px; font-size: 12px; -webkit-text-stroke: 2px #2c4512; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 48px; height: 48px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feats { flex-direction: row; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-modes button { width: 50px; height: 32px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feat { min-height: 30px; padding: 2px 6px 2px 2px; grid-template-columns: 20px auto; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feat::before { width: 20px; height: 24px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feat span, .lz-app[data-game="sling-plane"] .sb-over .lz-feat small { font-size: 12px; }
+}
+@media (max-height: 260px) { .lz-app[data-game="sling-plane"] .lz-action { width: 42px; height: 42px; } .lz-app[data-game="sling-plane"] :is(.lz-amount, #lzMinus, #lzPlus, #lzFast, #lzAuto) { max-height: 21px; } }
+/* narrow phones (320-380 wide): the win plate sits just above the bar, so LAUNCH always fits on the row */
+@media (max-aspect-ratio: 1/1) and (max-width: 380px) {
+  .lz-app[data-game="sling-plane"] .lz-win { position: absolute; left: 6px; bottom: calc(100% + 8px); min-height: 36px; padding: 0 14px; flex: none; z-index: 4; }
+  .lz-app[data-game="sling-plane"] .lz-panel { justify-content: space-between; }
+  .lz-app[data-game="sling-plane"] .lz-quick { flex-direction: column; gap: 0; }
+  .lz-app[data-game="sling-plane"] :is(#lzFast, #lzAuto) { height: 44px; }
+  .lz-app[data-game="sling-plane"] .lz-amount { min-width: 50px; }
+}
+@media (max-height: 260px) { .lz-app[data-game="sling-plane"] .sb-over .lz-feats { flex-direction: column; gap: 3px; } }
+
+/* smoothness (Lidor 2026-11-27: "it stutters when you pull the bug back"): a Chrome trace showed 50-140 ms GPU raster at the
+ * pull and the launch, from CSS filters on the bar's pictures being redrawn when the round starts. Only opacity and transform
+ * change from here on (the compositor does those without redrawing), and the pictures sit on their own layers. */
+.lz-app[data-game="sling-plane"] :is(.lz-action, #lzMinus, #lzPlus, #lzFast, #lzAuto, .lz-win, .lz-amount),
+.lz-app[data-game="sling-plane"] .sb-over :is(.lz-modes button, .lz-feats, .lz-modes) { will-change: transform, opacity; }
+.lz-app[data-game="sling-plane"] .lz-action.busy { filter: none; opacity: .7; }
+.lz-app[data-game="sling-plane"] .lz-action:hover:not(:disabled) { filter: none; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes button { filter: none; transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), opacity .2s ease; opacity: .6; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-modes button[aria-pressed="true"] { filter: none; opacity: 1; }
+.lz-app[data-game="sling-plane"] #lzFast[aria-pressed="true"] { filter: none; opacity: 1; outline: 3px solid #ffe066; outline-offset: -3px; }
+.lz-app[data-game="sling-plane"] #lzFast:not([aria-pressed="true"]) { opacity: .85; }
+
+/* every upright phone: the win plate sits just above the bar, wide enough for any total (Lidor: "part of the total is cut") */
+@media (max-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-win { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100% + 8px); min-width: 170px; min-height: 40px; padding: 0 22px; flex: none; z-index: 4; }
+  .lz-app[data-game="sling-plane"] .lz-win b { font-size: 18px; }
+  .lz-app[data-game="sling-plane"] .lz-panel { justify-content: space-between; }
+}
+/* standard 8.2: while flying, the buy buttons dim, and on a phone they are hidden (the dew drop needs the top of the screen) */
+@media (max-aspect-ratio: 1/1) { .lz-app[data-game="sling-plane"].busy .sb-over .lz-feats { opacity: 0; pointer-events: none; } }
+/* replay [171]: no play controls (the shell hides them; our own layout rules must not bring them back) */
+.lz-is-replay .lz-app[data-game="sling-plane"] :is(.lz-quick, .lz-feats, .lz-modes, .lz-field) { display: none !important; }
+
+/* ===== v2 (review 2026-11-27, "bet bar 1"): the game fills the window, the bar is a thin see-through strip over the ground,
+ * no separate title row and no frame. Balance, rules and sound sit in the top corner on meadow leaves (fixed item 9: no dark
+ * CSS chips), the night features are leaf plates, and the price window is a leaf. game.js layout() keeps the ground line
+ * above the bar (it reads the bar's height). */
+.lz-app[data-game="sling-plane"] {
+  padding: 0; gap: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "stage";
+}
+.lz-app[data-game="sling-plane"] .lz-stage { grid-area: stage; border: 0; border-radius: 0; background: #2c3a1d; }
+.lz-app[data-game="sling-plane"] .lz-top {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 4; pointer-events: none;
+  padding: max(8px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) 0 max(10px, env(safe-area-inset-left, 0px));
+}
+.lz-app[data-game="sling-plane"] .lz-top > * { pointer-events: auto; }
+.lz-app[data-game="sling-plane"] .lz-brand { display: none; }
+.lz-app[data-game="sling-plane"] .lz-tags { position: absolute; left: 50%; transform: translateX(-50%); top: 6px; }
+.lz-app[data-game="sling-plane"] .lz-tag { background: rgba(44, 69, 18, .7); border: 0; color: #fff8e6; }
+.lz-app[data-game="sling-plane"] .lz-top-right { gap: 4px; }
+
+/* balance on a leaf plate, rules and sound on round leaves with a bold dark glyph */
+.lz-app[data-game="sling-plane"] .lz-wallet {
+  background: var(--sb-panel) center / 100% 100% no-repeat; border: 0; border-radius: 0;
+  padding: 0 26px; height: 44px; align-items: center;
+}
+.lz-app[data-game="sling-plane"] .lz-wallet b { color: #fff8e6; -webkit-text-stroke: 4px #2c4512; paint-order: stroke fill; }
+.lz-app[data-game="sling-plane"] .lz-icon {
+  background: var(--sb-leaf) center / 100% 100% no-repeat; border: 0; border-radius: 0; color: #23380e;
+}
+.lz-app[data-game="sling-plane"] .lz-icon svg { width: 22px; height: 22px; stroke-width: 3; transform: translateY(2px); }
+.lz-app[data-game="sling-plane"] .lz-icon[aria-pressed="true"] { color: #23380e; opacity: .7; }
+
+/* the bar: no moss slab, no twig and no backing at all: the controls are pictures with outlined words and read on the ground */
+.lz-app[data-game="sling-plane"] .lz-panel {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; grid-area: auto;
+  background: none;
+  padding: 14px max(12px, env(safe-area-inset-right, 0px)) max(4px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+}
+.lz-app[data-game="sling-plane"] .lz-panel::before { display: none; }
+@media (min-aspect-ratio: 1/1) and (min-height: 381px) {
+  .lz-app[data-game="sling-plane"] .lz-win { min-height: 46px; }
+  .lz-app[data-game="sling-plane"] .lz-win b { font-size: 20px; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 92px; height: 92px; }
+}
+
+/* night features: leaf plates under the balance, no navy box */
+.lz-app[data-game="sling-plane"] .sb-over .lz-feats { top: 60px; right: 10px; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-feat {
+  background: var(--sb-panel) center / 100% 100% no-repeat; border: 0; border-radius: 0; padding: 6px 26px 6px 18px; color: #fff8e6;
+}
+.lz-app[data-game="sling-plane"] .sb-over .lz-feat span { -webkit-text-stroke: 3px #2c4512; paint-order: stroke fill; }
+.lz-app[data-game="sling-plane"] .sb-over .lz-feat small { color: #ffe066; font-weight: 700; -webkit-text-stroke: 3px #2c4512; paint-order: stroke fill; }
+
+/* the price window (fixed item 16): a big leaf with outlined words; the answers are leaves too, START an autumn-red leaf */
+#lzBuy, #lzAutoPanel { background: rgba(16, 24, 8, .55); backdrop-filter: none; -webkit-backdrop-filter: none; }
+#lzBuy .lz-sheet {
+  width: min(560px, 100%); border: 0; border-radius: 0; overflow: visible;
+  background: var(--sb-panel) center / 100% 100% no-repeat; padding: 44px 74px 40px;
+}
+#lzBuy .lz-sheet h2 {
+  font-size: 26px; color: #ffe066; -webkit-text-stroke: 5px #2c4512; paint-order: stroke fill; margin: 0 0 6px;
+}
+#lzBuy .lz-sheet p { font-size: 16px; line-height: 1.35; color: #fff8e6; font-weight: 600; -webkit-text-stroke: 3px #2c4512; paint-order: stroke fill; }
+#lzBuy .lz-sheet::before {
+  content: ""; position: absolute; left: 50%; top: -34px; width: 70px; height: 74px; transform: translateX(-50%) rotate(-12deg);
+  background: var(--sb-wing) center / contain no-repeat;
+}
+#lzBuy .lz-btns { gap: 14px; margin-top: 14px; }
+#lzBuy .lz-btns button {
+  height: 50px; border: 0; border-radius: 0; background: var(--sb-leaf) center / 100% 100% no-repeat; color: #fff8e6;
+  font-size: 18px; -webkit-text-stroke: 4px #2c4512; paint-order: stroke fill;
+}
+#lzBuy .lz-btns #lzBuyYes { background-image: var(--sb-panel); filter: hue-rotate(-75deg) saturate(1.7) brightness(1.05); color: #fff8e6; }
+#lzBuy .lz-btns #lzBuyYes { -webkit-text-stroke: 4px #5a1a08; }
+#lzBuy .lz-btns button:hover { transform: translateY(-2px); }
+
+#lzAutoPanel .lz-sheet { border: 0; border-radius: 18px; background: #33452a; }
+#lzBuy .lz-sheet, #lzAutoPanel .lz-sheet { box-shadow: none; }   /* station:ok: takes the shell's shadow away */
+#lzAutoPanel .lz-sheet::before { content: ""; position: absolute; left: 10px; right: 10px; top: 2px; height: 16px; background: var(--sb-bar) center / 100% 100% no-repeat; }
+
+/* phone, upright */
+@media (max-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-panel { padding-top: 10px; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 84px; height: 84px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feats { top: calc(2% + clamp(44px, 7vw, 66px) + 8px); }
+  .lz-app[data-game="sling-plane"] .lz-wallet { padding: 0 20px; }
+  #lzBuy .lz-sheet { padding: 40px 40px 34px; }
+  #lzBuy .lz-sheet h2 { font-size: 22px; }
+}
+/* short landscape windows: everything in the corner a size down */
+@media (max-height: 380px) and (min-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-panel { padding: 8px 6px 0; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 48px; height: 48px; }
+  .lz-app[data-game="sling-plane"] .lz-wallet { height: 32px; padding: 0 16px; }
+  .lz-app[data-game="sling-plane"] .lz-wallet b { font-size: 13px; -webkit-text-stroke: 3px #2c4512; }
+  .lz-app[data-game="sling-plane"] :is(#lzInfo, #lzSound) { width: 32px; height: 32px; min-width: 32px; }
+  .lz-app[data-game="sling-plane"] .lz-icon svg { width: 16px; height: 16px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feats { top: 44px; }
+  #lzBuy .lz-sheet { padding: 26px 44px 22px; }
+  #lzBuy .lz-sheet h2 { font-size: 18px; }
+  #lzBuy .lz-sheet p { font-size: 13px; }
+  #lzBuy .lz-btns button { height: 38px; font-size: 15px; }
+}
+@media (max-height: 260px) {
+  .lz-app[data-game="sling-plane"] .lz-top { padding-top: 3px; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 42px; height: 42px; }
+  .lz-app[data-game="sling-plane"] .lz-wallet { height: 26px; }
+  .lz-app[data-game="sling-plane"] :is(#lzInfo, #lzSound) { width: 28px; height: 28px; min-width: 28px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feats { top: 32px; }
+  #lzBuy .lz-sheet { padding: 16px 30px 14px; }
+  #lzBuy .lz-sheet::before { width: 36px; height: 38px; top: -16px; }
+  #lzBuy .lz-sheet p { font-size: 12px; margin: 2px 0; }
+  #lzBuy .lz-btns { margin-top: 6px; }
+  #lzBuy .lz-btns button { height: 30px; font-size: 13px; }
+}
+/* v2: the win plate a fixed width (it was stretching across the whole strip), the turbo, auto and launch group on the right */
+@media (min-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-win { flex: 0 1 320px; min-width: 150px; }
+  .lz-app[data-game="sling-plane"] .lz-quick { margin-left: auto; }
+}
+@media (min-aspect-ratio: 1/1) and (max-height: 380px) { .lz-app[data-game="sling-plane"] .lz-win { flex: 1 1 auto; min-width: 0; } }
+/* upright phone: balance under the rules and sound (the three pulls fill the top row), the night features under it */
+@media (max-aspect-ratio: 1/1) {
+  .lz-app[data-game="sling-plane"] .lz-wallet { position: absolute; right: 10px; top: calc(max(8px, env(safe-area-inset-top, 0px)) + 50px); height: 40px; }
+  .lz-app[data-game="sling-plane"] .sb-over .lz-feats { top: 104px; }
+  .lz-app[data-game="sling-plane"] .lz-stage { background: #2a2416; }
+}
+/* fixed item 1: one win counter on screen. While a tier scene counts up, the plate in the bar steps aside */
+.lz-app[data-game="sling-plane"] .lz-win { transition: opacity .25s ease; }
+body:has(.sb-celebrate.on) .lz-app[data-game="sling-plane"] .lz-win { opacity: 0; }
+/* station 2026-11-27 (v2 bar): upright phone bar under 12 %, the 400 x 225 bar under 20 % */
+@media (max-aspect-ratio: 1/1) {
+  /* the poppy stands up out of the strip (it does not make the strip taller), twice the next button */
+  .lz-app[data-game="sling-plane"] .lz-panel { padding-top: 0; padding-bottom: env(safe-area-inset-bottom, 0px); align-items: flex-end; }
+  .lz-app[data-game="sling-plane"] .lz-action { width: 92px; height: 92px; margin-top: -42px; align-self: flex-end; }
+}
+@media (max-height: 260px) { .lz-app[data-game="sling-plane"] .lz-panel { padding: 1px 4px 0; } .lz-app[data-game="sling-plane"] .lz-action { width: 42px; height: 42px; } }
+/* during the night bonus the play amount, -/+ and TURBO / AUTO step back: only the win plate counts (review v2: "no bonus bar") */
+.lz-app[data-game="sling-plane"].sb-bonus :is(.lz-field, #lzMinus, #lzPlus) { opacity: .25; }
+.lz-app[data-game="sling-plane"].sb-bonus .sb-over :is(.lz-modes, .lz-feats) { opacity: 0; pointer-events: none; }
+/* one win counter (fixed item 1, review v2): in the air the dew drop counts; the plate in the bar shows the win when the round ends */
+.lz-app[data-game="sling-plane"].busy .lz-win { opacity: 0; }
+/* the three pulls moved onto the slingshot as a power meter (Lidor 28.11): the leaf tags stay only for keyboards and screen readers */
+/* (28.11) the leaf tags are back: the pull is chosen on them; the meter over the sling only shows the choice */

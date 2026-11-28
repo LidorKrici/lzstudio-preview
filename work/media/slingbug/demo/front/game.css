@@ -1,0 +1,25 @@
+/* Slingbug skin: meadow palette from art/סגנון.md (world moss, poppy red, amber, firefly gold for wins).
+ * The bet bar itself is redesigned after Lidor picks one of 3 mock-ups (תוכנית-פרוסה.md, step 5); for now the shell's bar in these colours. */
+@font-face{font-family:"Fredoka";src:url("fonts/fredoka.woff2") format("woff2");font-weight:300 700;font-display:swap}
+:root{
+  --lz-bg:#2f3d24; --lz-panel:rgba(47,61,36,.88); --lz-panel-solid:#3a4b2c; --lz-line:rgba(242,165,49,.28);
+  --lz-text:#fdf6e3; --lz-muted:#c9d2b4; --lz-accent:#e8452c; --lz-accent-ink:#fff7ea; --lz-accent2:#f2a531;
+  --lz-good:#ffe066; --lz-bad:#e8452c; --lz-radius:18px;
+  --lz-font-display:"Fredoka",system-ui,sans-serif; --lz-font-body:"Fredoka",system-ui,sans-serif;
+}
+body{background:#a9c7e6}
+#lzStage{position:relative;overflow:hidden}
+#lzStage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.lz-modes small{display:none}
+/* tiny popout: the mode buttons (the pull picks the mode anyway) shrink so the amount buttons keep their room */
+@media (max-height:260px){
+  .lz-app[data-layout="bar"] .lz-modes{flex:0 1 92px}
+  .lz-app[data-layout="bar"] .lz-modes b{font-size:7px}
+  .lz-app[data-layout="bar"] .lz-win{flex:0 1 62px}
+  .lz-app[data-layout="bar"] .lz-field{flex:0 0 92px}
+}
+/* flag for the improvement station: on while the game's own win celebration is on screen */
+.sb-celebrate{display:none}
+.sb-celebrate.on{display:block;position:fixed;inset:0;pointer-events:none;background:transparent}
+/* no flash of the shell bar before the intro (review 11.5): shown once the game has dressed it */
+body:not(.sb-ready) .lz-app { visibility: hidden; }
