@@ -560,7 +560,7 @@
   }
 
   /* ---------- layout ---------- */
-  function layout(W, H, pad = 0) {
+  function layout(W, H, pad = 0, maxS = Infinity) {
     S.W = W; S.H = H;
     const wide = W / H > 1.02, BW = 12.0, BH = 16.0, He = Math.max(40, H - pad);
     S.wide = wide;
@@ -572,7 +572,8 @@
       top = He / 2 / s;                                 // the board's centre sits in the middle of the stage above the spin button
     } else {
       // tall: the board sits low, just over the bar; the space above it is the koi's (and the stamp's) strip
-      s = Math.min(W * 0.995 / BW, He * 0.99 / BH);
+      // maxS: on a short phone (the site frame on an iPhone) the board shrinks so its top rod stays under the buttons above it
+      s = Math.min(W * 0.995 / BW, He * 0.99 / BH, maxS);
       top = (He - 4) / s - BH / 2;
       S.koiStrip = top - BH / 2;
     }

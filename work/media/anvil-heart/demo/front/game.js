@@ -95,42 +95,83 @@
   /* ---------- Layout ---------- */
   // the board frame (assets/frame.webp): the cells' window as parts of the picture
   const FB = { l: .0825, r: .0825, t: .1205, b: .125 };
+  // four screens (Lidor, 28.11, after Waylanders Forge's): wide, square (the site's middle size), phone, and the small popout
+  const LAY_VARS = ['--ah-s', '--ah-spin', '--ah-lift', '--ah-bx', '--ah-bw', '--ah-bar', '--ah-strip', '--ah-ph', '--ah-r1', '--ah-r2', '--ah-info', '--ah-cardw', '--ah-modew'];
   function layout() {
     const r = cv.parentElement.getBoundingClientRect();
     W = Math.max(1, r.width); H = Math.max(1, r.height); DPR = Math.min(2, window.devicePixelRatio || 1);
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     cv.style.width = W + 'px'; cv.style.height = H + 'px';
-    const land = W / H >= 1.15, tiny = H < 260;
-    const pn = document.getElementById('lzPanel'), BH = pn ? pn.getBoundingClientRect().height : 0;
-    // landscape: the board takes its room first, and the floating bar is then sized to fill everything under it (Lidor, 28.11)
-    const HS = land ? Math.max(1, H - Math.max(H * .13, 44)) : Math.max(1, H - BH * .96);   // the stage above the floating bar
+    const ratio = W / H, tiny = H < 260;
+    const lay = tiny ? 'tiny' : ratio >= 1.15 ? 'land' : ratio < .8 ? 'phone' : 'square';
+    const land = lay !== 'phone';   // the square screen is drawn like the wide one: the logo top left, the bar under the frame
+    const app = document.getElementById('lzApp'); if (app) app.dataset.lay = lay;
+    const root = document.documentElement.style, set = (k, v) => root.setProperty(k, v.toFixed(1) + 'px');
+    LAY_VARS.forEach(k => root.removeProperty(k));
     const fr = A.frame || [2048, 1360], fw = fr[0], fh = fr[1];
     // inner width IW -> cell size, inner height, and the frame's borders around it
     const geo = IW => { const cw = IW / 6, ch = cw / 1.11, IH = viewRows * ch, k = IW / (fw * (1 - FB.l - FB.r)); return { cw, ch, IH, bl: fw * FB.l * k, br: fw * FB.r * k, bt: fh * FB.t * k, bb: fh * FB.b * k }; };
-    let IW, x0, y0;
-    if (land) {
-      const g1 = geo(1), maxH = HS * (tiny ? .94 : .9), perIW = g1.IH + g1.bt + g1.bb;
-      IW = Math.min(W * (tiny ? .42 : .48), maxH / perIW);
+    const g1 = geo(1), perIW = g1.IH + g1.bt + g1.bb, perOW = 1 + g1.bl + g1.br;
+    let IW, x0, y0, ph = null, sq = null;
+    if (lay === 'land' || lay === 'tiny') {
+      const HS = Math.max(1, H - Math.max(H * .13, 44));   // landscape: the board takes its room first, the bar fills what is under it
+      IW = Math.min(W * (tiny ? .42 : .48), HS * (tiny ? .94 : .9) / perIW);
       const g = geo(IW); x0 = W * (tiny ? .5 : .52) - IW / 2; y0 = (HS - (g.IH + g.bt + g.bb)) / 2 + g.bt + Math.min(HS * .04, (HS - (g.IH + g.bt + g.bb)) / 2);   // a little lower than the middle (Lidor, 28.11)
+    } else if (lay === 'square') {
+      // the board in the middle, as wide as it can be beside the side columns; one row of controls right under its frame
+      IW = Math.min(W * .7 / perOW, (H - Math.min(H * .15, 104) - H * .08) / perIW);
+      const g = geo(IW), ow = IW * perOW, oh = IW * perIW;
+      const s = Math.max(26, Math.min(H * .1, ow / 11.5, 64)), barH = s * 1.55 + 8;
+      const oy = Math.max(H * .03, (H - oh - 6 - barH) / 2);
+      x0 = (W - ow) / 2 + g.bl; y0 = oy + g.bt;
+      sq = { s, barH, lift: Math.max(4, H - (oy + oh + 6 + barH)), side: (W - ow) / 2 };
     } else {
-      const g1 = geo(1), perIW = g1.IH + g1.bt + g1.bb;
-      IW = Math.min(W * .92 / (1 + (g1.bl + g1.br)), HS * (viewRows > 4 ? .56 : .44) / perIW);
-      const g = geo(IW); x0 = (W - IW) / 2; y0 = HS * .1 + g.bt;
+      // the phone: the logo on top, the board across the screen, the fire modes and the three bonus cards under it,
+      // and the control strip at the bottom with the big spin button between - and + (Lidor, 28.11)
+      const k = Math.max(38, Math.min(W * .12, H * .07, 56)), sp = k * 1.6, r1 = k + 8, r2 = k + 14, info = Math.max(30, Math.min(H * .052, 40));
+      const barH = r1 + r2 + info;
+      const logoW = Math.min(W * .56, H * .28), logoH = logoW / 2.69, top = logoH + 14;
+      const modeW = Math.min(W * .38, 190), modeH = modeW / 2.5, cardW = Math.min(W * .3, 160), cardH = cardW / 1.3;
+      // from the bottom up (Lidor, 28.11): the controls, the board right above them, the bonus cards, the fire modes, the logo
+      const big = viewRows > 4, extras = big ? 0 : modeH + 6 + cardH + 10;
+      const room = H - barH - 6 - top;
+      IW = Math.max(60, Math.min(W * .97 / perOW, (room - extras) / perIW));
+      const g = geo(IW), ow = IW * perOW, oh = IW * perIW;
+      const oy = H - barH - 6 - oh;
+      x0 = (W - ow) / 2 + g.bl; y0 = oy + g.bt;
+      const cardsY = oy - 10 - cardH, modesY = cardsY - 6 - modeH, zTop = big ? Math.max(top * .7, oy - 80) : modesY;
+      ph = { k, sp, r1, r2, info, barH, logoW, logoH, oy, zTop, modeW, cardW, modesY, cardsY, logoY: Math.max(logoH / 2 + 6, (big ? oy : modesY) / 2) };
     }
     const g = geo(IW);
-    L = { land, tiny, g: { ix: x0, iy: y0, iw: IW, ih: g.IH, cw: g.cw, ch: g.ch, ox: x0 - g.bl, oy: y0 - g.bt, ow: IW + g.bl + g.br, oh: g.IH + g.bt + g.bb } };
+    L = { lay, land, tiny, g: { ix: x0, iy: y0, iw: IW, ih: g.IH, cw: g.cw, ch: g.ch, ox: x0 - g.bl, oy: y0 - g.bt, ow: IW + g.bl + g.br, oh: g.IH + g.bt + g.bb } };
     L.cs = Math.min(g.cw, g.ch);
     L.fw = L.cs * 1.6;
+    L.ph = ph;
     const bottom = L.g.oy + L.g.oh;
-    const root = document.documentElement.style;
-    if (land && !tiny) {
+    if (lay === 'land') {
       // the bar sits under the board's frame: no wider than the frame, centred on it, and no taller than the space below
       const lift = Math.max(8, Math.min(26, H * .028)), gap = H - bottom - 6 - lift, sz = Math.max(22, Math.min((gap - 12) / 2.65, L.g.ow / 8.8, 110));   // the controls, and the balance strip a little thinner under them
-      root.setProperty('--ah-s', sz.toFixed(1) + 'px');
-      root.setProperty('--ah-lift', lift.toFixed(1) + 'px'); root.setProperty('--ah-bx', L.g.ox.toFixed(1) + 'px'); root.setProperty('--ah-bw', L.g.ow.toFixed(1) + 'px');
-    } else { root.removeProperty('--ah-s'); root.removeProperty('--ah-bx'); root.removeProperty('--ah-bw'); root.removeProperty('--ah-lift'); }
-    if (land) {
-      const sh = Math.min(HS * .8, (L.g.ox - W * .02) * 1.25);
+      set('--ah-s', sz); set('--ah-lift', lift); set('--ah-bx', L.g.ox); set('--ah-bw', L.g.ow);
+    } else if (lay === 'square') {
+      // one row under the frame: turbo, balance and win, the play amount, autoplay, spin
+      set('--ah-s', sq.s); set('--ah-spin', sq.s * 1.55); set('--ah-bar', sq.barH); set('--ah-strip', sq.s * 1.2); set('--ah-ph', sq.s * 1.2);
+      set('--ah-lift', sq.lift); set('--ah-bx', L.g.ox); set('--ah-bw', L.g.ow);
+      const cw = Math.max(56, Math.min(sq.side - 10, H * .3, 220));
+      set('--ah-cardw', cw); set('--ah-modew', cw);
+    } else if (lay === 'phone') {
+      set('--ah-s', ph.k); set('--ah-spin', ph.sp); set('--ah-bar', ph.barH); set('--ah-r1', ph.r1); set('--ah-r2', ph.r2); set('--ah-info', ph.info);
+      set('--ah-cardw', ph.cardW); set('--ah-modew', ph.modeW);
+    }
+    if (lay === 'square') {
+      const sd = sq.side, sh = Math.min(H * .3, (L.g.ox - W * .01) * 1.25);
+      L.smith = { x: Math.max(sh * .3, L.g.ox * .5), y: H * .99, h: sh };
+      L.logo = { w: Math.min(sd * 1.7, H * .34, 260) }; L.logo.x = Math.max(L.logo.w / 2 + 6, sd * .5); L.logo.y = 6 + L.logo.w / 2.69 / 2;
+      L.title = { x: L.g.ix + IW / 2, y: L.g.iy + g.IH * .42, w: Math.min(W * .62, H * 1.0) };
+      L.total = { x: W / 2, y: L.g.oy + L.g.oh * .82, h: Math.max(16, Math.min(H * .055, L.g.ow * .06)) };
+      L.spins = { x: L.logo.x, y: L.logo.y + L.logo.w / 2.69 / 2 + H * .06, h: Math.max(14, Math.min(H * .045, sd * .16)) };
+      L.side = { x: L.g.ox + L.g.ow + sd / 2, y: H * .5, w: Math.max(40, Math.min(sd - 12, L.cs * 1.8)) };
+    } else if (land) {
+      const sh = Math.min(H * .8, (L.g.ox - W * .02) * 1.25);
       L.smith = { x: Math.max(sh * .3, L.g.ox * .5), y: H * .99, h: sh };
       L.logo = { x: L.g.ox * .5, y: H * .1, w: Math.min(L.g.ox * .86, H * .4) };
       L.title = { x: L.g.ix + IW / 2, y: L.g.iy + g.IH * .42, w: Math.min(W * .5, H * 1.0) };
@@ -138,14 +179,17 @@
       L.spins = { x: L.logo.x, y: H * .27, h: Math.max(14, Math.min(H * .05, L.g.ox * .09)) };
       L.side = { x: L.g.ox + L.g.ow + (W - L.g.ox - L.g.ow) / 2, y: H * .5, w: Math.max(40, Math.min(W - L.g.ox - L.g.ow - 16, L.cs * 1.8)) };
     } else {
-      const free = HS - bottom - HS * .02;
-      const sh = Math.min(HS * .3, W * .62);
-      L.smith = { x: W * .22, y: HS + BH * .2, h: sh };
-      L.logo = { x: W / 2, y: bottom + H * .042, w: Math.min(W * .5, H * .2) };
+      // the phone has no room for the smith (Waylanders Forge's phone screen hides its hero too); his sparks fly from the bar
+      // while a bonus plays the cards and modes step aside, and its total and gauge take their place over the board
+      const gap = Math.max(40, ph.oy - ph.zTop);
+      L.smith = { x: W * .15, y: H - ph.barH, h: 0 };
+      L.logo = { x: W / 2, y: ph.logoY, w: ph.logoW };
       L.title = { x: W / 2, y: L.g.iy + g.IH * .45, w: W * .94 };
-      L.total = { x: W * .7, y: HS * .88, h: Math.max(16, Math.min(free * .1, W * .065)) };
-      L.spins = { x: W / 2, y: bottom + H * .042, h: Math.max(14, Math.min(free * .07, W * .045)) };
-      L.side = { x: W * .7, y: HS * .78, w: W * .5, row: true };
+      L.total = { x: W / 2, y: ph.oy - gap * .7, h: Math.max(16, Math.min(gap * .2, W * .07)) };
+      // outside a bonus the cards and modes stay up there, so the total sits on the board's bottom edge where nothing covers it (Lidor, 28.11)
+      L.totalBase = { x: W / 2, y: L.g.oy + L.g.oh - g.bb * .5, h: Math.max(16, Math.min(g.bb * .62, W * .07)) };
+      L.spins = { x: W / 2, y: ph.logoY, h: Math.max(14, Math.min(ph.logoH * .4, W * .06)) };
+      L.side = { x: W / 2, y: ph.oy - gap * .28, w: W * .6, row: true };
     }
     place();
   }
@@ -154,6 +198,20 @@
     if (sb) { sb.dataset.land = L.land ? '1' : '0'; sb.dataset.tiny = L.tiny ? '1' : '0'; }
     const box = document.querySelector('.ah-smithbox');
     if (box) { const h = L.smith.h, w = h * .55; Object.assign(box.style, { left: (L.smith.x - w / 2) + 'px', top: (L.smith.y - h) + 'px', width: w + 'px', height: h + 'px' }); }
+    // the phone: the rules and sound knobs join the control strip; elsewhere they stay in the top-left corner
+    const bc = document.querySelector('.ah-bc'), corner = document.querySelector('.ah-corner'), info = document.getElementById('lzInfo'), snd = document.getElementById('lzSound');
+    const home = L.lay === 'phone' ? bc : corner;
+    if (home && info && snd && info.parentElement !== home) { home.append(info); home.append(snd); }
+    // the phone: the fire modes and the bonus cards sit under the board, where layout() measured room for them
+    const pin = (el, y) => {
+      if (!el) return;
+      if (y == null) { ['top', 'left', 'right', 'bottom', 'transform'].forEach(p => el.style.removeProperty(p)); return; }
+      el.style.setProperty('top', y.toFixed(1) + 'px', 'important'); el.style.setProperty('left', '50%', 'important');
+      el.style.setProperty('right', 'auto', 'important'); el.style.setProperty('bottom', 'auto', 'important');
+      el.style.setProperty('transform', 'translateX(-50%)', 'important');
+    };
+    pin(document.getElementById('lzModes'), L.ph ? L.ph.modesY : null);
+    pin(document.querySelector('.ah-signs'), L.ph ? L.ph.cardsY : null);
   }
   // the middle of cell (reel, row): rows count up from the bottom; the board shows viewRows rows
   const cellXY = (x, r) => [L.g.ix + (x + .5) * L.g.cw, L.g.iy + (viewRows - 1 - r + .5) * L.g.ch];
@@ -294,9 +352,10 @@
     const sx = [0, sl, iw - sl, iw], sy = [0, st2, ih - st2, ih], dx = [x, x + dl, x + w - dl, x + w], dy = [y, y + dt, y + h - dt, y + h];
     for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) c.drawImage(im, sx[i], sy[j], sx[i + 1] - sx[i], sy[j + 1] - sy[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]);
   }
+  const totalAt = () => (L.totalBase && !st.kind ? L.totalBase : L.total);
   function drawTotal() {
     if (!scene.totalShow || !scene.total) return;
-    const k = L.total, txt = money(scene.total), h = k.h * scene.totalPop, w = Math.max(R.textWidth(txt, h) + h * 1.4, h * 5);
+    const k = totalAt(), txt = money(scene.total), h = k.h * scene.totalPop, w = Math.max(R.textWidth(txt, h) + h * 1.4, h * 5);
     plank9(k.x - w / 2, k.y - h * .85, w, h * 1.7);
     // the ingot glows hotter as the total grows (fix 20: the sum rides on the hero)
     const x = roundCtx ? scene.total / Math.max(1, roundCtx.amount) : 0, heat = Math.min(1, Math.log10(1 + x) / 2.5);
@@ -749,6 +808,7 @@
     smithAct('smith-cheer', 1.2);
     await waitSkip(1100);
     st.kind = e.kind; st.heat = 0; st.lv = 0;
+    document.body.classList.add('ah-fs');   // the phone hides the bonus cards and modes while a bonus plays: its gauges sit there
     st.song = e.kind === 'song' ? Object.fromEntries([...REG].map(s => [s, 1])) : null;
     st.spots = e.kind === 'grinds' ? rows.map(h => new Array(h).fill(0)) : null;
     scene.bg2 = K.bg; scene.bgA = 0; tw(scene, { bgA: 1 }, 900, R.E.inOut);
@@ -772,7 +832,7 @@
     await tw(scene, { bgA: 0 }, 700, R.E.inOut);
     scene.bg2 = null;
     if (viewRows !== 4) { viewRows = 4; layout(); }
-    st.kind = null; st.song = null; st.spots = null;
+    st.kind = null; st.song = null; st.spots = null; document.body.classList.remove('ah-fs');
     S.music('base', 0);
   }
 
@@ -780,7 +840,7 @@
   function resetStage() {
     R.clearParts(); scene.flyers = []; scene.labels = []; scene.title = null; scene.eagle = null; scene.aurora = null; scene.screen = null; scene.banner = {};
     scene.total = 0; scene.totalShow = false; scene.dark = 0; scene.flash = 0; scene.spins = 0; scene.spinNow = 0; scene.bg2 = null; scene.bgA = 0;
-    st.kind = null; st.song = null; st.spots = null; st.heat = 0; st.lv = 0; cascade = 0;
+    st.kind = null; st.song = null; st.spots = null; st.heat = 0; st.lv = 0; cascade = 0; document.body.classList.remove('ah-fs');
     if (viewRows !== 4) { viewRows = 4; layout(); }
   }
   async function play(events, ctx) {
@@ -822,7 +882,7 @@
   /* ---------- 2x and up, below BIG WIN (standard 7.2): the ingot flares, Ilmarinen cheers, the amount rises over the board ---------- */
   async function midWin(units) {
     S.emit('winM'); smithAct('smith-cheer', 1.4);
-    const k = L.total, b = L.g;
+    const k = totalAt(), b = L.g;
     scene.flash = Math.max(scene.flash, .3); scene.shake = Math.max(scene.shake, 6);
     for (let q = 0; q < 18; q++) setTimeout(() => R.spawn({ img: q % 3 ? 'fx-spark' : 's-I', x: k.x + (Math.random() - .5) * 40, y: k.y, vx: (Math.random() - .5) * 560, vy: -560 - Math.random() * 400, g: 1300, w: L.cs * (q % 3 ? .3 : .28), rot: Math.random() * 6, vr: (Math.random() - .5) * 10, life: 1.15, fade: .3, add: q % 3 !== 0, layer: 2 }), (hurry ? 10 : 40) * q);
     const l = { text: money(units), x: k.x, y: k.y, h: L.cs * .5, s: .4, a: 1 };
@@ -848,7 +908,7 @@
     if (tier < 0 && x >= 2 * cost) { await midWin(units); return; }
     if (tier < 0) {
       S.emit('winS'); smithAct('smith-cheer', 1.6);
-      burst(L.total.x, L.total.y, 'fx-spark', 10, 1);
+      burst(totalAt().x, totalAt().y, 'fx-spark', 10, 1);
       scene.totalPop = 1.4; tw(scene, { totalPop: 1 }, 600, R.E.elastic);
       await wait(1100);
       return;

@@ -260,6 +260,18 @@
     else if (kind === 'lose') set(0.6, 'dive', 1100);
     else if (kind === 'fever') { $.kv.classList.toggle('gold', !!o); v.playbackRate = o ? 1.5 : 1; if (o && !koiLeap()) { set(1.5, 'big', 1600); koiSplash(); } }
   }
+  // phone: the scroll never climbs over the buttons at the top (info, sound, the ink switch, the KOI FEVER and KOI SPRING
+  // stamps). If its top rod would, the board shrinks until the rod sits just under them (Lidor, iPhone, 2026-11-28)
+  function fitUnderHud(r, pad) {
+    if (!SK || !SK.S.ready || SK.S.wide) return;
+    const st = stageEl.getBoundingClientRect();
+    let hud = 0;
+    for (const el of [$.icons, $.modes, $.buy]) { if (!el || el.hidden) continue; const q = el.getBoundingClientRect(); if (q.height) hud = Math.max(hud, q.bottom - st.top); }
+    const b = SK.rect('board'), bottom = b.y + b.h, need = hud + 6;
+    if (!hud || b.y >= need || bottom - need < 40) return;
+    SK.layout(Math.max(2, r.width | 0), Math.max(2, r.height | 0), pad, SK.S.s * (bottom - need) / (bottom - b.y));
+    place();
+  }
   function place() {
     if (!SK || !SK.S.ready) return;
     const b = SK.rect('board'), k = SK.rect('koi'), l = SK.rect('launcher');
@@ -1283,8 +1295,12 @@
       Snd.load();
       try { await SK.build(stage, ART, { reduced: api.reduced }); if (pendingInk) SK.setInk(pendingInk); }
       catch (e) { stage.classList.add('sk-flat'); console.error(e); }
-      const resize = () => { const r = stage.getBoundingClientRect(); if (SK.S.ready) { const a = document.getElementById('lzAction'), ar = a ? a.getBoundingClientRect() : null, pad = ar ? Math.max(0, r.bottom - ar.top + 2) : 0; SK.layout(Math.max(2, r.width | 0), Math.max(2, r.height | 0), pad); place(); } };
+      const resize = () => { const r = stage.getBoundingClientRect(); if (SK.S.ready) { const a = document.getElementById('lzAction'), ar = a ? a.getBoundingClientRect() : null, pad = ar ? Math.max(0, r.bottom - ar.top + 2) : 0; SK.layout(Math.max(2, r.width | 0), Math.max(2, r.height | 0), pad); place(); fitUnderHud(r, pad); } };
       if ('ResizeObserver' in window) new ResizeObserver(resize).observe(stage); else window.addEventListener('resize', resize);
+      // the buttons above the scroll grow when their pictures and font arrive: the board is fitted under them again
+      if ('ResizeObserver' in window) { let q = 0; const ro = new ResizeObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; resize(); }); }); [$.icons, $.modes, $.buy].forEach(el => { if (el) ro.observe(el); }); }
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(resize);
+      [500, 1500, 3000].forEach(ms => setTimeout(resize, ms));
       resize();
       { const orig = SK.Koi.react.bind(SK.Koi); SK.Koi.react = (k, o) => { orig(k, o); koiFilm(k, o); }; }
       SK.S.onFrame = () => { SK.S.rate = (SK.S.feverOn ? 2.0 : 2.35) / api.speed(); if (SK.Koi.mesh && !SK.S.videoKoi) { const k = SK.rect('koi'); if (k) Object.assign($.koi.style, { left: k.x + 'px', top: k.y + 'px', width: Math.max(1, k.w) + 'px', height: Math.max(1, k.h) + 'px' }); } };

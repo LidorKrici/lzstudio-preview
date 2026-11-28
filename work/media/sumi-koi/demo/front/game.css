@@ -202,10 +202,9 @@ body{background:var(--wood);color:var(--ink)}
 .sk-intro.short .sk-notes,.sk-intro.short .lz-intro-tag{display:none}
 @media (max-height:520px){ .sk-notes span{display:none} .sk-notes b{font-size:13px} .sk-intro .lz-intro-logo{height:clamp(48px,16vh,110px)} }
 @media (max-height:330px){ .sk-notes,.sk-intro .lz-intro-tag,.sk-intro .lz-intro-fine,.sk-keep{display:none} .sk-sheet{padding:6px 12px;gap:4px} .sk-intro .lz-intro-logo{height:72px} .sk-intro .lz-intro-play{width:76px;height:76px;font-size:14px} }
-/* if the scroll is ever taller than the frame (the shrink in game.js missed a late font), it scrolls from its top
-   instead of being cut at both ends */
-.lz-intro.sk-intro{overflow-y:auto;place-items:start center;-webkit-overflow-scrolling:touch}
-.sk-intro .lz-intro-in{margin:auto}
+/* the intro never scrolls, in any direction: the scroll shrinks to fit (game.js). A scrolling intro let the phone drag
+   it left and right, because the rods are wider than the sheet (Lidor, iPhone, 2026-11-28) */
+.lz-intro.sk-intro{overflow:hidden;overscroll-behavior:none;touch-action:none}
 
 /* ---------- phone and small frames ---------- */
 /* phone: two rows. Top: turbo, -, the enso, +, auto. Under them: balance left, win right. Info and sound on the stage. */
@@ -826,3 +825,5 @@ body:has(.sk-stage.sk-tease) .sk-bg{filter:brightness(.42) saturate(.8)}
 #lzApp.sk-bar #lzAction.busy .sk-stop{opacity:0!important}
 #lzApp.sk-bar #lzAction.busy span{opacity:1!important}
 #lzApp.sk-bar #lzAction:disabled:not(.busy){opacity:1!important}
+/* the drops count always reads over the sleeping dragon (on a short phone the board sits lower and the dragon reached it) */
+.sk-drops{z-index:2}

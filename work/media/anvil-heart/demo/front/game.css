@@ -434,3 +434,64 @@ body.ah-busy .ah-app .lz-win{visibility:visible!important}
 @media (max-height:300px){:root{--ah-strip:28px;--ah-bar:70px}}
 /* both rows a little higher than the bottom edge (Lidor, 28.11; game.js sets --ah-lift in landscape) */
 .ah-app .lz-panel{bottom:var(--ah-lift,8px)!important}
+
+/* =====================================================================================================================
+   The phone and the square screen (Lidor, 28.11: "the phone does not sit well", after Waylanders Forge's screens).
+   game.js sets data-lay on the app (land / square / phone / tiny) and measures every size into the --ah-* variables.
+   ===================================================================================================================== */
+/* the square screen: the board in the middle, one row of controls under its frame */
+.ah-app[data-lay="square"] .ah-bc.ah-row{flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:6px!important}
+.ah-app[data-lay="square"] .ah-top{display:contents!important}
+.ah-app[data-lay="square"] .ah-top>#lzFast{order:1}
+.ah-app[data-lay="square"] .ah-pw{order:2!important;flex:1 1 auto!important;min-width:0!important;height:var(--ah-strip)!important}
+.ah-app[data-lay="square"] .ah-pb{order:3;flex:none!important;width:calc(var(--ah-s) * 2.9)!important;max-width:none!important;height:var(--ah-strip)!important}
+.ah-app[data-lay="square"] .ah-top>#lzAuto{order:4}
+.ah-app[data-lay="square"] .ah-top>.ah-spin{order:5}
+.ah-app[data-lay="square"] .ah-pw .lz-wallet b,.ah-app[data-lay="square"] .ah-pw .lz-win b{font-size:clamp(12px,calc(var(--ah-strip) * .34),20px)!important}
+.ah-app[data-lay="square"] .ah-sign{width:var(--ah-cardw)!important}
+.ah-app[data-lay="square"] .lz-modes button{width:var(--ah-modew)!important}
+
+/* the phone: a dark strip at the bottom. Above it turbo (left) and sound (right) float over the scene; in it the menu,
+   -, the big spin button, + and autoplay; under it one line with the balance, the play amount and the win */
+.ah-app[data-lay="phone"] .lz-panel{left:0!important;right:0!important;width:100%!important;bottom:0!important;height:calc(var(--ah-bar) + env(safe-area-inset-bottom,0px))!important;
+  padding:0 0 env(safe-area-inset-bottom,0px)!important;box-sizing:border-box}
+.ah-app[data-lay="phone"] .ah-bc.ah-row{display:grid!important;position:relative;isolation:isolate;width:100%!important;height:var(--ah-bar);margin:0!important;padding:0!important;gap:0!important;
+  grid-template-columns:1fr 1fr var(--ah-spin) 1fr 1fr;grid-template-rows:var(--ah-r1) var(--ah-r2) var(--ah-info);
+  grid-template-areas:"fast . spin . snd" "menu minus spin plus aut" "wal bet bet bet win";align-items:center;justify-items:center}
+.ah-app[data-lay="phone"] .ah-bc.ah-row::before{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--ah-r2) + var(--ah-info));background:rgba(16,10,6,.8);border-top:1px solid rgba(255,207,90,.3);z-index:-1;pointer-events:none}
+.ah-app[data-lay="phone"] .ah-bc.ah-row::after{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--ah-info);background:rgba(0,0,0,.55);z-index:-1;pointer-events:none}
+.ah-app[data-lay="phone"] .ah-top,.ah-app[data-lay="phone"] .ah-pb,.ah-app[data-lay="phone"] .ah-arrows,.ah-app[data-lay="phone"] .ah-pw{display:contents!important}
+.ah-app[data-lay="phone"] #lzFast{grid-area:fast;align-self:end;margin-bottom:8px}
+.ah-app[data-lay="phone"] #lzSound{grid-area:snd;align-self:end;margin-bottom:8px}
+.ah-app[data-lay="phone"] #lzInfo{grid-area:menu}
+.ah-app[data-lay="phone"] #lzAuto{grid-area:aut}
+.ah-app[data-lay="phone"] .ah-spin{grid-area:spin;width:var(--ah-spin)!important;height:var(--ah-spin)!important}
+.ah-app[data-lay="phone"] .ah-pb #lzMinus{grid-area:minus}
+.ah-app[data-lay="phone"] .ah-pb #lzPlus{grid-area:plus}
+.ah-app[data-lay="phone"] .ah-pb #lzPlus,.ah-app[data-lay="phone"] .ah-pb #lzMinus{width:var(--ah-s)!important;height:var(--ah-s)!important;background:none!important;border-radius:50%!important;
+  color:#fff3dc!important;font:300 calc(var(--ah-s) * .8)/1 "Outfit",sans-serif!important;display:grid!important;place-items:center}
+/* the line under the strip */
+.ah-app[data-lay="phone"] .lz-wallet{grid-area:wal;justify-self:start;align-items:flex-start!important;padding:0 0 0 14px!important}
+.ah-app[data-lay="phone"] .lz-win{grid-area:win;justify-self:end;align-items:flex-end!important;padding:0 14px 0 0!important;margin:0!important;visibility:visible!important}
+.ah-app[data-lay="phone"] .ah-pb .lz-amount{grid-area:bet;align-items:center!important;justify-content:center!important;height:auto!important;padding:0!important;cursor:pointer}
+.ah-app[data-lay="phone"] .lz-lbl,.ah-app[data-lay="phone"] .ah-pb .lz-amount::before{font:700 10px/1.15 "Outfit",sans-serif!important;letter-spacing:.1em!important;color:#e8cf8c!important;margin:0!important}
+.ah-app[data-lay="phone"] .lz-wallet b,.ah-app[data-lay="phone"] .lz-win b,.ah-app[data-lay="phone"] .ah-pb .lz-amount b{font-size:14px!important;line-height:1.2;-webkit-text-stroke:0!important;max-width:36vw}
+.ah-app[data-lay="phone"] .lz-amount.x5::before{content:none}
+.ah-app[data-lay="phone"] .lz-amount.x5 .ah-cost{font-size:10px!important}
+/* the fire modes and the bonus cards under the board (game.js pins their height); while a bonus plays its gauges sit there */
+.ah-app[data-lay="phone"] .lz-modes{flex-direction:row!important;gap:6px!important}
+.ah-app[data-lay="phone"] .lz-modes button{width:var(--ah-modew)!important;display:flex!important}
+.ah-app[data-lay="phone"] .lz-modes button::after{content:none!important}
+.ah-app[data-lay="phone"] .ah-signs{flex-direction:row!important;gap:8px!important}
+.ah-app[data-lay="phone"] .ah-sign{width:var(--ah-cardw)!important}
+body.ah-fs .ah-app[data-lay="phone"] .ah-signs,body.ah-fs .ah-app[data-lay="phone"] .lz-modes{visibility:hidden}
+
+/* during a round nothing changes on screen (Lidor, 28.11: "I don't want any change during a spin"). The spin button keeps
+   its look (tapping it still hurries the round, through the invisible hurry layer over it), and what cannot be pressed
+   now looks exactly the same, it just does nothing */
+.ah-hurry{background:none!important}
+.ah-hurry::after{content:none!important}
+.ah-app .lz-action.busy,.ah-app #lzAction:disabled{filter:none!important;opacity:1!important}
+.ah-app button:disabled{opacity:1!important;filter:none!important;cursor:default}
+body.ah-busy .ah-signs,body.ah-busy .ah-app .lz-modes,body.ah-busy #lzMinus,body.ah-busy #lzPlus{opacity:1!important}
+.ah-app .lz-modes button[aria-pressed="false"]:disabled{opacity:.5!important;filter:grayscale(.5) brightness(.8)!important}
