@@ -334,3 +334,10 @@ body.rc-busy .rc-sign{transition:filter .25s ease 0s}
 .rc-stagebox[data-land="0"] .rc-signs{top:var(--rc-signtop,60px)!important;left:50%!important;right:auto!important;transform:translateX(-50%);flex-direction:row!important;gap:1.5vw;visibility:visible!important;opacity:1!important}
 .rc-stagebox[data-land="0"] .rc-sign,.rc-stagebox[data-land="0"] .rc-app .rc-sign{width:var(--rc-signw,190px)!important}
 .rc-stagebox[data-land="0"] .rc-sign small{font-size:calc(var(--rc-signw,190px) * .1)!important}
+
+/* Lidor, 28.11 (phone): balance and win went out of the bar's frame. One line each: the label, then the amount */
+@media (max-aspect-ratio:3/4){
+  .rc-app .lz-wallet,.rc-app .lz-win{flex-direction:row!important;align-items:center!important;gap:6px;height:24px;padding:0 8px!important;overflow:hidden;box-sizing:border-box}
+  .rc-app .lz-wallet .lz-lbl,.rc-app .lz-win .lz-lbl{font-size:11px!important;line-height:1;margin:0}
+  .rc-app .lz-wallet b,.rc-app .lz-win b{font-size:min(var(--rc-t),15px)!important;line-height:1!important;max-width:30vw}
+}
