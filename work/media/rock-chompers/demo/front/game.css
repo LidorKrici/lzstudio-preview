@@ -322,3 +322,15 @@ body.rc-busy .rc-sign{transition:filter .25s ease 0s}
 /* the intro's play medallion: the shell gave the button a 180px minimum and a red glow box, which showed as a red
    square around the round button (Lidor, 28.11) */
 .rc-intro .lz-intro-play{min-width:0!important;box-shadow:none!important}  /* station:ok — the shell's glow off */
+/* Lidor, 28.11: "the intro on the phone, the faces are cut". Five faces at 18.5vw plus the gaps and the padding were
+   wider than the screen; now they fit with room for the 1.1x of the one that talks */
+@media (max-aspect-ratio:4/5){
+  .rc-ifaces{gap:1vw}
+  .rc-iface{width:min(16vw,13vh)}
+  .rc-intro .lz-intro-in{padding-left:2vw;padding-right:2vw}
+}
+
+/* Lidor, 28.11 (phone): the two buy signs side by side above the board, always there (they only darken in a round) */
+.rc-stagebox[data-land="0"] .rc-signs{top:var(--rc-signtop,60px)!important;left:50%!important;right:auto!important;transform:translateX(-50%);flex-direction:row!important;gap:1.5vw;visibility:visible!important;opacity:1!important}
+.rc-stagebox[data-land="0"] .rc-sign,.rc-stagebox[data-land="0"] .rc-app .rc-sign{width:var(--rc-signw,190px)!important}
+.rc-stagebox[data-land="0"] .rc-sign small{font-size:calc(var(--rc-signw,190px) * .1)!important}

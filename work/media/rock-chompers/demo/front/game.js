@@ -58,12 +58,14 @@
         winHud: { x: gx + gs * .24, y: gy + gs - gs * .035, h: H * .06 }, nightHud: { x: gx + gs * .76, y: gy + gs - gs * .035, h: H * .05 },
         meter: { x: W * .1, y: H * .6, h: H * .66 } };
     } else {
-      gs = Math.min(W * .98, H * .52); gx = (W - gs) / 2; gy = H * .085;
       const S2 = Math.max(44, Math.min(52, innerHeight * .06)), feet = H - Math.max(0, 1.15 * S2 - 34) - 4;
-      L = { land, tiny, cook: { x: W * .8, y: feet, h: Math.min(H * .25, feet - (gy + gs) - H * .1) }, cart: { x: W * .8, y: feet, w: W * .26 },
-        logo: { x: W * .74, y: H * .038, w: W * .34 }, title: { x: W / 2, y: gy + gs * .45, w: W * .92 },
-        winHud: { x: W * .5, y: gy + gs + H * .1, h: H * .045 }, nightHud: { x: W * .5, y: gy + gs + H * .15, h: H * .032 },
-        meter: { x: W * .1, y: (gy + gs + feet) / 2 + H * .05, h: Math.min(H * .24, feet - (gy + gs) - H * .1) } };
+      const signW = Math.min(W * .47, 220), signTop = 6 + S2 + 6, signH = signW / 2.45;
+      gy = signTop + signH + 4; gs = Math.min(W * .995, feet - gy - H * .2); gx = (W - gs) / 2;
+      const zt = gy + gs, zone = feet - zt;                         // the strip under the board
+      L = { land, tiny, signW, signTop, cook: { x: W * .83, y: feet, h: zone * 1.1 }, cart: { x: W * .8, y: feet, w: W * .26 },
+        logo: { x: W * .48, y: zt + zone * .1, w: Math.min(W * .34, zone) }, title: { x: W / 2, y: gy + gs * .45, w: W * .92 },
+        winHud: { x: W * .48, y: zt + zone * .72, h: zone * .19 }, nightHud: { x: W * .48, y: zt + zone * .93, h: zone * .13 },
+        meter: { x: W * .1, y: zt + zone * .52, h: zone * .98 } };
     }
     const pad = gs * .125;                                   // the carved frame around the 7x7 floor
     L.grid = { x: gx, y: gy, s: gs, ix: gx + pad, iy: gy + pad, cs: (gs - pad * 2) / N };
@@ -75,6 +77,7 @@
     const st = document.querySelector('.rc-stagebox');
     if (st) { st.dataset.land = L.land ? '1' : '0'; st.dataset.tiny = L.tiny ? '1' : '0'; }
     // Lidor, 28.11: the two buy signs bigger, centred in the space right of the board
+    if (st && !L.land) { st.style.setProperty('--rc-signtop', L.signTop + 'px'); st.style.setProperty('--rc-signw', L.signW + 'px'); }
     if (st && L.land) { const right = L.grid.x + L.grid.s, space = W - right, sw = Math.min(space * .78, H * .36, 330); st.style.setProperty('--rc-signx', (right + space / 2) + 'px'); st.style.setProperty('--rc-signw', sw + 'px'); }
     const cb = document.querySelector('.rc-cookbox');
     if (cb) { const h = L.cook.h, w = h * .6; Object.assign(cb.style, { left: (L.cook.x - w * .5) + 'px', top: (L.cook.y - h) + 'px', width: w + 'px', height: Math.min(h, H - (L.cook.y - h)) + 'px' }); }
