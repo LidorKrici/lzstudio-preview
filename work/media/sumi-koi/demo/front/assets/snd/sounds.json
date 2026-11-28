@@ -1,0 +1,486 @@
+{
+ "about": "Sumi Koi sound set v3 (2026-11-28): modern casino with a Japanese touch. Every sound is cut and layered from real recordings or hand-made game sounds in free CC0 packs (Kenney, OpenGameArt, VCSL, VSCO 2 CE; see CREDITS-sound.md). No AI-generated audio. Loops (loop: true) are seamless when played from a decoded buffer (Web Audio, AudioBufferSourceNode.loop).",
+ "key": "B hirajoshi (B C# D F# G), A = 440 Hz. koto_1..7 = glockenspiel D6 F#6 G6 B6 C#7 D7 F#7 (win ladder by cup value); bell_1..4 = tubular bell F#5 B5 D6 F#6 (multiplier climb); reel_stop_1..3 = B5 D6 F#6; music_base and music_fever are in the same key, so every ladder note fits both.",
+ "format": "webm = Opus 48 kHz (mono 48 kbps, stereo 64 kbps); mp4 = AAC-LC (mono 64 kbps, stereo 96 kbps, ambience 80 kbps). The webm copies are kept in sound/webm; the game loads the mp4 files.",
+ "music": {
+  "music_base": {
+   "bpm": 72,
+   "bars": 16,
+   "beatsPerBar": 4,
+   "downbeat": 0.04,
+   "note": "calm koto (dan tranh) piece with two shakuhachi swells; bar 1 beat 1 is at `downbeat` seconds into the file"
+  },
+  "music_fever": {
+   "bpm": 116,
+   "bars": 16,
+   "beatsPerBar": 4,
+   "downbeat": 0.04,
+   "note": "taiko patterns and a driving koto ostinato for KOI FEVER; bar 1 beat 1 (with a gong) is at `downbeat` seconds into the file"
+  }
+ },
+ "sounds": {
+  "pin_1": {
+   "files": [
+    "pin_1.mp4"
+   ],
+   "dur": 0.1,
+   "peak": -4.5,
+   "group": "impact"
+  },
+  "pin_2": {
+   "files": [
+    "pin_2.mp4"
+   ],
+   "dur": 0.1,
+   "peak": -4.5,
+   "group": "impact"
+  },
+  "pin_3": {
+   "files": [
+    "pin_3.mp4"
+   ],
+   "dur": 0.1,
+   "peak": -4.5,
+   "group": "impact"
+  },
+  "pin_4": {
+   "files": [
+    "pin_4.mp4"
+   ],
+   "dur": 0.1,
+   "peak": -4.5,
+   "group": "impact"
+  },
+  "pin_5": {
+   "files": [
+    "pin_5.mp4"
+   ],
+   "dur": 0.1,
+   "peak": -4.5,
+   "group": "impact"
+  },
+  "launch_1": {
+   "files": [
+    "launch_1.mp4"
+   ],
+   "dur": 0.12,
+   "peak": -3,
+   "group": "impact"
+  },
+  "launch_2": {
+   "files": [
+    "launch_2.mp4"
+   ],
+   "dur": 0.13,
+   "peak": -3,
+   "group": "impact"
+  },
+  "cup_1": {
+   "files": [
+    "cup_1.mp4"
+   ],
+   "dur": 0.3,
+   "peak": -3,
+   "group": "impact"
+  },
+  "cup_2": {
+   "files": [
+    "cup_2.mp4"
+   ],
+   "dur": 0.3,
+   "peak": -3,
+   "group": "impact"
+  },
+  "cup_3": {
+   "files": [
+    "cup_3.mp4"
+   ],
+   "dur": 0.31,
+   "peak": -3,
+   "group": "impact"
+  },
+  "cup_4": {
+   "files": [
+    "cup_4.mp4"
+   ],
+   "dur": 0.3,
+   "peak": -3,
+   "group": "impact"
+  },
+  "cup_empty": {
+   "files": [
+    "cup_empty.mp4"
+   ],
+   "dur": 0.19,
+   "peak": -4,
+   "group": "impact"
+  },
+  "koto_1": {
+   "files": [
+    "koto_1.mp4"
+   ],
+   "dur": 1.46,
+   "peak": -4.5,
+   "group": "ladder",
+   "note": "D6"
+  },
+  "koto_2": {
+   "files": [
+    "koto_2.mp4"
+   ],
+   "dur": 1.43,
+   "peak": -4.5,
+   "group": "ladder",
+   "note": "F#6"
+  },
+  "koto_3": {
+   "files": [
+    "koto_3.mp4"
+   ],
+   "dur": 1.43,
+   "peak": -4.5,
+   "group": "ladder",
+   "note": "G6"
+  },
+  "koto_4": {
+   "files": [
+    "koto_4.mp4"
+   ],
+   "dur": 1.44,
+   "peak": -4.5,
+   "group": "ladder",
+   "note": "B6"
+  },
+  "koto_5": {
+   "files": [
+    "koto_5.mp4"
+   ],
+   "dur": 1.43,
+   "peak": -4.5,
+   "group": "ladder",
+   "note": "C#7"
+  },
+  "koto_6": {
+   "files": [
+    "koto_6.mp4"
+   ],
+   "dur": 1.42,
+   "peak": -4.5,
+   "group": "ladder",
+   "note": "D7"
+  },
+  "koto_7": {
+   "files": [
+    "koto_7.mp4"
+   ],
+   "dur": 1.43,
+   "peak": -4.5,
+   "group": "ladder",
+   "note": "F#7"
+  },
+  "gate": {
+   "files": [
+    "gate.mp4"
+   ],
+   "dur": 1.3,
+   "peak": -3,
+   "group": "special"
+  },
+  "reel_tick": {
+   "files": [
+    "reel_tick.mp4"
+   ],
+   "dur": 0.05,
+   "peak": -9,
+   "group": "ui"
+  },
+  "reel_stop_1": {
+   "files": [
+    "reel_stop_1.mp4"
+   ],
+   "dur": 0.43,
+   "peak": -3,
+   "group": "reel",
+   "note": "B5"
+  },
+  "reel_stop_2": {
+   "files": [
+    "reel_stop_2.mp4"
+   ],
+   "dur": 0.42,
+   "peak": -3,
+   "group": "reel",
+   "note": "D6"
+  },
+  "reel_stop_3": {
+   "files": [
+    "reel_stop_3.mp4"
+   ],
+   "dur": 0.42,
+   "peak": -3,
+   "group": "reel",
+   "note": "F#6"
+  },
+  "reach": {
+   "files": [
+    "reach.mp4"
+   ],
+   "dur": 2.6,
+   "peak": -3,
+   "group": "special"
+  },
+  "stamp": {
+   "files": [
+    "stamp.mp4"
+   ],
+   "dur": 0.4,
+   "peak": -3,
+   "group": "special"
+  },
+  "taiko_1": {
+   "files": [
+    "taiko_1.mp4"
+   ],
+   "dur": 1.37,
+   "peak": -3,
+   "group": "stinger"
+  },
+  "taiko_2": {
+   "files": [
+    "taiko_2.mp4"
+   ],
+   "dur": 1.34,
+   "peak": -3,
+   "group": "stinger"
+  },
+  "taiko_3": {
+   "files": [
+    "taiko_3.mp4"
+   ],
+   "dur": 1.14,
+   "peak": -3,
+   "group": "stinger"
+  },
+  "taiko_roll": {
+   "files": [
+    "taiko_roll.mp4"
+   ],
+   "dur": 4.34,
+   "peak": -3,
+   "group": "stinger"
+  },
+  "gong": {
+   "files": [
+    "gong.mp4"
+   ],
+   "dur": 4.92,
+   "peak": -3,
+   "group": "stinger"
+  },
+  "bowl_big": {
+   "files": [
+    "bowl_big.mp4"
+   ],
+   "dur": 6,
+   "peak": -3,
+   "group": "stinger"
+  },
+  "bell_1": {
+   "files": [
+    "bell_1.mp4"
+   ],
+   "dur": 2.17,
+   "peak": -3,
+   "group": "ladder",
+   "note": "F#5"
+  },
+  "bell_2": {
+   "files": [
+    "bell_2.mp4"
+   ],
+   "dur": 2.17,
+   "peak": -3,
+   "group": "ladder",
+   "note": "B5"
+  },
+  "bell_3": {
+   "files": [
+    "bell_3.mp4"
+   ],
+   "dur": 2.17,
+   "peak": -3,
+   "group": "ladder",
+   "note": "D6"
+  },
+  "bell_4": {
+   "files": [
+    "bell_4.mp4"
+   ],
+   "dur": 2.17,
+   "peak": -3,
+   "group": "ladder",
+   "note": "F#6"
+  },
+  "count_loop": {
+   "files": [
+    "count_loop.mp4"
+   ],
+   "dur": 1,
+   "peak": -3,
+   "group": "count",
+   "loop": true
+  },
+  "win_end_1": {
+   "files": [
+    "win_end_1.mp4"
+   ],
+   "dur": 1.49,
+   "peak": -3,
+   "group": "stinger",
+   "note": "coin burst + taiko + upward glockenspiel run"
+  },
+  "win_end_2": {
+   "files": [
+    "win_end_2.mp4"
+   ],
+   "dur": 3.08,
+   "peak": -3,
+   "group": "stinger",
+   "note": "coin shower + firework boom + taiko + crash, dan tranh glissando and mark-tree sparkle"
+  },
+  "scroll_unroll": {
+   "files": [
+    "scroll_unroll.mp4"
+   ],
+   "dur": 1.45,
+   "peak": -3,
+   "group": "special"
+  },
+  "paper_1": {
+   "files": [
+    "paper_1.mp4"
+   ],
+   "dur": 0.41,
+   "peak": -3,
+   "group": "impact"
+  },
+  "paper_2": {
+   "files": [
+    "paper_2.mp4"
+   ],
+   "dur": 0.42,
+   "peak": -3,
+   "group": "impact"
+  },
+  "ui_tick": {
+   "files": [
+    "ui_tick.mp4"
+   ],
+   "dur": 0.06,
+   "peak": -9,
+   "group": "ui"
+  },
+  "amb_room": {
+   "files": [
+    "amb_room.mp4"
+   ],
+   "dur": 9.4,
+   "peak": -3.8,
+   "group": "ambience",
+   "loop": true
+  },
+  "amb_night": {
+   "files": [
+    "amb_night.mp4"
+   ],
+   "dur": 9.4,
+   "peak": -3.3,
+   "group": "ambience",
+   "loop": true
+  },
+  "music_base": {
+   "files": [
+    "music_base.mp4"
+   ],
+   "dur": 53.333,
+   "peak": -2,
+   "group": "music",
+   "loop": true,
+   "note": "B hirajoshi, 72 BPM, 16 bars of 4/4",
+   "bpm": 72,
+   "bars": 16,
+   "downbeat": 0.04
+  },
+  "music_fever": {
+   "files": [
+    "music_fever.mp4"
+   ],
+   "dur": 33.103,
+   "peak": -2,
+   "group": "music",
+   "loop": true,
+   "note": "B hirajoshi, 116 BPM, 16 bars of 4/4, taiko; the mix is gently compressed (3.5:1 above -24 dB)",
+   "bpm": 116,
+   "bars": 16,
+   "downbeat": 0.04
+  },
+  "roar": {
+   "files": [
+    "roar.mp4"
+   ],
+   "dur": 2.2,
+   "peak": -3,
+   "group": "stinger"
+  }
+ },
+ "pools": {
+  "pin": [
+   "pin_1",
+   "pin_2",
+   "pin_3",
+   "pin_4",
+   "pin_5"
+  ],
+  "launch": [
+   "launch_1",
+   "launch_2"
+  ],
+  "cup": [
+   "cup_1",
+   "cup_2",
+   "cup_3",
+   "cup_4"
+  ],
+  "taiko": [
+   "taiko_1",
+   "taiko_2",
+   "taiko_3"
+  ],
+  "paper": [
+   "paper_1",
+   "paper_2"
+  ]
+ },
+ "ladders": {
+  "koto": [
+   "koto_1",
+   "koto_2",
+   "koto_3",
+   "koto_4",
+   "koto_5",
+   "koto_6",
+   "koto_7"
+  ],
+  "reel_stop": [
+   "reel_stop_1",
+   "reel_stop_2",
+   "reel_stop_3"
+  ],
+  "bell": [
+   "bell_1",
+   "bell_2",
+   "bell_3",
+   "bell_4"
+  ]
+ }
+}

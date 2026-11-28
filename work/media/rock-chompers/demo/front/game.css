@@ -1,0 +1,324 @@
+/* Rock Chompers skin. The shell gives the mechanism; everything the player sees is the canyon's own:
+ * mossy stone buttons, wooden signs, a stone tablet, the fuse for loading. No CSS gradients or shadows for decoration
+ * (fix #4): every surface is a drawn image or a flat colour. The only "shadow" words below switch the shell's off. */
+@font-face{font-family:"Fredoka";src:url("fonts/fredoka.woff2") format("woff2");font-weight:300 700;font-display:swap}
+:root{
+  --lz-bg:#22301f;--lz-panel:#3b2a1c;--lz-panel-solid:#3b2a1c;--lz-line:#5c4128;--lz-text:#fff6e2;--lz-muted:#e7cfa3;
+  --lz-accent:#e23b2e;--lz-accent-ink:#fff6e2;--lz-accent2:#ffd23f;--lz-good:#8be05a;--lz-bad:#ff5a4a;
+  --lz-radius:14px;--lz-font-display:"Fredoka",sans-serif;--lz-font-body:"Fredoka",sans-serif;--lz-action-bg:transparent;
+  --lz-shadow:none; /* station:ok — switches the shell's shadows off */
+  --rc-ink:#3a1d0b;--rc-gold:#ffc93a;
+  --rc-s:clamp(32px,6.2vh,52px);            /* a stone button */
+  --rc-spin:calc(var(--rc-s) * 2.15);       /* the play medallion: 2.15x the other buttons (fix #1) */
+  --rc-bar:calc(var(--rc-s) + 16px);        /* the bar: one low row */
+  --rc-t:clamp(12px,2.8vh,19px);            /* text in the bar: at least 16px at 1024x576, 12px in the small popout */
+}
+@media (max-aspect-ratio:3/4){:root{--rc-s:clamp(44px,6vh,52px)}}
+@media (max-height:300px){:root{--rc-s:28px;--rc-bar:calc(var(--rc-s) + 14px)}}
+body{background:#22301f}
+
+/* ---------- The frame: the stage is the whole screen, the bar is one low row at the bottom ---------- */
+.lz-app.rc-app{padding:0;gap:0;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr) var(--rc-bar)!important;grid-template-areas:"stage" "panel"!important}
+.rc-app .lz-top{display:none}
+.rc-app .lz-stage{border:0;border-radius:0;background:#22301f}
+.rc-canvas{position:absolute;inset:0;display:block;touch-action:manipulation}
+.rc-app .lz-panel{grid-area:panel;position:relative;display:grid!important;grid-template-columns:1fr auto 1fr!important;grid-template-rows:minmax(0,1fr)!important;grid-template-areas:none!important;align-items:center;gap:6px;
+  padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px));overflow:visible;
+  background:url("assets/ledge.webp") center top/100% 100% no-repeat,#3a2a1a}
+.rc-app .lz-panel>*{grid-area:auto!important}
+.rc-app .lz-panel>:not(.rc-bl):not(.rc-bc):not(.rc-br):not(.lz-msg):not(.lz-replay){display:none!important}
+.rc-bl,.rc-br{display:flex;align-items:center;gap:6px;min-width:0}
+.rc-br{justify-content:flex-end}
+.rc-bc{display:flex;align-items:flex-end;align-self:end;gap:clamp(4px,1.2vw,14px);padding-bottom:6px}
+.rc-gone{display:none!important}
+
+/* stone buttons: every one is a drawn image */
+.rc-app .lz-icon,.rc-bc>#lzMinus,.rc-bc>#lzPlus,.rc-quick button{width:var(--rc-s)!important;height:var(--rc-s)!important;min-height:0;padding:0;border:0;border-radius:0;
+  background:center/contain no-repeat;color:transparent;font-size:0;flex:none}
+.rc-bc>#lzMinus,.rc-bc>#lzPlus{margin-bottom:calc(var(--rc-s) * .12)}
+.rc-app .lz-icon svg{display:none}
+#lzInfo{background-image:url("assets/b-info.webp")!important}
+#lzSound{background-image:url("assets/b-sound.webp")!important}
+#lzSound[aria-pressed="true"]{background-image:url("assets/b-mute.webp")!important}
+#lzMinus{background-image:url("assets/b-left.webp")!important}
+#lzPlus{background-image:url("assets/b-right.webp")!important}
+#lzFast{background-image:url("assets/b-turbo.webp")!important}
+#lzFast[aria-pressed="true"]{outline:3px solid var(--rc-gold);outline-offset:-3px}
+#lzAuto{background-image:url("assets/b-auto.webp")!important;position:relative}
+#lzAuto.on{color:#fff6e2!important;font-size:12px!important;font-weight:700;-webkit-text-stroke:3px var(--rc-ink);paint-order:stroke fill}
+.rc-quick{display:flex;gap:6px;flex:none}
+.rc-app button:not(:disabled):active{transform:translateY(2px) scale(.96)}
+.rc-app button:disabled{opacity:.4}
+
+/* info and sound: two stone knobs in the stage's top-left corner (the bar keeps at most 7 controls) */
+.rc-corner{position:absolute;left:max(6px,env(safe-area-inset-left,0px));top:6px;display:flex;gap:6px}
+
+/* the play button: the big stone medallion with a chili; while a round plays it is a stop square that hurries */
+.rc-spinw{position:relative;display:flex;flex-direction:column;align-items:center;padding-bottom:calc(var(--rc-s) * .78 + 3px)}
+.rc-spin{position:relative;width:var(--rc-spin);height:var(--rc-spin)}
+.rc-app #lzAction{position:absolute;inset:0;min-height:0;padding:0;border:0;border-radius:0;background:url("assets/b-play.webp") center/contain no-repeat;color:transparent}
+.rc-app .lz-action{box-shadow:none} /* station:ok — the shell's glow off */
+.rc-app #lzAction span,.rc-app #lzAction small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.rc-app #lzAction:not(:disabled):hover{filter:brightness(1.08)}
+.rc-app #lzAction.auto{background-image:url("assets/b-stop.webp")}
+.rc-app #lzAction:disabled{opacity:1}
+.rc-hurry{position:absolute;inset:0;border:0;padding:0;background:url("assets/b-stop.webp") center/contain no-repeat;display:none;cursor:pointer}
+body.rc-busy .rc-hurry{display:block}
+/* the amount: a badge on the lower rim of the medallion; it opens the game's own picker */
+.rc-app .lz-amount{position:absolute;left:50%;top:auto;bottom:0;transform:translateX(-50%);display:flex;flex-direction:row;gap:6px;align-items:center;justify-content:center;height:calc(var(--rc-s) * .78)!important;min-height:0!important;min-width:max-content;box-sizing:border-box;
+  border:2px solid var(--rc-ink);background:#6b4424;border-radius:10px;padding:0 10px;cursor:pointer;z-index:2}
+.rc-app .lz-amount b{font-size:var(--rc-t);line-height:1.15;color:#fff6e2}
+.rc-app .lz-amount.x5{flex-direction:row;gap:6px;align-items:baseline}
+.rc-app .lz-amount .rc-cost{font-size:var(--rc-t);line-height:1.1;font-weight:700;color:var(--rc-gold)}
+.rc-app .lz-amount .rc-cost:empty{display:none}
+.rc-app .lz-amount select{display:none}
+
+/* balance and win: plain readable text on the ledge */
+.rc-app .lz-wallet,.rc-app .lz-win{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border:0;border-radius:10px;background:#2a1a0e;min-width:0}
+.rc-app .lz-win{align-items:flex-end}
+.rc-app .lz-lbl{display:block;font-size:max(12px,min(16px,2.8vh));line-height:1.05;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#e8cf8c;opacity:.9;-webkit-text-stroke:0;margin-bottom:1px}
+.rc-app .lz-wallet b,.rc-app .lz-win b{font-size:var(--rc-t);color:var(--lz-text);font-weight:700;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
+.rc-app .lz-win.has b{color:var(--rc-gold)}
+body.rc-busy .rc-app .lz-win{visibility:hidden}
+body.rc-busy #lzMinus,body.rc-busy #lzPlus{opacity:.35;pointer-events:none}
+.rc-app .lz-msg{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);z-index:6;background:#3a1d0b;border:2px solid var(--rc-gold);color:var(--lz-text);white-space:nowrap;font-size:var(--rc-t)}
+.rc-app .lz-replay{grid-column:1/-1}
+.rc-replay{display:flex;flex-wrap:wrap;gap:2px 14px;justify-content:center;font-size:var(--rc-t)}
+.rc-fact{display:inline-flex;gap:6px}.rc-fact dt{color:var(--lz-muted)}.rc-fact dd{margin:0;color:#fff6e2;font-weight:700}
+
+/* the amount picker: the game's own window over the amount (fix #14) */
+.rc-amtpop{position:fixed;left:50%;bottom:calc(var(--rc-bar) + 10px);transform:translateX(-50%);z-index:40;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;
+  width:min(94vw,440px);max-height:calc(100vh - var(--rc-bar) - 20px);overflow:auto;padding:14px;border-radius:16px;background:#3b2a1c;border:3px solid var(--rc-ink);outline:2px solid #8a5a2b;outline-offset:-7px}
+.rc-amtpop button{min-height:44px;border-radius:10px;border:2px solid var(--rc-ink);background:#6b4424;color:var(--lz-text);font-weight:700;font-size:var(--rc-t);white-space:nowrap;overflow:hidden;padding:0 4px}
+.rc-amtpop button.on{background:var(--rc-gold);color:var(--rc-ink)}
+
+/* ---------- On the stage: the pepper switch and the feature signs ---------- */
+.rc-stagebox{position:absolute;inset:0;pointer-events:none;z-index:3}
+.rc-stagebox>*{pointer-events:auto}
+.rc-app .lz-modes{position:absolute;display:flex;gap:4px;padding:0;border-radius:0;background:transparent;border-style:solid;border-width:0;background:url("assets/ledge.webp") center/100% 100% no-repeat,#3a2a1a;padding:5px 7px;border-radius:12px}
+.rc-app .lz-modes button{display:flex;flex-direction:row;align-items:center;gap:5px;padding:0 10px;height:var(--rc-s);min-height:0;border:0;border-radius:10px;background:transparent;color:var(--lz-muted);min-width:0}
+.rc-app .lz-modes b,.rc-app .lz-modes small{font-size:var(--rc-t);font-weight:700;letter-spacing:0}
+.rc-app .lz-modes small{color:var(--rc-gold)}
+.rc-app .lz-modes button[aria-pressed="true"]{background:#c8281c;color:#fff6e2;-webkit-text-stroke:3px #4a0c04;paint-order:stroke fill}
+.rc-app .lz-modes button:not([aria-pressed="true"]){color:#f3dfb4;-webkit-text-stroke:3px #2a1406;paint-order:stroke fill}
+.rc-app .lz-modes button[data-mode="reaper"][aria-pressed="true"]{background:#6a0c14}
+.rc-signs{position:absolute;display:flex;flex-direction:column;gap:4px}
+.rc-app .rc-sign{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;width:clamp(130px,30vh,250px);aspect-ratio:2.05;padding:11% 6% 3% 16%;border:0;border-radius:0;
+  background:url("assets/sign.webp") center/contain no-repeat;color:#fff6e2;transform-origin:50% 0}
+.rc-app .rc-sign span,.rc-app .rc-sign small{font-size:min(var(--rc-t),4.1vw);font-weight:700;line-height:1.1;-webkit-text-stroke:4px var(--rc-ink);paint-order:stroke fill;white-space:nowrap}
+.rc-app .rc-sign span{color:#fff6e2}.rc-app .rc-sign small{color:var(--rc-gold)}
+@media (hover:hover){.rc-app .rc-sign:not(:disabled):hover{animation:rcSway 1.2s ease-in-out infinite}}
+@keyframes rcSway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+body.rc-busy .rc-signs{opacity:.45;pointer-events:none}
+body.rc-busy .rc-stagebox[data-land="0"] .rc-signs{visibility:hidden}
+body.rc-busy .rc-app .lz-modes{visibility:hidden}
+/* landscape: signs top-right, the switch under the logo */
+.rc-stagebox[data-land="1"] .rc-signs{right:1%;top:1%}
+.rc-stagebox[data-land="1"] .lz-modes{left:1.5%;top:25%}
+/* portrait: signs on the right between the faces and the bar, the switch on the left */
+.rc-stagebox[data-land="0"] .rc-signs{right:1.5%;top:55%}
+.rc-stagebox[data-land="0"] .rc-sign{width:clamp(130px,36vw,190px)}
+.rc-stagebox[data-land="0"] .lz-modes{left:1.5%;top:53.5%}
+/* the small popouts: compact */
+.rc-stagebox[data-tiny="1"] .rc-sign{width:110px;padding:10% 5% 3% 15%}
+.rc-stagebox[data-tiny="1"] .rc-sign span,.rc-stagebox[data-tiny="1"] .rc-sign small{font-size:12px;-webkit-text-stroke:3px var(--rc-ink)}
+.rc-stagebox[data-tiny="1"] .lz-modes{top:auto;bottom:2%;left:1%;padding:2px}
+.rc-stagebox[data-tiny="1"] .lz-modes button{min-height:28px;padding:2px 6px}
+.rc-stagebox[data-tiny="1"] .lz-modes small{display:none}
+
+/* ---------- Windows: the stone tablet (feature confirmation, autoplay, rules) ---------- */
+.lz-modal{background:rgba(20,12,6,.62)}
+.lz-modal>div{background:#e9d6ac!important;color:#3a1d0b!important;border:4px solid var(--rc-ink)!important;border-radius:22px!important;outline:3px solid #9a7a4a;outline-offset:-10px}
+.lz-modal>div,.lz-toast,.lz-modal button{box-shadow:none!important} /* station:ok — the shell's shadows off */
+#lzBuy>div{background:transparent!important;border-style:solid!important;border-width:clamp(46px,9vw,92px) clamp(58px,11vw,120px)!important;border-image:url("assets/tablet.webp") 33% 21% fill / 1 / 0 stretch!important;border-radius:0!important;outline:0!important;padding:0 4px!important;width:min(94vw,640px);max-width:none!important;box-sizing:border-box;text-align:center}
+#lzBuy>div *{position:relative}
+#lzBuy h2{font-size:clamp(16px,3.4vh,26px)}#lzBuy p{font-size:clamp(12px,2.8vh,17px)}
+.lz-modal h2{font-family:var(--lz-font-display);color:#3a1d0b;font-weight:700}
+.lz-modal p,.lz-modal li,.lz-modal td,.lz-modal th,.lz-modal dd,.lz-modal dt,.lz-modal label,.lz-modal .lz-note,.lz-modal .lz-sum{color:#3a1d0b!important}
+.lz-modal .lz-btns button{white-space:nowrap;min-height:44px;border-radius:999px!important;border:3px solid var(--rc-ink)!important;font-weight:700;padding:8px 18px;font-size:var(--rc-t)}
+.lz-modal .lz-go{background:#e23b2e!important;color:#fff6e2!important}
+.lz-modal .lz-ghost{background:#c9b184!important;color:#3a1d0b!important}
+.lz-modal .lz-seg button{border:2px solid var(--rc-ink)!important;background:#c9b184!important;color:#3a1d0b!important}
+.lz-modal .lz-seg button[aria-pressed="true"]{background:#e23b2e!important;color:#fff6e2!important}
+.lz-modal table{border-collapse:collapse}.lz-modal td,.lz-modal th{border-bottom:1px solid #b89a68;padding:4px 6px;text-align:left}
+.lz-modal .lz-icon{background:#c9b184;border:2px solid var(--rc-ink);color:#3a1d0b}
+.lz-toast{background:#3a1d0b!important;color:#fff6e2!important;border:2px solid var(--rc-gold)!important}
+
+/* ---------- The intro: the cliff asleep; one face at a time talks in its sleep; the fuse burns while it loads ---------- */
+.lz-intro.rc-intro{background:#22301f url("assets/bg-mid.jpg") center/cover no-repeat}
+.rc-intro .lz-intro-in{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(4px,1.4vh,14px);width:100%;max-width:1200px;height:100%;padding:2vh 3vw;box-sizing:border-box}
+.rc-intro .lz-intro-logo{width:min(56vw,40vh,460px);height:auto}
+.rc-intro .lz-intro-logo img{width:100%;height:auto;display:block}
+.rc-intro .lz-intro-tag{display:none}
+.rc-intro .lz-intro-cards{width:100%;display:block!important}
+.rc-ifaces{display:flex;justify-content:center;align-items:flex-end;gap:clamp(2px,1.2vw,16px);margin-top:min(19vh,170px)}
+.rc-iface{position:relative;width:min(15vw,17vh,160px);flex:none}
+.rc-iface img{width:100%;display:block;animation:rcDoze 3.2s ease-in-out infinite}
+.rc-iface.f1,.rc-iface.f3{margin-bottom:3vh}
+.rc-iface.f1 img{animation-delay:-.8s}.rc-iface.f2 img{animation-delay:-1.6s}.rc-iface.f3 img{animation-delay:-2.3s}.rc-iface.f4 img{animation-delay:-.4s}
+.rc-iface.awake img,.rc-iface.talk img{animation:none;transform:scale(1.1) rotate(-3deg)}
+@keyframes rcDoze{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2%) scale(1.03,.98)}}
+.rc-bubble{display:none;position:absolute;bottom:96%;width:min(56vw,430px);padding:16px 18px 28px;box-sizing:border-box;
+  background:url("assets/bubble.webp") center/100% 100% no-repeat;color:#3a1d0b;text-align:center;line-height:1.25}
+.rc-iface.talk .rc-bubble{display:block}
+.rc-iface.f0 .rc-bubble{left:0}.rc-iface.f2 .rc-bubble{left:50%;transform:translateX(-50%)}.rc-iface.f4 .rc-bubble{right:0}
+.rc-bubble b{display:block;font-size:clamp(14px,3.2vh,22px);font-weight:700;color:#c8281c}
+.rc-bubble span{display:block;font-size:clamp(12px,2.8vh,17px);font-weight:500}
+.rc-intro .lz-intro-load.rc-fuse{position:relative;width:min(70vw,520px);height:clamp(12px,2.2vh,20px);background:none;border:0;border-radius:0;overflow:visible}
+.rc-intro .lz-intro-load.rc-fuse i#lzIntroBar{position:absolute;inset:0;transform:none!important;background:url("assets/fuse.webp") left center/100% 100% no-repeat;clip-path:inset(0 calc((1 - var(--k,0)) * 100%) 0 0)}
+.rc-fuse .rc-spark{position:absolute;top:50%;left:calc(var(--k,0) * 100%);width:clamp(28px,5vh,44px);aspect-ratio:1;transform:translate(-50%,-50%);background:url("assets/fx-spark.webp") center/contain no-repeat;animation:rcSpin .6s linear infinite}
+@keyframes rcSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.rc-intro .lz-intro-play{flex:none;width:clamp(64px,14vh,120px);height:clamp(64px,14vh,120px);padding:0;border:0;border-radius:0;background:url("assets/b-play.webp") center/contain no-repeat;color:transparent;font-size:0}
+.rc-intro .lz-intro-play:focus-visible{outline:0}
+.rc-intro .lz-intro-play:disabled{opacity:.55}
+.rc-intro .lz-intro-play:not(:disabled){animation:rcPulse 1.4s ease-in-out infinite}
+@keyframes rcPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.rc-intro .lz-intro-fine,.rc-skip{margin:0;font-size:clamp(12px,2.8vh,16px);font-weight:600;color:#fff6e2;-webkit-text-stroke:3px var(--rc-ink);paint-order:stroke fill}
+.rc-skip{display:flex;align-items:center;gap:6px}
+.rc-skip input{width:18px;height:18px;accent-color:#e23b2e}
+.rc-intro .lz-intro-err{color:#fff6e2;background:#3a1d0b;padding:8px 14px;border-radius:12px}
+.rc-intro .lz-studio{display:none}
+.lz-intro.rc-intro.out{animation:rcIntroOut .5s ease-in forwards}
+@keyframes rcIntroOut{to{opacity:0;transform:scale(1.06)}}
+/* portrait phones: the faces a bit bigger, the bubble wider */
+@media (max-aspect-ratio:4/5){
+  .rc-iface{width:min(18.5vw,13vh)}
+  .rc-bubble{width:min(84vw,360px)}
+  .rc-ifaces{margin-top:min(20vh,190px)}
+}
+/* wide screens up to ~640 tall (1024x576 and such): everything a little smaller, so the last line is not cut */
+@media (max-height:640px) and (min-aspect-ratio:1/1){
+  .rc-intro .lz-intro-in{gap:clamp(3px,.9vh,8px);padding:1.4vh 3vw}
+  .rc-intro .lz-intro-logo{width:min(40vw,30vh,360px)}
+  .rc-ifaces{margin-top:min(21vh,130px)}
+  .rc-iface{width:min(12vw,15vh)}
+  .rc-intro .lz-intro-play{width:clamp(56px,11.5vh,96px);height:clamp(56px,11.5vh,96px)}
+}
+/* short screens (landscape phones, popouts): small faces, the "fine print" goes */
+@media (max-height:440px){
+  .rc-intro .lz-intro-logo{width:min(40vw,32vh)}
+  .rc-ifaces{margin-top:min(24vh,100px)}
+  .rc-iface{width:min(10vw,14vh)}
+  .rc-bubble{width:min(52vw,320px);padding:8px 12px 16px}
+  .rc-intro .lz-intro-fine{display:none}
+}
+@media (max-height:300px){
+  .rc-intro .lz-intro-cards{display:none!important}
+  .rc-intro .lz-intro-logo{width:min(46vw,48vh)}
+  .rc-intro .lz-intro-in{gap:6px}
+  .rc-intro .lz-intro-play{width:56px;height:56px}
+}
+
+/* reduced motion: no sway, no pulse */
+@media (prefers-reduced-motion:reduce){.rc-iface img,.rc-intro .lz-intro-play,.rc-fuse .rc-spark,.rc-app .rc-sign{animation:none!important}}
+/* portrait phones: turbo and auto join info and sound in the top-left corner; the bar keeps balance, play, win */
+@media (max-aspect-ratio:3/4){
+  :root{--rc-bar:calc(var(--rc-s) + 16px + 24px)}
+  .rc-app .lz-panel{grid-template-columns:1fr 1fr!important;grid-template-rows:24px minmax(0,1fr)!important;row-gap:0}
+  .rc-app .lz-panel>.rc-bl{grid-area:1/1/2/2!important;align-self:center}
+  .rc-app .lz-panel>.rc-br{grid-area:1/2/2/3!important;align-self:center}
+  .rc-app .lz-panel>.rc-bc{grid-area:2/1/3/3!important;justify-self:center}
+  .rc-app .lz-wallet,.rc-app .lz-win{padding:0 8px;background:transparent}
+  .rc-app .lz-panel .lz-win{align-items:flex-end!important;margin-left:auto}
+  .rc-app .lz-panel .rc-br{justify-content:flex-end}
+  .rc-app .lz-wallet b,.rc-app .lz-win b{max-width:46vw;-webkit-text-stroke:3px #2a1a0e;paint-order:stroke fill}
+  body.rc-busy #lzMinus,body.rc-busy #lzPlus{visibility:hidden}
+  .rc-spinw{flex-direction:row-reverse;align-items:flex-end;gap:6px;padding-bottom:0}
+  .rc-app .lz-amount{position:static;transform:none;height:var(--rc-s)!important;margin-bottom:0}
+  .rc-quick{position:fixed;top:6px;left:calc(max(6px,env(safe-area-inset-left,0px)) + (var(--rc-s) + 6px) * 2);z-index:4}
+  .rc-br{justify-content:flex-end}
+}
+/* phones: + and - go (the amount badge opens the picker), the balance and win stay readable */
+@media (max-width:399px){.rc-bc>#lzMinus,.rc-bc>#lzPlus{display:none}}
+@media (max-width:600px){
+  .rc-quick{gap:4px}
+  .rc-app .lz-wallet,.rc-app .lz-win{padding:2px 6px}
+  .rc-app .lz-wallet b,.rc-app .lz-win b{max-width:30vw}
+}
+
+/* layout markers for the checks: invisible */
+.rc-cookbox{position:absolute;pointer-events:none;z-index:0}
+.rc-celeb{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;pointer-events:none}
+.rc-celeb.on{left:25%;top:30%;width:50%;height:30%;clip:auto;color:transparent}
+
+@media (max-aspect-ratio:3/4) and (max-width:370px){.rc-stagebox[data-land="0"] .lz-modes button[aria-pressed="false"]{display:none}.rc-stagebox[data-land="0"] .lz-modes button[aria-pressed="true"]::after{content:"⇄";margin-left:4px;color:#fff6e2}}
+
+/* the night's opening card: a stone tablet with the night's title, how many feasts, and a tap to go */
+.rc-ncard{position:absolute;left:50%;top:48%;z-index:30;width:min(86vw,560px);box-sizing:border-box;text-align:center;color:#fff3d6;font-family:"Fredoka",system-ui,sans-serif;
+  border-style:solid;border-width:clamp(40px,8vw,84px) clamp(50px,10vw,110px);border-image:url("assets/tablet.webp") 33% 21% fill / 1 / 0 stretch;
+  transform:translate(-50%,-50%) scale(.6);opacity:0;transition:transform .45s cubic-bezier(.2,1.6,.4,1),opacity .25s;pointer-events:auto;cursor:pointer;-webkit-text-stroke:3px #2a1406;paint-order:stroke fill}
+.rc-ncard.on{transform:translate(-50%,-50%) scale(1);opacity:1}
+.rc-ncard img{display:block;width:92%;margin:-8% auto 2%}
+.rc-ncard b{display:block;font-size:clamp(24px,5.4vw,44px);font-weight:700;color:#ffd35a;letter-spacing:.04em}
+.rc-ncard p{margin:.3em 0 .6em;font-size:clamp(15px,3vw,21px);font-weight:500}
+.rc-ncard i{display:block;font-style:normal;font-size:clamp(14px,2.6vw,18px);font-weight:700;letter-spacing:.12em;color:#ffe9b0;animation:rcBlink 1.1s ease-in-out infinite}
+@keyframes rcBlink{50%{opacity:.35}}
+
+/* the night look: the buy signs are dark carved panels like the bar */
+.rc-app .rc-sign{background:url("assets/ledge.webp") center/100% 100% no-repeat!important;padding:6% 6% 4%!important}
+/* the phone: the two buy signs sit side by side in one row under the board */
+.rc-stagebox[data-land="0"] .rc-signs{right:auto!important;left:50%!important;top:62%!important;transform:translateX(-50%);flex-direction:row!important;gap:2vw}
+.rc-stagebox[data-land="0"] .rc-app .rc-sign,.rc-stagebox[data-land="0"] .rc-sign{width:min(42vw,190px)!important}
+
+/* the night look (28.11): the windows are dark carved stone with gold, like the tablet, the bar and the buy signs */
+.lz-modal>div{background:#1a110c!important;color:#f3e2c0!important;border:3px solid #c9973f!important;outline:2px solid #4a2e18;outline-offset:-9px}
+.lz-modal h2{color:#ffd35a!important}
+.lz-modal p,.lz-modal li,.lz-modal td,.lz-modal th,.lz-modal dd,.lz-modal dt,.lz-modal label,.lz-modal .lz-note,.lz-modal .lz-sum{color:#f3e2c0!important}
+.lz-modal b{color:#ffd35a}
+.lz-modal .lz-btns button{border:2px solid #c9973f!important}
+.lz-modal .lz-ghost,.lz-modal .lz-seg button,.lz-modal .lz-icon{background:#3a2616!important;color:#f3e2c0!important;border-color:#c9973f!important}
+.lz-modal td,.lz-modal th{border-bottom-color:#4a2e18}
+#lzBuy>div{border:0!important;border-style:solid!important;border-width:clamp(40px,8vw,80px) clamp(30px,6vw,60px)!important;border-image:url("assets/tablet.webp") 22% 9% fill / 1 / 0 stretch!important;outline:0!important}
+.rc-ncard{border-width:clamp(36px,7vw,72px) clamp(28px,5.5vw,56px);border-image:url("assets/tablet.webp") 22% 9% fill / 1 / 0 stretch}
+
+/* Lidor, 28.11: "things disappear for a second with every autoplay round". Nothing vanishes during a round:
+   the signs, the modes, the win and the amount buttons dim softly, and wait a moment before they light again,
+   so between two autoplay rounds they stay dim instead of blinking */
+body.rc-busy .rc-stagebox[data-land="0"] .rc-signs{visibility:visible;opacity:0}
+body.rc-busy .rc-app .lz-modes{visibility:visible;opacity:.35;pointer-events:none}
+.rc-signs,.rc-app .lz-modes,#lzMinus,#lzPlus{transition:opacity .35s ease .8s}
+body.rc-busy .rc-signs,body.rc-busy .rc-app .lz-modes,body.rc-busy #lzMinus,body.rc-busy #lzPlus{transition:opacity .25s ease 0s}
+
+/* Lidor, 28.11: "upgrade the part that counts the prize". On wide screens balance and win are two carved night panels:
+   a gold label, a display number, and the win lights up gold and pops every time it lands (phones keep the slim bar) */
+@media (min-aspect-ratio:3/4){
+  .rc-app .lz-wallet,.rc-app .lz-win{position:relative;background:url("assets/ledge.webp") center/100% 100% no-repeat!important;border-radius:0;padding:4px 14px 5px;align-items:center!important;justify-content:center}
+  .rc-app .lz-wallet .lz-lbl,.rc-app .lz-win .lz-lbl{color:#c9973f;letter-spacing:.2em;font-size:max(12px,min(16px,2.8vh));margin:0}
+  .rc-app .lz-wallet b,.rc-app .lz-win b{font-family:var(--lz-font-display);line-height:1.05;color:#fff3d6;-webkit-text-stroke:3px #1a0f08;paint-order:stroke fill;max-width:none;overflow:visible}
+  .rc-app .lz-win.has b{color:#ffd35a}
+  .rc-app .lz-win.has::before{content:"";position:absolute;inset:0;background:url("assets/fx-flash.webp") center/contain no-repeat;opacity:.45;mix-blend-mode:screen;pointer-events:none;animation:rc-winglow 1.6s ease-in-out infinite}
+  .rc-app .lz-win.rc-pop b{animation:rc-winpop .5s cubic-bezier(.2,1.8,.4,1)}
+}
+@keyframes rc-winpop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+@keyframes rc-winglow{0%,100%{opacity:.3}50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.rc-app .lz-win.rc-pop b,.rc-app .lz-win.has::before{animation:none!important}}
+
+/* Lidor, 28.11: "make the two signs bigger, and never see-through". On wide screens they are centred right of the board,
+   sized to that space; during a round they only darken a little (never transparent, never gone) */
+.rc-stagebox[data-land="1"] .rc-signs{right:auto;left:var(--rc-signx,85%);top:2.5%;transform:translateX(-50%);gap:6px}
+.rc-stagebox[data-land="1"] .rc-sign{width:var(--rc-signw,250px)!important}
+.rc-stagebox[data-land="1"] .rc-sign span{font-size:calc(var(--rc-signw,250px) * .088)!important}
+.rc-stagebox[data-land="1"] .rc-sign small{font-size:calc(var(--rc-signw,250px) * .082)!important}
+body.rc-busy .rc-stagebox[data-land="1"] .rc-signs,.rc-stagebox[data-land="1"] .rc-signs{opacity:1!important;visibility:visible!important}
+body.rc-busy .rc-sign{filter:brightness(.72) saturate(.8)}
+.rc-sign{transition:filter .35s ease .8s}
+body.rc-busy .rc-sign{transition:filter .25s ease 0s}
+.rc-app .rc-sign:disabled,.rc-app .rc-sign[disabled]{opacity:1!important}
+
+/* Lidor, 28.11: "the signs are not at a high enough level". Each buy sign is now its own painted sign with the title in it;
+   the price (it changes with the play amount) sits in the empty strip at its bottom */
+.rc-app .rc-sign{aspect-ratio:2.45!important;padding:0 0 4.5%!important;justify-content:flex-end!important;background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important}
+.rc-app .rc-sign[data-mode="night"]{background-image:url("assets/sign-night.webp")!important}
+.rc-app .rc-sign[data-mode="wheel"]{background-image:url("assets/sign-wheel.webp")!important;padding-bottom:3.5%!important}
+.rc-app .rc-sign span{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.rc-app .rc-sign small{font-family:var(--lz-font-display);color:#ffd35a!important;-webkit-text-stroke:4px #1a0f08;paint-order:stroke fill;letter-spacing:.03em}
+.rc-stagebox[data-land="1"] .rc-sign small{font-size:calc(var(--rc-signw,250px) * .1)!important}
+.rc-stagebox[data-land="0"] .rc-sign small{font-size:min(var(--rc-t),4.6vw)!important}
+
+/* Lidor, 28.11: "the red square around the arrow". It was the browser's focus frame on the round buttons;
+   the painted buttons and signs show focus as a soft brightening instead of a box */
+.rc-app button:focus-visible,.rc-app .rc-sign:focus-visible,.rc-hurry:focus-visible{outline:0!important}
+.rc-app #lzAction:focus-visible,.rc-hurry:focus-visible,.rc-app .lz-icon:focus-visible,.rc-app .rc-sign:focus-visible,.rc-app #lzMinus:focus-visible,.rc-app #lzPlus:focus-visible{filter:brightness(1.18)}
+/* the intro's play medallion: the shell gave the button a 180px minimum and a red glow box, which showed as a red
+   square around the round button (Lidor, 28.11) */
+.rc-intro .lz-intro-play{min-width:0!important;box-shadow:none!important}  /* station:ok — the shell's glow off */
