@@ -354,3 +354,6 @@ body.rc-busy .rc-sign{transition:filter .25s ease 0s}
   :root{--rc-bar:calc(var(--rc-s) + 16px + 24px + 24px)}
   .rc-app .lz-panel{padding:calc(var(--rc-bar) * .22) 16px 0!important}
 }
+@media (max-aspect-ratio:3/4){
+  .rc-app .lz-wallet,.rc-app .lz-win,.rc-app .lz-panel .lz-win{gap:6px!important;align-items:center!important}
+}

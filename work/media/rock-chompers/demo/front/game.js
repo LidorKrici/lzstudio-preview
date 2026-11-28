@@ -59,16 +59,15 @@
         meter: { x: W * .1, y: H * .6, h: H * .66 } };
     } else {
       const S2 = Math.max(44, Math.min(52, innerHeight * .06)), feet = H - Math.max(0, 1.15 * S2 - 34) - 4;
-      const logoW = Math.min(W * .52, 240), logoH = logoW * .551, logoTop = 4 + S2 + 2;
-      const signW = Math.min(W * .47, 220), signH = signW / 2.45, signTop = logoTop + logoH * .92 + 2;
-      const top = signTop + signH + 6, avail = feet - top;
-      gs = Math.min(W * .74, avail); gx = (W - gs) / 2; gy = top + Math.max(0, (avail - gs) * .35);
-      const mh = Math.min(gs * .9, gx * 1.45 / .403), mw = mh * .403;              // the totem in the left gutter
-      const ch = Math.min(gs * .62, gx * 1.7 / .644), cw = ch * .644;               // the lizard in the right gutter
-      L = { land, tiny, signW, signTop, cook: { x: W - cw / 2 - 2, y: gy + gs * .97, h: ch }, cart: { x: W * .8, y: feet, w: W * .26 },
+      const logoW = Math.min(W * .42, 200), logoH = logoW * .551, logoTop = 4 + S2 + 2;
+      const signW = Math.min(W * .45, 210), signH = signW / 2.45, signTop = logoTop + logoH * .9 + 2;
+      const top = signTop + signH + 4;
+      gs = Math.min(W * .985, feet - top - 90); gx = (W - gs) / 2; gy = feet - gs;   // the board sits down on the bar
+      const row = gy - top;                                                         // the totem and the lizard stand above it
+      L = { land, tiny, signW, signTop, cook: { x: W * .8, y: gy + gs * .07, h: row * 1.12 + gs * .07 }, cart: { x: W * .8, y: feet, w: W * .26 },
         logo: { x: W * .5, y: logoTop + logoH * .3, w: logoW }, title: { x: W / 2, y: gy + gs * .45, w: W * .92 },
         winHud: { x: gx + gs * .3, y: gy + gs - gs * .035, h: gs * .07 }, nightHud: { x: gx + gs * .74, y: gy + gs - gs * .035, h: gs * .055 },
-        meter: { x: Math.max(mw / 2 + 2, gx * .5), y: gy + gs * .5, h: mh } };
+        meter: { x: W * .2, y: top + row * .52 + gs * .02, h: row * 1.04 } };
     }
     const pad = gs * .125;                                   // the carved frame around the 7x7 floor
     L.grid = { x: gx, y: gy, s: gs, ix: gx + pad, iy: gy + pad, cs: (gs - pad * 2) / N };
