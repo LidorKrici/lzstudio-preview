@@ -442,6 +442,12 @@
     };
     fit(); window.addEventListener('resize', fit);
     if (document.fonts) document.fonts.ready.then(fit);
+    // iPhone Safari: fonts.ready can resolve before the display font is even asked for, so the text grew after the
+    // last fit and pushed Play off the bottom. Refit whenever a font lands or the scroll changes size, and a few
+    // times while the intro unrolls.
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', fit);
+    if (window.ResizeObserver) { let q = 0; new ResizeObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; fit(); }); }).observe(sheet); }
+    [300, 900, 2000, 4000].forEach(ms => setTimeout(fit, ms));
     [...sc.querySelectorAll('img')].forEach(im => { if (!im.complete) im.addEventListener('load', fit); });
     I.querySelectorAll('.lz-intro-logo img').forEach(im => { if (!im.complete) im.addEventListener('load', fit); });
     // the exit: the scroll flies to where the board hangs, then the board takes over
@@ -1260,7 +1266,7 @@
     onMode(name) { setInkFor(name); },
     introCards: FEATS.map(f => ({ title: f.title, text: f.text })),
     featureName: 'KOI FEVER', statLabel: 'Fevers',
-    playLabel: 'PLAY', busyLabel: 'PLAYING',
+    playLabel: 'PLAY', busyLabel: 'PLAY',
     rules: RULES,
     async mount(stage, a) {
       api = a; stageEl = stage; SK = window.SK;

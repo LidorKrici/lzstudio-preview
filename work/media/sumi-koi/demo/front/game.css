@@ -202,6 +202,10 @@ body{background:var(--wood);color:var(--ink)}
 .sk-intro.short .sk-notes,.sk-intro.short .lz-intro-tag{display:none}
 @media (max-height:520px){ .sk-notes span{display:none} .sk-notes b{font-size:13px} .sk-intro .lz-intro-logo{height:clamp(48px,16vh,110px)} }
 @media (max-height:330px){ .sk-notes,.sk-intro .lz-intro-tag,.sk-intro .lz-intro-fine,.sk-keep{display:none} .sk-sheet{padding:6px 12px;gap:4px} .sk-intro .lz-intro-logo{height:72px} .sk-intro .lz-intro-play{width:76px;height:76px;font-size:14px} }
+/* if the scroll is ever taller than the frame (the shrink in game.js missed a late font), it scrolls from its top
+   instead of being cut at both ends */
+.lz-intro.sk-intro{overflow-y:auto;place-items:start center;-webkit-overflow-scrolling:touch}
+.sk-intro .lz-intro-in{margin:auto}
 
 /* ---------- phone and small frames ---------- */
 /* phone: two rows. Top: turbo, -, the enso, +, auto. Under them: balance left, win right. Info and sound on the stage. */
@@ -810,3 +814,15 @@ body:has(.sk-stage.sk-tease) .sk-bg{filter:brightness(.42) saturate(.8)}
 @media (max-height:330px){ .sk-ink button b{font-size:13px} }
 /* the buy confirmation at the smallest heights (400x225): no picture, a smaller start stamp, so the whole sheet fits */
 @media (max-height:330px){ #lzBuy .lz-sheet::before{display:none} #lzBuy #lzBuyYes{width:60px;height:60px;font-size:15px} #lzBuy .lz-sheet{padding-top:8px;padding-bottom:8px} }
+/* standard 1.11 (8.2): during a round the bar looks exactly as it does when ready. Nothing disappears, dims or changes
+   shape, on a phone too and under a celebration: no stop square, no turning enso, the label stays PLAY. The core
+   keeps +/-, TURBO, AUTO, the ink switch and the buy stamps disabled mid-round, so a press on them simply does nothing. */
+#lzApp.sk-bar :is(#lzMinus,#lzPlus,#lzFast,#lzAuto):disabled{opacity:1!important;visibility:visible!important}
+#lzApp.sk-bar .lz-stepper:has(#lzAction.busy) :is(#lzMinus,#lzPlus){opacity:1!important;visibility:visible!important;pointer-events:none}
+#lzApp:has(#lzAction.busy) .sk-buy,.sk-stage:has(~ .lz-panel #lzAction.busy) .sk-buy{opacity:1!important;pointer-events:none}
+.sk-buy .lz-feat:disabled{opacity:1!important}
+#lzApp:has(#lzAction.busy) .sk-ink{opacity:1!important}
+#lzApp.sk-bar #lzAction.busy .sk-enso{opacity:1!important;transform:none!important;animation:none!important}
+#lzApp.sk-bar #lzAction.busy .sk-stop{opacity:0!important}
+#lzApp.sk-bar #lzAction.busy span{opacity:1!important}
+#lzApp.sk-bar #lzAction:disabled:not(.busy){opacity:1!important}
