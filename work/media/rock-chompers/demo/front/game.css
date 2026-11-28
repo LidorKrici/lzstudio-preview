@@ -341,3 +341,10 @@ body.rc-busy .rc-sign{transition:filter .25s ease 0s}
   .rc-app .lz-wallet .lz-lbl,.rc-app .lz-win .lz-lbl{font-size:11px!important;line-height:1;margin:0}
   .rc-app .lz-wallet b,.rc-app .lz-win b{font-size:min(var(--rc-t),15px)!important;line-height:1!important;max-width:30vw}
 }
+
+/* Lidor, 28.11 (phone): balance and win sat on the top edge of the bar's frame. The bar is a little taller and its
+   content starts inside the frame */
+@media (max-aspect-ratio:3/4){
+  :root{--rc-bar:calc(var(--rc-s) + 16px + 24px + 16px)}
+  .rc-app .lz-panel{padding:16px 14px 0!important;box-sizing:border-box}
+}

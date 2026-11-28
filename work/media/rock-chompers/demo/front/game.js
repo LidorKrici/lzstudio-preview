@@ -59,13 +59,16 @@
         meter: { x: W * .1, y: H * .6, h: H * .66 } };
     } else {
       const S2 = Math.max(44, Math.min(52, innerHeight * .06)), feet = H - Math.max(0, 1.15 * S2 - 34) - 4;
-      const signW = Math.min(W * .47, 220), signTop = 6 + S2 + 6, signH = signW / 2.45;
-      const rowTop = signTop + signH + 4, row = Math.max(90, H * .17);   // the row of the logo, between the totem and the cook
-      gy = rowTop + row; gs = Math.min(W * .995, feet - gy); gx = (W - gs) / 2;
-      L = { land, tiny, signW, signTop, cook: { x: W * .86, y: gy + gs * .06, h: row * 1.3 }, cart: { x: W * .8, y: feet, w: W * .26 },
-        logo: { x: W * .49, y: rowTop + row * .5 - Math.min(W * .46, row * 1.75) * .55 * .2, w: Math.min(W * .46, row * 1.75) }, title: { x: W / 2, y: gy + gs * .45, w: W * .92 },
+      const logoW = Math.min(W * .52, 240), logoH = logoW * .551, logoTop = 4 + S2 + 2;
+      const signW = Math.min(W * .47, 220), signH = signW / 2.45, signTop = logoTop + logoH * .92 + 2;
+      const top = signTop + signH + 6, avail = feet - top;
+      gs = Math.min(W * .74, avail); gx = (W - gs) / 2; gy = top + Math.max(0, (avail - gs) * .35);
+      const mh = Math.min(gs * .9, gx * 1.45 / .403), mw = mh * .403;              // the totem in the left gutter
+      const ch = Math.min(gs * .62, gx * 1.7 / .644), cw = ch * .644;               // the lizard in the right gutter
+      L = { land, tiny, signW, signTop, cook: { x: W - cw / 2 - 2, y: gy + gs * .97, h: ch }, cart: { x: W * .8, y: feet, w: W * .26 },
+        logo: { x: W * .5, y: logoTop + logoH * .3, w: logoW }, title: { x: W / 2, y: gy + gs * .45, w: W * .92 },
         winHud: { x: gx + gs * .3, y: gy + gs - gs * .035, h: gs * .07 }, nightHud: { x: gx + gs * .74, y: gy + gs - gs * .035, h: gs * .055 },
-        meter: { x: W * .1, y: rowTop + row * .55, h: row * 1.15 } };
+        meter: { x: Math.max(mw / 2 + 2, gx * .5), y: gy + gs * .5, h: mh } };
     }
     const pad = gs * .125;                                   // the carved frame around the 7x7 floor
     L.grid = { x: gx, y: gy, s: gs, ix: gx + pad, iy: gy + pad, cs: (gs - pad * 2) / N };
