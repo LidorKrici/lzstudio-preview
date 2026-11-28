@@ -348,3 +348,9 @@ body.rc-busy .rc-sign{transition:filter .25s ease 0s}
   :root{--rc-bar:calc(var(--rc-s) + 16px + 24px + 16px)}
   .rc-app .lz-panel{padding:16px 14px 0!important;box-sizing:border-box}
 }
+/* the carved top edge of the bar's frame is about a fifth of the bar's height (the picture stretches with the bar),
+   so the balance and win row starts below that edge, in proportion, not at a fixed 16px */
+@media (max-aspect-ratio:3/4){
+  :root{--rc-bar:calc(var(--rc-s) + 16px + 24px + 24px)}
+  .rc-app .lz-panel{padding:calc(var(--rc-bar) * .22) 16px 0!important}
+}
