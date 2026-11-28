@@ -1,0 +1,85 @@
+{
+  "note": "Derived from publish/math by math/tuning.mjs (standard 3.3). Values are multiples of the play amount.",
+  "modes": {
+    "base": {
+      "cost": 1,
+      "music": {
+        "level_1": 0.48,
+        "level_2": 4.8,
+        "level_3": 80.78
+      },
+      "bigWinReactionX": 10,
+      "winTiersX": [
+        10,
+        25,
+        50,
+        100,
+        1000
+      ]
+    },
+    "stoke": {
+      "cost": 3,
+      "music": {
+        "level_1": 0.56,
+        "level_2": 18,
+        "level_3": 253.32
+      },
+      "bigWinReactionX": 19.1,
+      "winTiersX": [
+        19,
+        48,
+        96,
+        191,
+        1910
+      ]
+    },
+    "bellows": {
+      "cost": 100,
+      "music": {
+        "level_1": 103.02,
+        "level_2": 299.3,
+        "level_3": 848.06
+      },
+      "bigWinReactionX": 150,
+      "winTiersX": [
+        150,
+        375,
+        750,
+        1500,
+        15000
+      ]
+    },
+    "runesong": {
+      "cost": 200,
+      "music": {
+        "level_1": 128.8,
+        "level_2": 667.9,
+        "level_3": 3325.96
+      },
+      "bigWinReactionX": 225.4,
+      "winTiersX": [
+        225,
+        564,
+        1127,
+        2254,
+        22540
+      ]
+    },
+    "mountain": {
+      "cost": 500,
+      "music": {
+        "level_1": 300.72,
+        "level_2": 2100.01,
+        "level_3": 8345.12
+      },
+      "bigWinReactionX": 386.4,
+      "winTiersX": [
+        386,
+        966,
+        1932,
+        3864,
+        38640
+      ]
+    }
+  }
+}

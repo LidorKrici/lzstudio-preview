@@ -1,0 +1,436 @@
+/* Anvil Heart skin (adapted from Rock Chompers). The shell gives the mechanism; everything the player sees is the forge's own:
+ * hammered gold and iron buttons, dark carved wood with red and white folk embroidery. No CSS gradients or shadows for
+ * decoration: every surface is a drawn image or a flat colour. The only "shadow" words below switch the shell's off. */
+@font-face{font-family:"Cinzel";src:url("fonts/cinzel.woff2") format("woff2");font-weight:400 900;font-display:swap}
+@font-face{font-family:"Outfit";src:url("fonts/outfit.woff2") format("woff2");font-weight:100 900;font-display:swap}
+:root{
+  --lz-bg:#0d1526;--lz-panel:#24160e;--lz-panel-solid:#24160e;--lz-line:#6b4a22;--lz-text:#fff3dc;--lz-muted:#e6cf9c;
+  --lz-accent:#d8462a;--lz-accent-ink:#fff3dc;--lz-accent2:#ffcf5a;--lz-good:#8be05a;--lz-bad:#ff5a4a;
+  --lz-radius:14px;--lz-font-display:"Cinzel",serif;--lz-font-body:"Outfit",sans-serif;--lz-action-bg:transparent;
+  --lz-shadow:none; /* station:ok — switches the shell's shadows off */
+  --ah-ink:#1c0f07;--ah-gold:#ffcf5a;
+  --ah-s:clamp(32px,6.2vh,52px);            /* a stone button */
+  --ah-spin:calc(var(--ah-s) * 2.15);       /* the play medallion: 2.15x the other buttons (fix #1) */
+  --ah-bar:calc(var(--ah-s) + 16px);        /* the bar: one low row */
+  --ah-t:clamp(12px,2.8vh,19px);            /* text in the bar: at least 16px at 1024x576, 12px in the small popout */
+}
+@media (max-aspect-ratio:3/4){:root{--ah-s:clamp(44px,6vh,52px)}}
+@media (max-height:300px){:root{--ah-s:28px;--ah-bar:calc(var(--ah-s) + 14px)}}
+body{background:#0d1526}
+
+/* ---------- The frame: the stage is the whole screen, the bar is one low row at the bottom ---------- */
+.lz-app.ah-app{padding:0;gap:0;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr) var(--ah-bar)!important;grid-template-areas:"stage" "panel"!important}
+.ah-app .lz-top{display:none}
+.ah-app .lz-stage{border:0;border-radius:0;background:#0d1526}
+.ah-canvas{position:absolute;inset:0;display:block;touch-action:manipulation}
+.ah-app .lz-panel{grid-area:panel;position:relative;display:grid!important;grid-template-columns:1fr auto 1fr!important;grid-template-rows:minmax(0,1fr)!important;grid-template-areas:none!important;align-items:center;gap:6px;
+  padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px));overflow:visible;
+  background:url("assets/bar.webp") center top/100% 100% no-repeat,#1c110a}
+.ah-app .lz-panel>*{grid-area:auto!important}
+.ah-app .lz-panel>:not(.ah-bl):not(.ah-bc):not(.ah-br):not(.lz-msg):not(.lz-replay){display:none!important}
+.ah-bl,.ah-br{display:flex;align-items:center;gap:6px;min-width:0}
+.ah-br{justify-content:flex-end}
+.ah-bc{display:flex;align-items:flex-end;align-self:end;gap:clamp(4px,1.2vw,14px);padding-bottom:6px}
+.ah-gone{display:none!important}
+
+/* stone buttons: every one is a drawn image */
+.ah-app .lz-icon,.ah-bc>#lzMinus,.ah-bc>#lzPlus{width:var(--ah-s)!important;height:var(--ah-s)!important;min-height:0;padding:0;border:0;border-radius:0;
+  background:center/contain no-repeat;color:transparent;font-size:0;flex:none}
+.ah-bc>#lzMinus,.ah-bc>#lzPlus{margin-bottom:calc(var(--ah-s) * .12)}
+#lzInfo,#lzSound{background-image:url("assets/b-round.webp")!important;display:grid!important;place-items:center}
+.ah-app .lz-icon svg{display:block!important;width:44%;height:44%;color:var(--ah-gold)}
+#lzSound[aria-pressed="true"] svg{opacity:.55}
+#lzMinus{background-image:url("assets/b-minus.webp")!important}
+#lzPlus{background-image:url("assets/b-plus.webp")!important}
+#lzFast,#lzAuto{width:auto!important;min-width:calc(var(--ah-s) * 1.5)!important;padding:0 10px!important;background:url("assets/plank.webp") center/100% 100% no-repeat!important;color:var(--ah-gold)!important;font:700 var(--ah-t)/1 "Cinzel",serif!important;letter-spacing:.06em;-webkit-text-stroke:3px var(--ah-ink);paint-order:stroke fill}
+#lzFast[aria-pressed="true"]{color:#fff3dc!important;outline:2px solid var(--ah-gold);outline-offset:-4px}
+#lzAuto.on{color:#fff3dc!important}
+.ah-quick{display:flex;gap:6px;flex:none}
+.ah-app button:not(:disabled):active{transform:translateY(2px) scale(.96)}
+.ah-app button:disabled{opacity:.4}
+
+/* info and sound: two stone knobs in the stage's top-left corner (the bar keeps at most 7 controls) */
+.ah-corner{position:absolute;left:max(6px,env(safe-area-inset-left,0px));top:6px;display:flex;gap:6px}
+
+/* the play button: the big stone medallion with a chili; while a round plays it is a stop square that hurries */
+.ah-spinw{position:relative;display:flex;flex-direction:column;align-items:center;padding-bottom:calc(var(--ah-s) * .78 + 3px)}
+.ah-spin{position:relative;width:var(--ah-spin);height:var(--ah-spin)}
+.ah-app #lzAction{position:absolute;inset:0;min-height:0;padding:0;border:0;border-radius:0;background:url("assets/b-play.webp") center/contain no-repeat;color:transparent}
+.ah-app .lz-action{box-shadow:none} /* station:ok — the shell's glow off */
+.ah-app #lzAction span,.ah-app #lzAction small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ah-app #lzAction:not(:disabled):hover{filter:brightness(1.08)}
+.ah-app #lzAction.auto{background-image:url("assets/b-round.webp")}
+.ah-app #lzAction.auto::after{content:"";position:absolute;inset:36%;background:var(--ah-gold);border-radius:3px}
+.ah-app #lzAction:disabled{opacity:1}
+.ah-hurry{position:absolute;inset:0;border:0;padding:0;background:url("assets/b-round.webp") center/contain no-repeat;display:none;cursor:pointer}
+.ah-hurry::after{content:"";position:absolute;inset:34%;background:var(--ah-gold);border-radius:3px}
+body.ah-busy .ah-hurry{display:block}
+/* the amount: a badge on the lower rim of the medallion; it opens the game's own picker */
+.ah-app .lz-amount{position:absolute;left:50%;top:auto;bottom:0;transform:translateX(-50%);display:flex;flex-direction:row;gap:6px;align-items:center;justify-content:center;height:calc(var(--ah-s) * .78)!important;min-height:0!important;min-width:max-content;box-sizing:border-box;
+  border:2px solid var(--ah-ink);background:#3a2414;border-radius:10px;padding:0 10px;cursor:pointer;z-index:2}
+.ah-app .lz-amount b{font-size:var(--ah-t);line-height:1.15;color:#fff6e2}
+.ah-app .lz-amount.x5{flex-direction:row;gap:6px;align-items:baseline}
+.ah-app .lz-amount .ah-cost{font-size:var(--ah-t);line-height:1.1;font-weight:700;color:var(--ah-gold)}
+.ah-app .lz-amount .ah-cost:empty{display:none}
+.ah-app .lz-amount select{display:none}
+
+/* balance and win: plain readable text on the ledge */
+.ah-app .lz-wallet,.ah-app .lz-win{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border:0;border-radius:10px;background:#1c110a;min-width:0}
+.ah-app .lz-win{align-items:flex-end}
+.ah-app .lz-lbl{display:block;font-size:max(12px,min(16px,2.8vh));line-height:1.05;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#e8cf8c;opacity:.9;-webkit-text-stroke:0;margin-bottom:1px}
+.ah-app .lz-wallet b,.ah-app .lz-win b{font-size:var(--ah-t);color:var(--lz-text);font-weight:700;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
+.ah-app .lz-win.has b{color:var(--ah-gold)}
+body.ah-busy #lzMinus,body.ah-busy #lzPlus{opacity:.6;pointer-events:none}
+.ah-app .lz-msg{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);z-index:6;background:#3a1d0b;border:2px solid var(--ah-gold);color:var(--lz-text);white-space:nowrap;font-size:var(--ah-t)}
+.ah-app .lz-replay{grid-column:1/-1}
+.ah-replay{display:flex;flex-wrap:wrap;gap:2px 14px;justify-content:center;font-size:var(--ah-t)}
+.ah-fact{display:inline-flex;gap:6px}.ah-fact dt{color:var(--lz-muted)}.ah-fact dd{margin:0;color:#fff6e2;font-weight:700}
+
+/* the amount picker: the game's own window over the amount (fix #14) */
+.ah-amtpop{position:fixed;left:50%;bottom:calc(var(--ah-bar) + 10px);transform:translateX(-50%);z-index:40;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;
+  width:min(94vw,440px);max-height:calc(100vh - var(--ah-bar) - 20px);overflow:auto;padding:14px;border-radius:16px;background:#24160e;border:3px solid var(--ah-ink);outline:2px solid #8a5a2b;outline-offset:-7px}
+.ah-amtpop button{min-height:44px;border-radius:10px;border:2px solid var(--ah-ink);background:#3a2414;color:var(--lz-text);font-weight:700;font-size:var(--ah-t);white-space:nowrap;overflow:hidden;padding:0 4px}
+.ah-amtpop button.on{background:var(--ah-gold);color:var(--ah-ink)}
+
+/* ---------- On the stage: the pepper switch and the feature signs ---------- */
+.ah-stagebox{position:absolute;inset:0;pointer-events:none;z-index:3}
+.ah-stagebox>*{pointer-events:auto}
+.ah-app .lz-modes{position:absolute;display:flex;gap:4px;padding:0;border-radius:0;background:transparent;border-style:solid;border-width:0;background:url("assets/bar.webp") center/100% 100% no-repeat,#1c110a;padding:5px 7px;border-radius:12px}
+.ah-app .lz-modes button{display:flex;flex-direction:row;align-items:center;gap:5px;padding:0 10px;height:var(--ah-s);min-height:0;border:0;border-radius:10px;background:transparent;color:var(--lz-muted);min-width:0}
+.ah-app .lz-modes b,.ah-app .lz-modes small{font-size:var(--ah-t);font-weight:700;letter-spacing:0}
+.ah-app .lz-modes small{color:var(--ah-gold)}
+.ah-app .lz-modes button[aria-pressed="true"]{background:#b8321e;color:#fff6e2;-webkit-text-stroke:3px #3a0c04;paint-order:stroke fill}
+.ah-app .lz-modes button:not([aria-pressed="true"]){color:#f3dfb4;-webkit-text-stroke:3px #2a1406;paint-order:stroke fill}
+.ah-app .lz-modes button[data-mode="stoke"][aria-pressed="true"]{background:#c2461a}
+.ah-signs{position:absolute;display:flex;flex-direction:column;gap:4px}
+.ah-app .ah-sign{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;width:clamp(130px,30vh,250px);aspect-ratio:2.05;padding:11% 6% 3% 16%;border:0;border-radius:0;
+  background:url("assets/plank.webp") center/contain no-repeat;color:#fff6e2;transform-origin:50% 0}
+.ah-app .ah-sign span,.ah-app .ah-sign small{font-size:min(var(--ah-t),4.1vw);font-weight:700;line-height:1.1;-webkit-text-stroke:4px var(--ah-ink);paint-order:stroke fill;white-space:nowrap}
+.ah-app .ah-sign span{color:#fff6e2}.ah-app .ah-sign small{color:var(--ah-gold)}
+@media (hover:hover){.ah-app .ah-sign:not(:disabled):hover{animation:ahSway 1.2s ease-in-out infinite}}
+@keyframes ahSway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+body.ah-busy .ah-signs{opacity:.6;pointer-events:none}
+/* landscape: signs top-right, the switch under the logo */
+.ah-stagebox[data-land="1"] .ah-signs{right:1%;top:1%}
+.ah-stagebox[data-land="1"] .lz-modes{left:1.5%;top:25%}
+/* portrait: signs on the right between the faces and the bar, the switch on the left */
+.ah-stagebox[data-land="0"] .ah-signs{right:1.5%;top:55%}
+.ah-stagebox[data-land="0"] .ah-sign{width:clamp(130px,36vw,190px)}
+.ah-stagebox[data-land="0"] .lz-modes{left:1.5%;top:53.5%}
+/* the small popouts: compact */
+.ah-stagebox[data-tiny="1"] .ah-sign{width:110px;padding:10% 5% 3% 15%}
+.ah-stagebox[data-tiny="1"] .ah-sign span,.ah-stagebox[data-tiny="1"] .ah-sign small{font-size:12px;-webkit-text-stroke:3px var(--ah-ink)}
+.ah-stagebox[data-tiny="1"] .lz-modes{top:auto;bottom:2%;left:1%;padding:2px}
+.ah-stagebox[data-tiny="1"] .lz-modes button{min-height:28px;padding:2px 6px}
+.ah-stagebox[data-tiny="1"] .lz-modes small{display:none}
+
+/* ---------- Windows: the stone tablet (feature confirmation, autoplay, rules) ---------- */
+.lz-modal{background:rgba(20,12,6,.62)}
+.lz-modal>div{background:#e9d6ac!important;color:#3a1d0b!important;border:4px solid var(--ah-ink)!important;border-radius:22px!important;outline:3px solid #9a7a4a;outline-offset:-10px}
+.lz-modal>div,.lz-toast,.lz-modal button{box-shadow:none!important} /* station:ok — the shell's shadows off */
+#lzBuy>div *{position:relative}
+#lzBuy h2{font-size:clamp(16px,3.4vh,26px)}#lzBuy p{font-size:clamp(12px,2.8vh,17px)}
+.lz-modal h2{font-family:var(--lz-font-display);color:#3a1d0b;font-weight:700}
+.lz-modal p,.lz-modal li,.lz-modal td,.lz-modal th,.lz-modal dd,.lz-modal dt,.lz-modal label,.lz-modal .lz-note,.lz-modal .lz-sum{color:#3a1d0b!important}
+.lz-modal .lz-btns button{white-space:nowrap;min-height:44px;border-radius:999px!important;border:3px solid var(--ah-ink)!important;font-weight:700;padding:8px 18px;font-size:var(--ah-t)}
+.lz-modal .lz-go{background:#e23b2e!important;color:#fff6e2!important}
+.lz-modal .lz-ghost{background:#c9b184!important;color:#3a1d0b!important}
+.lz-modal .lz-seg button{border:2px solid var(--ah-ink)!important;background:#c9b184!important;color:#3a1d0b!important}
+.lz-modal .lz-seg button[aria-pressed="true"]{background:#e23b2e!important;color:#fff6e2!important}
+.lz-modal table{border-collapse:collapse}.lz-modal td,.lz-modal th{border-bottom:1px solid #b89a68;padding:4px 6px;text-align:left}
+.lz-modal .lz-icon{background:#c9b184;border:2px solid var(--ah-ink);color:#3a1d0b}
+.lz-toast{background:#3a1d0b!important;color:#fff6e2!important;border:2px solid var(--ah-gold)!important}
+
+/* portrait phones: turbo and auto join info and sound in the top-left corner; the bar keeps balance, play, win */
+@media (max-aspect-ratio:3/4){
+  :root{--ah-bar:calc(var(--ah-s) + 16px + 24px)}
+  .ah-app .lz-panel{grid-template-columns:1fr 1fr!important;grid-template-rows:24px minmax(0,1fr)!important;row-gap:0}
+  .ah-app .lz-panel>.ah-bl{grid-area:1/1/2/2!important;align-self:center}
+  .ah-app .lz-panel>.ah-br{grid-area:1/2/2/3!important;align-self:center}
+  .ah-app .lz-panel>.ah-bc{grid-area:2/1/3/3!important;justify-self:center}
+  .ah-app .lz-wallet,.ah-app .lz-win{padding:0 8px;background:transparent}
+  .ah-app .lz-panel .lz-win{align-items:flex-end!important;margin-left:auto}
+  .ah-app .lz-panel .ah-br{justify-content:flex-end}
+  .ah-app .lz-wallet b,.ah-app .lz-win b{max-width:46vw;-webkit-text-stroke:3px #2a1a0e;paint-order:stroke fill}
+  .ah-spinw{flex-direction:row-reverse;align-items:flex-end;gap:6px;padding-bottom:0}
+  .ah-app .lz-amount{position:static;transform:none;height:var(--ah-s)!important;margin-bottom:0}
+  .ah-quick{position:fixed;top:6px;left:calc(max(6px,env(safe-area-inset-left,0px)) + (var(--ah-s) + 6px) * 2);z-index:4}
+  .ah-br{justify-content:flex-end}
+}
+/* phones: + and - go (the amount badge opens the picker), the balance and win stay readable */
+@media (max-width:399px){.ah-bc>#lzMinus,.ah-bc>#lzPlus{display:none}}
+@media (max-width:600px){
+  .ah-quick{gap:4px}
+  .ah-app .lz-wallet,.ah-app .lz-win{padding:2px 6px}
+  .ah-app .lz-wallet b,.ah-app .lz-win b{max-width:30vw}
+}
+
+/* layout markers for the checks: invisible */
+.ah-cookbox{position:absolute;pointer-events:none;z-index:0}
+.ah-celeb{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;pointer-events:none}
+.ah-celeb.on{left:25%;top:30%;width:50%;height:30%;clip:auto;color:transparent}
+
+@media (max-aspect-ratio:3/4) and (max-width:370px){.ah-stagebox[data-land="0"] .lz-modes button[aria-pressed="false"]{display:none}.ah-stagebox[data-land="0"] .lz-modes button[aria-pressed="true"]::after{content:"⇄";margin-left:4px;color:#fff6e2}}
+
+/* the night look: the buy signs are dark carved panels like the bar */
+.ah-app .ah-sign{background:url("assets/bar.webp") center/100% 100% no-repeat!important;padding:6% 6% 4%!important}
+/* the phone: the two buy signs sit side by side in one row under the board */
+.ah-stagebox[data-land="0"] .ah-signs{right:auto!important;left:50%!important;top:62%!important;transform:translateX(-50%);flex-direction:row!important;gap:2vw}
+.ah-stagebox[data-land="0"] .ah-app .ah-sign,.ah-stagebox[data-land="0"] .ah-sign{width:min(42vw,190px)!important}
+
+/* the night look (28.11): the windows are dark carved stone with gold, like the tablet, the bar and the buy signs */
+.lz-modal>div{background:#1a110c!important;color:#f3e2c0!important;border:3px solid #c9973f!important;outline:2px solid #4a2e18;outline-offset:-9px}
+.lz-modal h2{color:#ffd35a!important}
+.lz-modal p,.lz-modal li,.lz-modal td,.lz-modal th,.lz-modal dd,.lz-modal dt,.lz-modal label,.lz-modal .lz-note,.lz-modal .lz-sum{color:#f3e2c0!important}
+.lz-modal b{color:#ffd35a}
+.lz-modal .lz-btns button{border:2px solid #c9973f!important}
+.lz-modal .lz-ghost,.lz-modal .lz-seg button,.lz-modal .lz-icon{background:#3a2616!important;color:#f3e2c0!important;border-color:#c9973f!important}
+.lz-modal td,.lz-modal th{border-bottom-color:#4a2e18}
+
+/* ---------- Anvil Heart: the feature confirmation, the forge's own windows ---------- */
+#lzBuy>div{width:min(94vw,560px);max-width:none!important;box-sizing:border-box;text-align:center;padding:22px 20px!important}
+.lz-modal>div{background:#170d08!important;border:3px solid #c9973f!important;outline:2px solid #6b2016;outline-offset:-9px;border-radius:18px!important}
+.lz-modal h2{font-family:"Cinzel",serif!important;letter-spacing:.04em}
+.lz-modal .lz-go{background:#c2461a!important;color:#fff3dc!important}
+
+/* ---------- The intro: the forge at night, the logo, three carved planks, the gold bar that fills ---------- */
+.lz-intro.ah-intro{background:#0d1526 url("assets/bg-wide.jpg") center/cover no-repeat}
+.ah-intro .lz-intro-in{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,1.6vh,16px);width:100%;max-width:1200px;height:100%;padding:2vh 3vw;box-sizing:border-box}
+.ah-intro .lz-intro-logo{width:min(64vw,34vh,520px);height:auto}
+.ah-intro .lz-intro-logo img{width:100%;height:auto;display:block}
+.ah-intro .lz-intro-tag{display:none}
+.ah-intro .lz-intro-cards{width:100%;display:flex!important;justify-content:center;gap:clamp(6px,1.4vw,18px);flex-wrap:wrap}
+.ah-icard{flex:1 1 0;max-width:330px;min-width:180px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:clamp(10px,2vh,18px) clamp(10px,1.4vw,18px);box-sizing:border-box;
+  background:url("assets/plank.webp") center/100% 100% no-repeat;color:#fff3dc;text-align:center;animation:ahFloat 4s ease-in-out infinite}
+.ah-icard:nth-child(2){animation-delay:-1.3s}.ah-icard:nth-child(3){animation-delay:-2.6s}
+.ah-icard img{height:clamp(40px,9vh,86px);width:auto}
+.ah-icard b{font:700 clamp(13px,2.6vh,19px)/1.15 "Cinzel",serif;color:var(--ah-gold);letter-spacing:.04em;-webkit-text-stroke:3px var(--ah-ink);paint-order:stroke fill}
+.ah-icard span{font:500 clamp(12px,2.2vh,15px)/1.3 "Outfit",sans-serif}
+@keyframes ahFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.ah-intro .lz-intro-load{position:relative;width:min(70vw,460px);height:clamp(8px,1.4vh,12px);background:#1c110a;border:2px solid #c9973f;border-radius:999px;overflow:hidden}
+.ah-intro .lz-intro-load i#lzIntroBar{background:#ffb347}
+.ah-intro .lz-intro-play{flex:none;width:clamp(64px,14vh,120px);height:clamp(64px,14vh,120px);padding:0;border:0;border-radius:0;background:url("assets/b-play.webp") center/contain no-repeat;color:transparent;font-size:0}
+.ah-intro .lz-intro-play:focus-visible{outline:0}
+.ah-intro .lz-intro-play:disabled{opacity:.55}
+.ah-intro .lz-intro-play:not(:disabled){animation:ahPulse 1.4s ease-in-out infinite}
+@keyframes ahPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.ah-intro .lz-intro-fine,.ah-skip{margin:0;font-size:clamp(12px,2.6vh,16px);font-weight:600;color:#fff3dc;-webkit-text-stroke:3px var(--ah-ink);paint-order:stroke fill}
+.ah-skip{display:flex;align-items:center;gap:6px}
+.ah-skip input{width:18px;height:18px;accent-color:#c2461a}
+.ah-intro .lz-intro-err{color:#fff3dc;background:#1c110a;padding:8px 14px;border-radius:12px}
+.ah-intro .lz-studio{display:none}
+.lz-intro.ah-intro.out{animation:ahIntroOut .5s ease-in forwards}
+@keyframes ahIntroOut{to{opacity:0;transform:scale(1.06)}}
+@media (max-height:640px) and (min-aspect-ratio:1/1){.ah-intro .lz-intro-logo{width:min(46vw,28vh,400px)}.ah-icard img{height:clamp(32px,7vh,60px)}.ah-intro .lz-intro-play{width:clamp(56px,11vh,96px);height:clamp(56px,11vh,96px)}}
+@media (max-height:440px){.ah-intro .lz-intro-fine{display:none}.ah-icard span{display:none}.ah-icard{min-width:120px;padding:6px}}
+@media (max-height:300px){.ah-intro .lz-intro-cards{display:none!important}.ah-intro .lz-intro-logo{width:min(46vw,46vh)}.ah-intro .lz-intro-play{width:56px;height:56px}}
+@media (max-aspect-ratio:4/5){.ah-intro .lz-intro-cards{flex-direction:column;align-items:center}.ah-icard{width:min(86vw,360px);max-width:none;flex:none;flex-direction:row;text-align:left}.ah-icard img{height:clamp(36px,6vh,60px)}.ah-icard>div{display:flex;flex-direction:column}}
+@media (prefers-reduced-motion:reduce){.ah-icard,.ah-intro .lz-intro-play,.ah-app .ah-sign{animation:none!important}}
+
+/* ---------- The bonus card: the title, the spins, one line on what stays; it goes on its own ---------- */
+.ah-card{position:absolute;left:50%;top:46%;z-index:30;width:min(88vw,600px);box-sizing:border-box;padding:clamp(14px,3vh,28px) clamp(16px,3vw,30px);text-align:center;color:#fff3dc;
+  background:#170d08;border:3px solid #c9973f;outline:2px solid #6b2016;outline-offset:-9px;border-radius:20px;
+  transform:translate(-50%,-50%) scale(.6);opacity:0;transition:transform .45s cubic-bezier(.2,1.6,.4,1),opacity .25s;pointer-events:none;-webkit-text-stroke:3px #1c0f07;paint-order:stroke fill}
+.ah-card.on{transform:translate(-50%,-50%) scale(1);opacity:1}
+.ah-card img{display:block;width:96%;margin:0 auto 2%}
+.ah-card b{display:block;font:700 clamp(22px,5vw,42px)/1.1 "Cinzel",serif;color:var(--ah-gold);letter-spacing:.04em}
+.ah-card p{margin:.4em 0 0;font:500 clamp(14px,2.8vw,20px)/1.3 "Outfit",sans-serif}
+
+/* ---------- Anvil Heart placement of the signs and the fire switch ---------- */
+.ah-app .ah-sign{width:clamp(110px,21vh,190px)!important;aspect-ratio:2.2!important}
+.ah-stagebox[data-land="1"] .ah-signs{right:1%!important;top:1.5%!important}
+.ah-stagebox[data-land="1"] .lz-modes{left:1.5%!important;top:23%!important}
+.ah-stagebox[data-land="0"] .lz-modes{left:50%!important;transform:translateX(-50%);top:55.5%!important}
+.ah-stagebox[data-land="0"] .ah-signs{top:63%!important;gap:1.5vw!important}
+.ah-stagebox[data-land="0"] .ah-sign{width:min(31vw,150px)!important}
+.ah-stagebox[data-land="0"] .ah-sign span,.ah-stagebox[data-land="0"] .ah-sign small{font-size:min(var(--ah-t),2.9vw)!important;letter-spacing:0}
+.ah-stagebox[data-tiny="1"] .ah-sign{width:96px!important;padding:4% 4% 3%!important}
+.ah-stagebox[data-tiny="1"] .ah-sign span,.ah-stagebox[data-tiny="1"] .ah-sign small{font-size:11px!important;-webkit-text-stroke:3px var(--ah-ink)}
+.ah-stagebox[data-tiny="1"] .lz-modes{top:auto!important;bottom:2%!important;left:1%!important}
+@media (max-height:300px){.ah-app .lz-wallet,.ah-app .lz-win{padding:0 4px}.ah-app .lz-lbl{font-size:10px!important;letter-spacing:.06em}.ah-app .lz-wallet b,.ah-app .lz-win b{font-size:12px!important;max-width:22vw}.ah-bc{gap:3px!important}.ah-quick{gap:3px!important}#lzFast,#lzAuto{min-width:0!important;padding:0 6px!important;font-size:11px!important}}
+@media (max-height:300px) and (min-aspect-ratio:1/1){.ah-quick{position:fixed;top:6px;left:calc(max(6px,env(safe-area-inset-left,0px)) + (var(--ah-s) + 6px) * 2);z-index:4}#lzFast,#lzAuto{height:var(--ah-s)!important}}
+
+/* ---------- The wooden plank keeps its gold corners: drawn in nine pieces, only its middle stretches (Lidor, 28.11) ---------- */
+.ah-icard,.ah-app .ah-sign,#lzFast,#lzAuto{background:none!important;border-style:solid!important;border-image:url("assets/plank.webp") 28% 9% fill / 1 / 0 stretch!important}
+.ah-icard{border-width:clamp(14px,2.6vh,24px) clamp(18px,2.2vw,30px)!important;padding:2px 4px!important;align-items:center}
+.ah-icard>div{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}
+.ah-app .ah-sign{border-width:clamp(10px,1.9vh,16px) clamp(14px,1.6vw,22px)!important;padding:0 2px!important;aspect-ratio:auto!important;min-height:calc(var(--ah-s) * 1.25)}
+#lzFast,#lzAuto{border-width:6px 10px!important;padding:0 2px!important}
+@media (max-aspect-ratio:4/5){.ah-icard>div{align-items:flex-start;text-align:left}}
+.ah-intro .lz-intro-play{box-shadow:none!important;min-width:0!important;border-radius:50%!important;padding:0!important} /* station:ok — the shell's red shadow under PLAY off: it showed as a cut square (Lidor, 28.11) */
+
+/* ---------- The feature cards and the fire switch: painted art (28.11). The words are in the picture; the price is
+   written on the card's gold plaque. The button's own text stays for screen readers only. ---------- */
+.ah-app .ah-sign{border:0!important;border-image:none!important;padding:0!important;min-height:0!important;aspect-ratio:1.3!important;
+  width:min(18.5vw,29vh,300px)!important;background:center/contain no-repeat!important;position:relative;transition:transform .15s}
+.ah-app .ah-sign[data-mode="bellows"]{background-image:url("assets/buy-bellows.webp")!important}
+.ah-app .ah-sign[data-mode="runesong"]{background-image:url("assets/buy-song.webp")!important}
+.ah-app .ah-sign[data-mode="mountain"]{background-image:url("assets/buy-mountain.webp")!important}
+.ah-app .ah-sign span{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ah-app .ah-sign small{position:absolute!important;left:50%;bottom:9.5%;transform:translateX(-50%);width:62%;text-align:center;
+  font:800 clamp(11px,min(1.6vw,2.6vh),20px)/1 "Cinzel",serif!important;color:#3a1a06!important;-webkit-text-stroke:0!important;letter-spacing:0;white-space:nowrap}
+.ah-app .ah-sign:not(:disabled):hover{transform:scale(1.04)}
+.ah-stagebox[data-land="1"] .ah-signs{gap:.6vh!important}
+.ah-stagebox[data-land="0"] .ah-sign{width:min(31vw,170px)!important}
+.ah-stagebox[data-land="0"] .ah-sign small{font-size:clamp(10px,2.6vw,14px)!important}
+.ah-stagebox[data-tiny="1"] .ah-sign{width:min(18vw,30vh)!important}
+.ah-stagebox[data-tiny="1"] .ah-sign small{font-size:10px!important}
+
+.ah-app .lz-modes{background:none!important;padding:0!important;border:0!important;gap:4px!important}
+.ah-app .lz-modes button{width:min(19vw,32vh,300px)!important;height:auto!important;aspect-ratio:2.5;padding:0!important;border:0!important;border-radius:0!important;
+  background:center/contain no-repeat!important;-webkit-text-stroke:0!important;transition:opacity .2s,filter .2s,transform .15s}
+.ah-app .lz-modes button[data-mode="base"]{background-image:url("assets/mode-normal.webp")!important}
+.ah-app .lz-modes button[data-mode="stoke"]{background-image:url("assets/mode-stoke.webp")!important}
+.ah-app .lz-modes button b,.ah-app .lz-modes button small{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ah-app .lz-modes button[aria-pressed="false"]{opacity:.5;filter:grayscale(.5) brightness(.8)}
+.ah-app .lz-modes button[aria-pressed="true"]{opacity:1;transform:scale(1.04)}
+.ah-stagebox[data-land="1"] .lz-modes{flex-direction:column!important;left:1%!important;top:21%!important}
+.ah-stagebox[data-land="0"] .lz-modes{flex-direction:row!important}
+.ah-stagebox[data-land="0"] .lz-modes button{width:min(44vw,220px)!important}
+.ah-stagebox[data-tiny="1"] .lz-modes button{width:min(17vw,30vh)!important}
+.ah-stagebox[data-tiny="1"] .lz-modes{flex-direction:row!important}
+
+/* STOKE THE FIRE: the amount and its 3x price on two lines, so the badge never runs into + and - (Lidor, 28.11) */
+.ah-app .lz-amount.x5{flex-direction:column!important;align-items:center!important;gap:0!important;height:auto!important;padding:2px 10px!important;line-height:1}
+.ah-app .lz-amount.x5 b{font-size:calc(var(--ah-t) * .9)}
+.ah-app .lz-amount.x5 .ah-cost{font-size:calc(var(--ah-t) * .72)!important;line-height:1.1}
+.ah-spinw:has(.lz-amount.x5){padding-bottom:calc(var(--ah-s) * 1.05 + 3px)}
+@media (max-aspect-ratio:3/4){.ah-app .lz-amount.x5{height:var(--ah-s)!important;justify-content:center}}
+/* the sound knob: its icon fills the knob's middle like the rules icon, and the focus ring is round (Lidor, 28.11) */
+#lzSound>span{display:grid;place-items:center;width:100%;height:100%;grid-area:1/1}
+#lzSound>span[hidden]{display:none}
+#lzSound>span svg{width:44%;height:44%;color:var(--ah-gold)}
+.ah-app .lz-icon{border-radius:50%!important}
+.ah-app .lz-icon:focus-visible{outline:2px solid var(--ah-gold);outline-offset:1px}
+/* during a round every control stays where it is (Lidor, 28.11: "everything disappears when you press spin"); what cannot be pressed now is only dimmed */
+body.ah-busy .ah-app .lz-modes{opacity:.6;pointer-events:none}
+body.ah-busy .ah-app .lz-win{visibility:visible!important}
+
+/* =====================================================================================================================
+   The floating control bar (28.11, after Waylanders Forge's, painted in Higgsfield): over the bottom of the stage, no
+   strip behind it. Turbo, a carved panel with the balance and the win, a panel with the play amount and its arrows,
+   autoplay, and the big spin button. The panels are drawn in nine pieces, so their gold corners never stretch.
+   ===================================================================================================================== */
+:root{--ah-s:clamp(34px,7vh,58px);--ah-spin:calc(var(--ah-s) * 1.6);--ah-bar:calc(var(--ah-spin) + 12px);--ah-ph:calc(var(--ah-s) * 1.18)}
+.lz-app.ah-app{grid-template-rows:minmax(0,1fr)!important;grid-template-areas:"stage"!important}
+.ah-app .lz-panel{position:absolute!important;left:0;right:0;bottom:0;height:var(--ah-bar)!important;background:none!important;z-index:6;
+  display:flex!important;align-items:center;justify-content:center;gap:0!important;padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px))!important;pointer-events:none}
+.ah-app .lz-panel>*{pointer-events:auto}
+.ah-bc.ah-row{display:flex!important;flex-wrap:nowrap;align-items:center;align-self:center!important;justify-content:center;gap:clamp(6px,1vw,14px);padding:0!important;margin-left:clamp(0px,14vw,240px)}
+/* turbo and autoplay: round knobs */
+.ah-row>#lzFast,.ah-row>#lzAuto{width:var(--ah-s)!important;height:var(--ah-s)!important;min-width:0!important;padding:0!important;border:0!important;border-image:none!important;border-radius:50%!important;
+  background:center/contain no-repeat!important;color:transparent!important;font:800 calc(var(--ah-s) * .2)/1 "Cinzel",serif!important;-webkit-text-stroke:0!important;flex:none;display:flex!important;align-items:flex-end;justify-content:center}
+.ah-row>#lzFast{background-image:url("assets/bt-turbo.webp")!important}
+.ah-row>#lzAuto{background-image:url("assets/bt-auto.webp")!important}
+.ah-row>#lzFast[aria-pressed="true"]{outline:3px solid var(--ah-gold);outline-offset:-2px}
+.ah-row>#lzAuto.on{color:#fff3dc!important;-webkit-text-stroke:3px var(--ah-ink)!important;paint-order:stroke fill;padding-bottom:2px!important}
+/* the balance and win panel */
+.ah-pw{display:flex;align-items:center;justify-content:space-between;gap:12px;height:var(--ah-ph);box-sizing:border-box;width:clamp(190px,30vw,440px);
+  border-style:solid;border-width:calc(var(--ah-ph) * .28) calc(var(--ah-ph) * .32) calc(var(--ah-ph) * .16);border-image:url("assets/bar-wide.webp") 30% 9% 20% fill / 1 / 0 stretch;padding:0 4px}
+.ah-pw .lz-wallet,.ah-pw .lz-win{background:none!important;padding:0!important;border:0!important;min-width:0}
+.ah-pw .lz-win{align-items:flex-end!important;text-align:right}
+.ah-pw .lz-lbl{font-size:clamp(9px,1.7vh,13px)!important;margin:0!important}
+.ah-pw .lz-wallet b,.ah-pw .lz-win b{font-size:clamp(12px,2.6vh,20px)!important;max-width:14vw}
+/* the play amount panel, with its up / down arrows */
+.ah-pb{display:flex;align-items:center;gap:6px;height:var(--ah-ph);box-sizing:border-box;
+  border-style:solid;border-width:calc(var(--ah-ph) * .28) calc(var(--ah-ph) * .3) calc(var(--ah-ph) * .16);border-image:url("assets/bar-small.webp") 26% 12% 18% fill / 1 / 0 stretch;padding:0 2px 0 6px}
+.ah-pb .lz-amount{position:static!important;transform:none!important;height:auto!important;border:0!important;background:none!important;padding:0!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:0!important}
+.ah-pb .lz-amount::before{content:"PLAY";font:700 clamp(9px,1.7vh,13px)/1.05 "Outfit",sans-serif;letter-spacing:.12em;color:#e8cf8c}
+.ah-pb .lz-amount b{font-size:clamp(12px,2.6vh,20px)!important;color:#fff3dc}
+.ah-arrows{display:flex;flex-direction:column;gap:2px}
+.ah-pb #lzPlus,.ah-pb #lzMinus{width:calc(var(--ah-ph) * .5)!important;height:calc(var(--ah-ph) * .5)!important;margin:0!important;border-radius:22%!important;background:center/contain no-repeat!important}
+.ah-pb #lzPlus{background-image:url("assets/bt-up.webp")!important}
+.ah-pb #lzMinus{background-image:url("assets/bt-down.webp")!important}
+/* the spin button */
+.ah-row .ah-spin{width:var(--ah-spin);height:var(--ah-spin);flex:none}
+.ah-row #lzAction{background-image:url("assets/bt-spin.webp")!important}
+/* the rules button is the menu knob */
+#lzInfo{background-image:url("assets/bt-menu.webp")!important}
+#lzInfo svg{display:none!important}
+
+/* phones: the balance panel on its own row, the rest under it */
+@media (max-aspect-ratio:3/4){
+  :root{--ah-s:clamp(40px,6vh,52px);--ah-bar:calc(var(--ah-ph) + var(--ah-spin) + 16px)}
+  .ah-bc.ah-row{flex-wrap:wrap;row-gap:4px;margin-left:0;width:100%}
+  .ah-pw{order:-1;flex-basis:100%;width:auto}
+  .ah-pw .lz-wallet b,.ah-pw .lz-win b{max-width:40vw}
+}
+/* the small popouts */
+@media (max-height:300px){
+  :root{--ah-s:28px;--ah-spin:42px;--ah-bar:50px;--ah-ph:34px}
+  .ah-bc.ah-row{gap:4px;margin-left:0}
+  .ah-pw{width:clamp(140px,34vw,240px)}
+  .ah-pw .lz-lbl,.ah-pb .lz-amount::before{font-size:9px!important}
+  .ah-pw .lz-wallet b,.ah-pw .lz-win b,.ah-pb .lz-amount b{font-size:12px!important}
+}
+/* the bar fills the space between the board and the bottom (Lidor, 28.11: "make it bigger") */
+:root{--ah-s:clamp(38px,8.6vh,74px);--ah-spin:calc(var(--ah-s) * 1.55);--ah-ph:calc(var(--ah-s) * 1.3);--ah-bar:calc(var(--ah-spin) + 8px)}
+.ah-pw{width:clamp(240px,34vw,560px)}
+.ah-pw .lz-lbl,.ah-pb .lz-amount::before{font-size:clamp(10px,2vh,16px)!important}
+.ah-pw .lz-wallet b,.ah-pw .lz-win b,.ah-pb .lz-amount b{font-size:clamp(14px,3.3vh,26px)!important}
+@media (max-aspect-ratio:3/4){:root{--ah-s:clamp(46px,7vh,62px);--ah-bar:calc(var(--ah-ph) + var(--ah-spin) + 14px)}}
+@media (max-height:300px){:root{--ah-s:30px;--ah-spin:46px;--ah-bar:52px;--ah-ph:38px}.ah-pw{width:clamp(150px,36vw,260px)}.ah-pw .lz-lbl,.ah-pb .lz-amount::before{font-size:9px!important}.ah-pw .lz-wallet b,.ah-pw .lz-win b,.ah-pb .lz-amount b{font-size:12px!important}}
+/* landscape: the bar's size comes from the space under the board (game.js sets --ah-s); the panels grow with it */
+.ah-bc.ah-row{margin-left:0!important}
+.ah-pw{width:min(calc(var(--ah-s) * 6.6),46vw)}
+/* the arrows sit side by side inside the amount panel, so they never stick out of it */
+.ah-arrows{flex-direction:row!important;gap:4px!important}
+.ah-pb #lzPlus,.ah-pb #lzMinus{width:calc(var(--ah-ph) * .5)!important;height:calc(var(--ah-ph) * .5)!important}
+@media (max-aspect-ratio:3/4){.ah-pw{width:auto}}
+@media (max-height:300px){.ah-pw{width:clamp(150px,36vw,260px)}}
+
+/* ---------- The bar in two rows (Lidor, 28.11): the controls on top, a long rectangular balance strip under them ---------- */
+:root{--ah-strip:calc(var(--ah-s) * .8);--ah-bar:calc(var(--ah-spin) + var(--ah-strip) + 12px)}
+.ah-bc.ah-row{flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;gap:4px!important;width:auto!important}
+.ah-top{display:flex;align-items:center;justify-content:center;gap:clamp(6px,1vw,14px)}
+.ah-top>#lzFast,.ah-top>#lzAuto{width:var(--ah-s)!important;height:var(--ah-s)!important;min-width:0!important;padding:0!important;border:0!important;border-image:none!important;border-radius:50%!important;
+  background:center/contain no-repeat!important;color:transparent!important;font:800 calc(var(--ah-s) * .2)/1 "Cinzel",serif!important;-webkit-text-stroke:0!important;flex:none;display:flex!important;align-items:flex-end;justify-content:center}
+.ah-top>#lzFast{background-image:url("assets/bt-turbo.webp")!important}
+.ah-top>#lzAuto{background-image:url("assets/bt-auto.webp")!important}
+.ah-top>#lzFast[aria-pressed="true"]{outline:3px solid var(--ah-gold);outline-offset:-2px}
+.ah-top>#lzAuto.on{color:#fff3dc!important;-webkit-text-stroke:3px var(--ah-ink)!important;paint-order:stroke fill;padding-bottom:2px!important}
+.ah-top .ah-spin{width:var(--ah-spin);height:var(--ah-spin);flex:none}
+.ah-top #lzAction{background-image:url("assets/bt-spin.webp")!important}
+/* PLAY: a wide rectangular panel too */
+.ah-pb{width:calc(var(--ah-s) * 4.4);justify-content:space-between;border-image:url("assets/bar-wide.webp") 30% 9% 20% fill / 1 / 0 stretch!important}
+/* the balance strip: as wide as the row above, balance on the left, win on the right, each on one line */
+.ah-pw{order:2!important;flex-basis:auto!important;width:auto!important;height:var(--ah-strip)!important;border-width:calc(var(--ah-strip) * .26) calc(var(--ah-strip) * .4) calc(var(--ah-strip) * .14)!important;padding:0 6px!important}
+.ah-pw .lz-wallet,.ah-pw .lz-win{flex-direction:row!important;align-items:baseline!important;gap:8px}
+.ah-pw .lz-lbl{font-size:clamp(9px,calc(var(--ah-strip) * .28),15px)!important}
+.ah-pw .lz-wallet b,.ah-pw .lz-win b{font-size:clamp(12px,calc(var(--ah-strip) * .42),24px)!important;max-width:none}
+@media (max-aspect-ratio:3/4){
+  :root{--ah-s:clamp(42px,6.2vh,56px);--ah-bar:calc(var(--ah-spin) + var(--ah-strip) + 14px)}
+  .ah-bc.ah-row{width:100%!important}
+  .ah-pb{width:auto;flex:1 1 auto}
+  .ah-top{width:100%}
+}
+@media (max-height:300px){
+  :root{--ah-s:24px;--ah-spin:36px;--ah-ph:30px;--ah-strip:22px;--ah-bar:64px}
+  .ah-pb{width:110px}
+  .ah-pw .lz-lbl{font-size:8px!important}.ah-pw .lz-wallet b,.ah-pw .lz-win b,.ah-pb .lz-amount b{font-size:11px!important}
+}
+/* landscape: the bar under the board's frame (game.js sets --ah-bx / --ah-bw to the frame), at most as wide as it */
+.ah-app .lz-panel{left:var(--ah-bx,0)!important;right:auto!important;width:var(--ah-bw,100%)!important;padding:0!important}
+.ah-bc.ah-row{width:100%!important}
+.ah-top{justify-content:space-between}
+.ah-pb{flex:1 1 auto;width:auto;max-width:calc(var(--ah-s) * 4.6)}
+/* the arrows: the painted button only (no shell border, no + / - text) */
+.ah-pb #lzPlus,.ah-pb #lzMinus{border:0!important;outline:0!important;color:transparent!important;font-size:0!important;padding:0!important}
+.ah-pb #lzPlus:focus-visible,.ah-pb #lzMinus:focus-visible{outline:2px solid var(--ah-gold)!important}
+/* a little room between each label and its amount */
+.ah-pw .lz-lbl{margin-right:4px!important}
+/* the balance strip is half the bar, the controls the other half (Lidor, 28.11) */
+:root{--ah-strip:var(--ah-spin);--ah-bar:calc(var(--ah-spin) * 2 + 12px)}
+.ah-pw{height:var(--ah-strip)!important;border-width:calc(var(--ah-strip) * .22) calc(var(--ah-strip) * .3) calc(var(--ah-strip) * .12)!important;padding:0 calc(var(--ah-strip) * .12)!important}
+.ah-pw .lz-wallet,.ah-pw .lz-win{flex-direction:column!important;align-items:flex-start!important;gap:0!important}
+.ah-pw .lz-win{align-items:flex-end!important}
+.ah-pw .lz-lbl{font-size:clamp(9px,calc(var(--ah-strip) * .2),16px)!important;margin:0!important}
+.ah-pw .lz-wallet b,.ah-pw .lz-win b{font-size:clamp(13px,calc(var(--ah-strip) * .34),30px)!important}
+@media (max-aspect-ratio:3/4){:root{--ah-bar:calc(var(--ah-spin) * 2 + 14px)}}
+@media (max-height:300px){:root{--ah-strip:32px;--ah-bar:74px}}
+/* the balance strip a little thinner (Lidor, 28.11) */
+:root{--ah-strip:calc(var(--ah-spin) * .72);--ah-bar:calc(var(--ah-spin) + var(--ah-strip) + 12px)}
+@media (max-aspect-ratio:3/4){:root{--ah-bar:calc(var(--ah-spin) + var(--ah-strip) + 14px)}}
+@media (max-height:300px){:root{--ah-strip:28px;--ah-bar:70px}}
+/* both rows a little higher than the bottom edge (Lidor, 28.11; game.js sets --ah-lift in landscape) */
+.ah-app .lz-panel{bottom:var(--ah-lift,8px)!important}
