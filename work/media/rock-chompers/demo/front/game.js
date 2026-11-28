@@ -61,13 +61,18 @@
       const S2 = Math.max(44, Math.min(52, innerHeight * .06)), feet = H - Math.max(0, 1.15 * S2 - 34) - 4;
       const logoW = Math.min(W * .42, 200), logoH = logoW * .551, logoTop = 4 + S2 + 2;
       const signW = Math.min(W * .45, 210), signH = signW / 2.45, signTop = logoTop + logoH * .9 + 2;
-      const top = signTop + signH + 4;
-      gs = Math.min(W * .985, feet - top - 90); gx = (W - gs) / 2; gy = feet - gs;   // the board sits down on the bar
-      const row = gy - top;                                                         // the totem and the lizard stand above it
-      L = { land, tiny, signW, signTop, cook: { x: W * .8, y: gy + gs * .07, h: row * 1.12 + gs * .07 }, cart: { x: W * .8, y: feet, w: W * .26 },
+      const top = signTop + signH + 4, avail = feet - top;
+      // two ways to lay it out; the one with the bigger board wins: the two beside the board, or above it
+      const gsSide = Math.min(W * .985, avail), gsAbove = Math.min(W * .985, avail - 90), side = gsSide > gsAbove + 8;
+      gs = side ? gsSide : gsAbove; gx = (W - gs) / 2;
+      gy = feet - gs;
+      const row = gy - top;
+      const mh = side ? Math.min(gs * .85, gx * 1.6 / .403) : row * 1.04, ch = side ? Math.min(gs * .7, gx * 1.9 / .644) : row * 1.12 + gs * .07;
+      L = { land, tiny, signW, signTop,
+        cook: side ? { x: W - ch * .644 * .42, y: gy + gs, h: ch } : { x: W * .8, y: gy + gs * .07, h: ch }, cart: { x: W * .8, y: feet, w: W * .26 },
         logo: { x: W * .5, y: logoTop + logoH * .3, w: logoW }, title: { x: W / 2, y: gy + gs * .45, w: W * .92 },
         winHud: { x: gx + gs * .3, y: gy + gs - gs * .035, h: gs * .07 }, nightHud: { x: gx + gs * .74, y: gy + gs - gs * .035, h: gs * .055 },
-        meter: { x: W * .2, y: top + row * .52 + gs * .02, h: row * 1.04 } };
+        meter: side ? { x: Math.max(mh * .403 * .5 + 2, gx * .45), y: gy + gs * .55, h: mh } : { x: W * .2, y: top + row * .52 + gs * .02, h: mh } };
     }
     const pad = gs * .125;                                   // the carved frame around the 7x7 floor
     L.grid = { x: gx, y: gy, s: gs, ix: gx + pad, iy: gy + pad, cs: (gs - pad * 2) / N };
@@ -75,8 +80,42 @@
     L.fw = L.grid.cs * 1.6;                                   // the size the effects scale with
     place();
   }
+  // Lidor, 28.11: "give them a place of honour, bigger and more dignified". On a phone the bar is two rows: BALANCE and WIN
+  // as two big carved plaques on the two sides of the round button, and under the button the - / amount / + row.
+  // The pieces are moved into that layout on a phone and back to the bar's own layout on a wide screen.
+  let pbar = null, home = null;
+  function placeBar() {
+    const panel = document.querySelector('.lz-panel'), wallet = document.getElementById('lzWallet'), win = document.getElementById('lzWinBox');
+    const spin = document.querySelector('.rc-spin'), minus = document.getElementById('lzMinus'), plus = document.getElementById('lzPlus');
+    const amt = document.querySelector('.lz-amount');
+    if (!L || !panel || !wallet || !win || !spin) return;
+    if (!home) home = { wallet: wallet.parentElement, win: win.parentElement, spinw: spin.parentElement, bc: minus && minus.parentElement };
+    const phone = !L.land;
+    if (phone && !pbar) {
+      pbar = document.createElement('div'); pbar.className = 'rc-pbar'; pbar.style.setProperty('display', 'flex', 'important');
+      const r1 = document.createElement('div'); r1.className = 'rc-pbar-top';
+      const r2 = document.createElement('div'); r2.className = 'rc-pbar-bet';
+      wallet.classList.add('rc-plaque'); win.classList.add('rc-plaque');
+      r1.append(wallet, spin, win);
+      if (minus && amt && plus) r2.append(minus, amt, plus);
+      pbar.append(r1, r2); panel.append(pbar);
+      document.documentElement.classList.add('rc-phonebar');
+    } else if (!phone && pbar) {
+      wallet.classList.remove('rc-plaque'); win.classList.remove('rc-plaque');
+      home.wallet.prepend(wallet); home.win.prepend(win); home.spinw.prepend(spin);
+      if (home.bc && minus && amt && plus) { home.bc.prepend(minus); home.spinw.append(amt); home.bc.append(plus); }
+      pbar.remove(); pbar = null;
+      document.documentElement.classList.remove('rc-phonebar');
+    }
+    if (!pbar) return;
+    // the amounts: as big as fits (up to 22px), the same size on both plaques
+    const nums = [wallet, win].map(b => b.querySelector('b')).filter(Boolean);
+    for (let f = 22; f >= 12; f--) { nums.forEach(n => n.style.fontSize = f + 'px'); if ([wallet, win].every(b => b.scrollWidth <= b.clientWidth + 1)) break; }
+  }
+  addEventListener('resize', () => requestAnimationFrame(placeBar));
   function place() {
     const st = document.querySelector('.rc-stagebox');
+    requestAnimationFrame(placeBar); setTimeout(placeBar, 300);
     if (st) { st.dataset.land = L.land ? '1' : '0'; st.dataset.tiny = L.tiny ? '1' : '0'; }
     // Lidor, 28.11: the two buy signs bigger, centred in the space right of the board
     if (st && !L.land) { st.style.setProperty('--rc-signtop', L.signTop + 'px'); st.style.setProperty('--rc-signw', L.signW + 'px'); }
