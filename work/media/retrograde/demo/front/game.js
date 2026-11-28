@@ -9,7 +9,7 @@ const RG_RUN = () => {
   const TAU = Math.PI * 2, PI = Math.PI, clamp = A.clamp;
   const PLANETS = 'LTICQSG';
   // each planet's own colour [glow, light] (glow, win dust); matches tools/tint-sym.mjs
-  const SYMCOL = { L: ['#b48cff', '#e6d8ff'], T: ['#6fa8ff', '#dbe9ff'], I: ['#ff7a4a', '#ffd3b6'], C: ['#56d989', '#d4ffe2'], Q: ['#46e2f2', '#d4fbff'], S: ['#e8eefc', '#ffffff'], G: ['#ffd24a', '#fff2b8'], W: ['#bfe0ff', '#ffffff'], A: ['#ff9ec0', '#ffe9a8'] };
+  const SYMCOL = { L: ['#b48cff', '#e6d8ff'], T: ['#6fa8ff', '#dbe9ff'], I: ['#ff4a4a', '#ffd0c8'], C: ['#56d989', '#d4ffe2'], Q: ['#46e2f2', '#d4fbff'], S: ['#e8eefc', '#ffffff'], G: ['#ffd24a', '#fff2b8'], W: ['#bfe0ff', '#ffffff'], A: ['#ff9ec0', '#ffe9a8'] };
   // The win table shown in the rules (hundredths of the play amount). Same numbers as math/game.mjs.
   const TABLE = {
     L: [20, 25, 35, 50, 70, 100, 200, 500, 2000], T: [25, 35, 45, 65, 90, 140, 280, 700, 2500], I: [30, 45, 60, 85, 120, 180, 350, 900, 3500],
@@ -26,7 +26,7 @@ const RG_RUN = () => {
   // painted lettering for the four tiers (art/titles -> tools/make-board.mjs); the text stays in the node for screen readers
   const TITLE_ART = { 'GRAND WIN': 'grand', 'CELESTIAL WIN': 'celestial', 'COSMIC WIN': 'cosmic', 'HEAVENLY WIN': 'heavenly' };
   function bigTitle(text) { el.bigTitle.textContent = text; const a = TITLE_ART[text]; if (a) el.bigTitle.dataset.art = a; else delete el.bigTitle.dataset.art; }
-  const SKY = [null, { x: 5, kick: 'Star shower', title: 'GRAND WIN' }, { x: 20, kick: 'Great conjunction', title: 'CELESTIAL WIN' }, { x: 50, kick: 'Total eclipse', title: 'COSMIC WIN' }, { x: 250, kick: 'The heavens align', title: 'HEAVENLY WIN' }];
+  const SKY = [null, { x: 5, kick: 'Star shower', title: 'GRAND WIN' }, { x: 15, kick: 'Great conjunction', title: 'CELESTIAL WIN' }, { x: 30, kick: 'Total eclipse', title: 'COSMIC WIN' }, { x: 60, kick: 'The heavens align', title: 'HEAVENLY WIN' }];
 
   /* Gold digits (art/digits, tools/make-digits.mjs -> assets/ui/digits.webp + digits.js): numbers in the logo's sculpted
    * gold for the ALIGNMENT pop, the dial, the win cartouche and the big win. A string with any other character (another
@@ -44,6 +44,7 @@ const RG_RUN = () => {
     }
     function into(node, str, fit) {
       if (!node) return;
+      node.dataset.value = str;     // the value as text, for QA and assistive tools (the gold digits are a canvas)
       if (!can(str)) { if (node._gc) { node._gc.remove(); node._gc = null; } node.textContent = str; return; }
       let cv = node._gc;
       if (!cv || !cv.isConnected) { node.textContent = ''; cv = document.createElement('canvas'); cv.className = 'rg-gold'; cv.setAttribute('role', 'img'); node.append(cv); node._gc = cv; }
@@ -65,11 +66,11 @@ const RG_RUN = () => {
   const el = {};                    // DOM nodes
   const S = {
     W: 0, H: 0, dpr: 1, G: 0, cs: 0, gx: 0, gy: 0, cx: 0, cy: 0, M: 0, b: 2, land: true, small: false, spPx: 0,
-    sprites: {}, bodies: {}, grid: null, tok: new Array(49).fill(null), exiting: [], dying: [],
+    sprites: {}, grid: null, tok: new Array(49).fill(null), exiting: [], dying: [],
     lines: [], labels: [], rings: [], cellGlow: [], shocks: [], tweens: [], timers: new Set(), tw: [], motes: [],
     retro: false, retroMix: 0, ringA: 0, ringV: 1, ringTarget: 1, light: 0, t: 0, dirty: true, raf: 0, last: 0,
     playing: false, attract: false, started: false, hasScat: false, nextGlint: 0, glint: null, antic: null, shoot: null, nextShoot: 6,
-    circles: [], spells: [], beams: [], stars: [], flyers: [], spinCast: 0, wiz: false, wizBox: null, wizWorried: false,
+    spells: [], beams: [], stars: [], flyers: [], spinCast: 0, wiz: false, wizBox: null, wizWorried: false,
     featOn: false, feat: 0, left: 0, spins: 0, peak: 1, totalShown: 0, totalTw: null, flash: 0, shake: null, bw: null, fxLive: false, level: 0,
   };
   const Dial = { D: 0, m: 1, mf: 1, g: 0, axis: -PI / 2, axisT: -PI / 2, pulse: 0, kick: 0, release: 0, sp: [], pl: [1.15, .9, .72, .56, .43, .31, .22].map((v, i) => ({ a: i * 2.4 + 1, v })) };
@@ -142,7 +143,7 @@ const RG_RUN = () => {
     const f = { text: l.text, x: x0, y: y0, h: h0 }, cx = (x0 + tx) / 2, cy = Math.min(y0, ty) - S.cs * 1.6;
     S.flyers.push(f); S.fxLive = true;
     tween(FLIGHT * sp, q => {
-      const u = 1 - q; f.x = u * u * x0 + 2 * u * q * cx + q * q * tx; f.y = u * u * y0 + 2 * u * q * cy + q * q * ty; f.h = h0 * (1 + .25 * Math.sin(q * PI)) * (1 - .4 * q); S.fxLive = true;
+      const u = 1 - q; f.a = q > .7 ? 1 - (q - .7) / .3 : 1; f.x = u * u * x0 + 2 * u * q * cx + q * q * tx; f.y = u * u * y0 + 2 * u * q * cy + q * q * ty; f.h = h0 * (1 + .25 * Math.sin(q * PI)) * (1 - .4 * q); S.fxLive = true;
       if (Math.random() < .6) emit({ layer: 'f', x: f.x, y: f.y, vx: (Math.random() - .5) * S.cs * .5, vy: (Math.random() - .5) * S.cs * .5, max: .4, z: Math.max(1, S.cs * .025), col: DUST[(Math.random() * 4) | 0], g: 0 });
     }, { delay: delay * sp, ease: easeInOut, done: () => { const i = S.flyers.indexOf(f); if (i >= 0) S.flyers.splice(i, 1); if (!api.reduced) burstF(tx, ty, S.small ? 6 : 12, { speed: .22, grav: .15, life: .6 }); if (done) done(); } });
   }
@@ -159,7 +160,20 @@ const RG_RUN = () => {
   /* Painted light bursts (art/fx -> tools/make-fx.mjs -> assets/fx): gold flare, pink-violet nebula, star dust, all on
    * black and drawn additively, so they read as light. They replace the stroked rings that looked drawn by code. */
   const FX = {};
-  for (const n of ['gold', 'violet', 'dust']) { const im = new Image(); im.src = 'assets/fx/burst-' + n + '.webp'; FX[n] = im; }
+  // Phones (2026-11-27): a picture the browser has not decoded yet is decoded the first time it is drawn, which froze the
+  // screen for 50-250 ms right at the first win. Each one is baked into a canvas as soon as it loads (a canvas never
+  // needs decoding), and keeps the Image fields the drawing code checks.
+  function baked(src, set) {
+    const im = new Image(); im.src = src;
+    (im.decode ? im.decode() : new Promise(r => { im.onload = r; })).then(() => {
+      const cv = document.createElement('canvas'); cv.width = im.naturalWidth; cv.height = im.naturalHeight; cv.getContext('2d').drawImage(im, 0, 0);
+      cv.complete = true; cv.naturalWidth = im.naturalWidth; cv.naturalHeight = im.naturalHeight; set(cv);
+    }, () => {});
+    return im;
+  }
+  let MOON = baked('assets/ui/moon.webp', cv => { MOON = cv; });   // the eclipse disc of the big win (art/ui2)
+  let KNOB = baked('assets/ui/knob.webp', cv => { KNOB = cv; const k = document.createElement('canvas'); k.width = cv.width; k.height = cv.height; const kc = k.getContext('2d'); kc.filter = 'sepia(.35) hue-rotate(-28deg) saturate(1.7)'; kc.drawImage(cv, 0, 0); k.complete = true; k.naturalWidth = cv.width; KNOBR = k; }), KNOBR = null;   // the RETROGRADE tint baked once (a canvas filter every frame is slow on phones)
+  for (const n of ['gold', 'violet', 'dust']) FX[n] = baked('assets/fx/burst-' + n + '.webp', cv => { FX[n] = cv; });
   function fxKind(col) {
     const h = String(col || '').replace('#', ''), r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
     if (b > g && r > 180) return 'violet'; if (b > r) return 'dust'; return 'gold';
@@ -185,7 +199,7 @@ const RG_RUN = () => {
     for (const p of POOL) p.on = false;
     for (const tk of S.tok) if (tk) { tk.ox = tk.oy = 0; tk.sc = 1; tk.al = 1; tk.glow = 0; tk.lift = 0; tk.sq = 0; tk.shine = 0; tk.yaw = 0; tk.hue = false; }
     S.flyers.length = 0;
-    el.card.classList.remove('on'); el.plus.classList.remove('on'); if (el.mpop) el.mpop.classList.remove('on'); el.root.classList.remove('tense'); el.big.classList.remove('on', 'done'); el.grid.style.transform = '';
+    el.card.classList.remove('on'); el.plus.classList.remove('on'); if (el.mpop) el.mpop.classList.remove('on'); el.root.classList.remove('tense'); el.big.classList.remove('on', 'done'); el.grid.style.transform = el.gbg.style.transform = el.gund.style.transform = el.b3d.style.transform = '';
     S.dirty = true; S.fxLive = true;
   }
 
@@ -335,6 +349,39 @@ const RG_RUN = () => {
     };
   })();
 
+  /* Recorded sound (front/sound.js + assets/snd, 107 real recordings, 2026-11-27; sound/WIRING.md). The synth above is
+   * only the fallback when RGSound is missing. The game emits events; levels, pools, pitch and pan live in sound.js CFG. */
+  const RGS = window.RGSound && window.RG_SND ? window.RGSound : null;
+  let rgCascade = 0, rgCount = null;
+  const rgSet = () => (S.retro ? (S.ecl ? 'eclipse' : 'retro') : 'base');
+  // base: 0 idle, 1 spinning, 2 cascades, 3 a hot cascade (ALIGNMENT x4+) or a big win; features: by ALIGNMENT, never down
+  const rgLevel = l => (S.retro ? (S.ecl ? (Dial.m >= 6 ? 1 : 0) : (Dial.m >= 6 ? 2 : Dial.m >= 3 ? 1 : 0)) : (l >= 2 && Dial.m >= 4 ? 3 : l));
+  const Sfx = RGS ? {
+    whoosh(up) { rgCascade = 0; RGS.emit('spin', { retro: !!up }); },
+    land(col, up, when) { RGS.emit('land', { col, retro: !!up, when: when || 0 }); },
+    scatter(n) { RGS.emit('scatter', { n }); },
+    antic(col) { RGS.emit('antic', { col }); RGS.tension(true); },
+    run(mult, n, up) { RGS.emit('run', { step: ++rgCascade, retro: !!up }); },
+    win(mult, big, up) { RGS.emit('win', { big: !!big, retro: !!up }); },
+    dust(up) { RGS.emit('dust', { retro: !!up }); },
+    wild(when) { RGS.emit('wild', { when: when || 0 }); },
+    step(mult, up) { RGS.emit('step', { mult, retro: !!up }); },
+    unwind(n) { RGS.emit('unwind'); },
+    trigger() { RGS.emit('trigger'); },
+    windDown(d) { RGS.emit('windDown'); },
+    swell(d) { RGS.emit('swell'); },
+    flip() { RGS.emit(S.ecl ? 'eclipse' : 'flip'); },
+    more() { RGS.emit('more'); },
+    release() { RGS.emit('release'); },
+    end(good) { RGS.emit('featureEnd', { good: !!good }); },
+    count(sec, tier) { if (rgCount) rgCount(); rgCount = RGS.count(sec, tier); },
+    skyStart(tier, sec) { RGS.emit('skyStart', { tier }); },
+    skyHit(tier) { RGS.emit('skyHit', { tier }); },
+    skyEnd(top) { if (rgCount) { rgCount(); rgCount = null; } RGS.emit('skyEnd', { tier: top }); },
+    page() { RGS.emit('page'); },
+    start() { RGS.start(); },
+  } : Snd;
+
   /* ---------- Layout: the grid gets the largest square; the instrument lives in what is left ---------- */
   function place(node, x, y, w, h) { node.style.left = Math.round(x) + 'px'; node.style.top = Math.round(y) + 'px'; node.style.width = Math.round(w) + 'px'; node.style.height = Math.round(h) + 'px'; }
   function layout() {
@@ -345,12 +392,19 @@ const RG_RUN = () => {
     const land = W >= H * 1.12;
     let G, gx, gy, fr, strip = 0;
     const FB = A.boardFrame ? A.boardFrame() : 0;           // the painted frame needs its own width round the field
+    // landscape (Lidor 2026-11-28): the bar floats over the room, raised off the bottom edge, with no black band; the
+    // stage runs to the bottom of the screen and everything is laid out above the bar (Hb)
+    const pnl = document.getElementById('lzPanel'), floatBar = land && pnl && getComputedStyle(pnl).position === 'absolute';
+    const Hb = floatBar ? Math.max(120, H - pnl.offsetHeight - (parseFloat(getComputedStyle(pnl).bottom) || 0)) : H;
     if (land) {
-      const pad = clamp(H * .028, 3, 14), small0 = H - pad * 2 < 240; fr = FB ? FB * 7 : small0 ? .08 : .2;
-      G = Math.floor(Math.min((H - pad * 2) / (1 + 2 * fr / 7), W * .57)); gx = Math.round((W - G) / 2); gy = Math.round((H - G) / 2);
+      const pad = clamp(Hb * .028, 3, 14), small0 = Hb - pad * 2 < 240; fr = FB ? FB * 7 : small0 ? .08 : .2;
+      // 20% smaller than the room allows (Lidor 2026-11-28): more room for the bar, the wizard and the right column
+      G = Math.floor(Math.min((Hb - pad * 2) / (1 + 2 * fr / 7), W * .57) * .8); gx = Math.round((W - G) / 2);
+      // the board stands on the same line as the wizard's feet (Lidor 2026-11-28): its frame's bottom edge just above the bar
+      S.floorY = Math.round(Hb - pad); gy = Math.round(S.floorY - G - Math.max(2, G / 7 * fr));
     } else {
       // with bar B the mode knob and the RETROGRADE buy stand on the stage under the board: keep room for them
-      const foot = document.querySelector('#lzApp.rg-barB') ? clamp(H * .075, 40, 60) : 0;
+      const foot = document.querySelector('#lzApp.rg-barB') ? clamp(H * .2, 112, 150) : 0;   // two rows: mode knob, then the buys
       fr = FB ? FB * 7 : .1; strip = clamp(H * .2, 58, 136);
       G = Math.floor(Math.min((W - 8) / (1 + 2 * fr / 7), (H - strip - foot - 8) / (1 + 2 * fr / 7))); gx = Math.round((W - G) / 2);
       gy = Math.round(strip + (H - strip - foot - G) * .5);
@@ -361,16 +415,17 @@ const RG_RUN = () => {
     st.setProperty('--k', (G / 100).toFixed(3) + 'px'); st.setProperty('--m', (Math.min(W, H) / 100).toFixed(3) + 'px');
     st.setProperty('--vx', (S.cx / W * 100).toFixed(2) + '%'); st.setProperty('--vy', (S.cy / H * 100).toFixed(2) + '%');
     el.root.dataset.land = land ? '1' : '0'; el.root.dataset.small = small ? '1' : '0';
-    // sky layers are a little larger than the stage so they can drift (parallax)
-    const over = 1.08, SW = Math.round(W * over * dpr), SH = Math.round(H * over * dpr), geo = { cx: (S.cx + W * (over - 1) / 2) * dpr, cy: (S.cy + H * (over - 1) / 2) * dpr, G: G * dpr, k: dpr };
-    for (const [cv, pal] of [[el.neb1, 'night'], [el.neb2, 'retro']]) { cv.width = SW; cv.height = SH; A.drawNebula(cv.getContext('2d'), SW, SH, pal, geo); }
-    el.stars.width = SW; el.stars.height = SH; A.drawStars(el.stars.getContext('2d'), SW, SH, 'night', geo);
-    el.orr.width = W * dpr; el.orr.height = H * dpr; el.fx.width = W * dpr; el.fx.height = H * dpr;
+    // phone: the soft twinkle layer at 1x and the effects layer (painted light bursts, sparks) at 1.25x: 4x and 2.5x fewer
+    // pixels to clear and fill every frame; the board's symbols stay at full sharpness
+    S.odpr = land ? dpr : 1; S.fdpr = land ? dpr : Math.min(dpr, 1.25);
+    el.orr.width = Math.round(W * S.odpr); el.orr.height = Math.round(H * S.odpr); el.fx.width = Math.round(W * S.fdpr); el.fx.height = Math.round(H * S.fdpr);
     el.grid.width = Math.round((G + M * 2) * dpr); el.grid.height = el.grid.width; place(el.grid, gx - M, gy - M, G + M * 2, G + M * 2);
-    S.plateN = A.plate(G, b, dpr, 'night'); S.plateR = A.plate(G, b, dpr, 'retro'); S.plateE = FB ? A.plate(G, b, dpr, 'ecl') : S.plateR; S.glassN = A.plateGlass(G, b, dpr, 'night'); S.glassR = A.plateGlass(G, b, dpr, 'retro');
+    el.gbg.width = el.grid.width; el.gbg.height = el.grid.height; place(el.gbg, gx - M, gy - M, G + M * 2, G + M * 2); S.bgMix = -1;
+    el.gund.width = el.grid.width; el.gund.height = el.grid.height; place(el.gund, gx - M, gy - M, G + M * 2, G + M * 2); place(el.b3d, gx - M, gy - M, G + M * 2, G + M * 2);
+    S.plateN = A.plate(G, b, dpr, 'night'); S.plateR = A.plate(G, b, dpr, 'retro'); S.plateE = FB ? A.plate(G, b, dpr, 'ecl') : S.plateR;
     const px = Math.round(clamp(cs * dpr * 1.08, 64, 280));
     if (px !== S.spPx) { S.spPx = px; for (const s of PLANETS + 'WA') S.sprites[s] = A.sprite(s, px); }
-    if (!S.glowGold) { S.glowGold = A.glow(96, '#ffd978'); S.glowBlue = A.glow(96, '#9fd0ff'); S.glowRose = A.glow(96, '#ff7aa8'); S.glowWhite = A.glow(96, '#ffffff'); S.shadow = A.glow(96, '#000000'); S.spark = A.spark(64); for (const s of PLANETS) S.bodies[s] = A.body(48, s); S.glowSym = {}; for (const s in SYMCOL) S.glowSym[s] = A.glow(96, SYMCOL[s][0]); }
+    if (!S.glowGold) { S.glowGold = A.glow(96, '#ffd978'); S.glowBlue = A.glow(96, '#9fd0ff'); S.glowRose = A.glow(96, '#ff7aa8'); S.glowWhite = A.glow(96, '#ffffff'); S.shadow = A.glow(96, '#000000'); S.spark = A.spark(64); S.glowSym = {}; for (const s in SYMCOL) S.glowSym[s] = A.glow(96, SYMCOL[s][0]); }
     const rnd = A.seeded(91); S.tw = []; S.motes = [];
     for (let i = 0; i < (small ? 12 : 34); i++) { const x = rnd() * W, y = rnd() * H; if (x > gx - 4 && x < gx + G + 4 && y > gy - 4 && y < gy + G + 4) continue; S.tw.push({ x, y, ph: rnd() * TAU, sp: .5 + rnd() * 1.6, z: (small ? 3 : 5) + rnd() * (small ? 3 : 8) }); }
     for (let i = 0; i < (small ? 8 : 20); i++) S.motes.push({ x: rnd() * W, y: rnd() * H, z: (small ? 5 : 9) + rnd() * (small ? 8 : 22), a: .06 + rnd() * .14, v: .5 + rnd(), ph: rnd() * TAU });
@@ -379,25 +434,28 @@ const RG_RUN = () => {
     if (land) {
       const gap = b + clamp(G * .03, 3, 14), colW = Math.min(gx - gap - 3, G * .78);
       D = Math.round(clamp(Math.min(colW * .86, H * .54), 34, 270));
-      D = Math.round(clamp(Math.min(colW * .74, H * .34), 34, 230));
+      D = Math.round(clamp(Math.min(colW * .66, H * (H < 220 ? .34 : H < 420 ? .2 : .27)), 34, 210));   // (2026-11-28) a smaller dial: room for the knob and the buys at full size   // a short landscape phone: a smaller dial leaves room for the knob and the buys
       const top = Math.round(clamp(H * .03, 4, 22)), ah = Math.round(D * 1.12 + clamp(G * .06, 14, 34));
       // the right column carries the instruments (ALIGNMENT on top, the win cartouche under it); the whole left column is the wizard's
-      place(el.align, gx + G + gap, top, colW, ah); place(el.plaque, gx + G + gap, top + ah, colW, H - top - ah);
-      S.wizBox = { x: 0, y: Math.round(top * .5), w: gx - gap + Math.round(G * .04), h: H - Math.round(top * .5) };
+      place(el.align, gx + G + gap, top, colW, ah); place(el.plaque, gx + G + gap, top + ah, colW, Hb - top - ah);
+      S.wizBox = { x: 0, y: Math.round(top * .5), w: gx - gap + Math.round(G * .04), h: S.floorY - Math.round(top * .5) }; S.wizBase = null;   // his feet on the board's line
     } else {
       const sh = gy - b - 3;
       D = Math.round(clamp(sh - 24, 34, 124));
       const wz = Math.round(clamp(sh * .78, 40, 120));
-      D = Math.round(clamp(Math.min(sh - 24, (W - wz) * .3), 34, 124));
-      const ic = document.querySelector('#lzApp.rg-barB') ? 40 : 0;   // bar B: the info/sound knobs stand at the right edge
+      D = Math.round(clamp(Math.min(sh - 24, (W - wz) * .24), 34, 124));   // a little smaller: the TOTAL WIN cartouche beside it gets the room
+      const ic = document.querySelector('#lzApp.rg-barB') ? 58 : 0;   // bar B: the info/sound knobs stand at the right edge
       place(el.align, wz + 2, 0, D + 22, sh); place(el.plaque, wz + D + 28, 0, W - wz - D - 32 - ic, sh);
-      S.wizBox = { x: 0, y: 0, w: wz + 8, h: sh + Math.round(b * 2), bust: true };
+      // the logo stands at the top left: the wizard's bust starts under it (2026-11-28 review: the logo sat on his hat)
+      const lg = clamp(Math.round(sh * .26), 22, 36);
+      S.wizBox = { x: 0, y: lg, w: wz + 8, h: sh + Math.round(b * 2) - lg + Math.round(sh * .12), bust: true };
     }
     Dial.D = D; el.dial.style.width = el.dial.style.height = D + 'px'; el.dial.width = el.dial.height = Math.round(D * dpr);
-    S.dialN = A.dialFace(el.dial.width, 'night'); S.dialR = A.dialFace(el.dial.width, 'retro'); S.dialG = A.dialGlass(el.dial.width);
+    S.dialN = A.dialFace(el.dial.width, 'night'); S.dialR = A.dialFace(el.dial.width, 'retro');
     place(el.card, gx, gy, G, G); place(el.plus, gx, gy, G, G); place(el.mpop, gx, gy, G, G);
     placeWiz();
     S.dirty = true; S.fxLive = true;
+    requestAnimationFrame(() => fitLine(el.align && el.align.querySelector('.rg-acap')));   // ALIGNMENT never wider than its column
   }
 
   /* ---------- Tokens ---------- */
@@ -420,7 +478,16 @@ const RG_RUN = () => {
   /* ---------- The Old Astronomer: when he acts, and the magic that leaves his hand ---------- */
   function placeWiz() {
     if (!S.wiz || !window.RGWiz) return;
-    const b = S.wizBox; el.wiz.hidden = !b;
+    const b = S.wizBox; el.wiz.hidden = !b; el.wiz.classList.toggle('bust', !!(b && b.bust));
+    // the contact shadow: drawn once per layout on its own small canvas under his feet (full figure only)
+    if (!el.wizsh) { el.wizsh = document.createElement('canvas'); el.wizsh.className = 'rg-wizsh'; el.wizsh.setAttribute('aria-hidden', 'true'); el.wiz.before(el.wizsh); }
+    el.wizsh.hidden = !b || b.bust;
+    if (b && !b.bust && S.shadow) {
+      const fh = b.h * .97, fw = Math.min(b.w * .98, fh * 2 / 3), w = fw * .78, h = Math.max(8, fh * .07), dpr = S.dpr;
+      Object.assign(el.wizsh.style, { left: Math.round(b.x + b.w / 2 - w / 2) + 'px', top: Math.round(b.y + b.h - h * .62) + 'px', width: Math.round(w) + 'px', height: Math.round(h) + 'px' });
+      el.wizsh.width = Math.round(w * dpr); el.wizsh.height = Math.round(h * dpr);
+      const c = el.wizsh.getContext('2d'); c.globalAlpha = .7; c.drawImage(S.shadow, 0, 0, el.wizsh.width, el.wizsh.height);
+    }
     if (b) RGWiz.frame(b.x, b.y, b.w, b.h, b.bust ? 'bust' : 'full');
   }
   let wizAt = 0;
@@ -507,8 +574,7 @@ const RG_RUN = () => {
       if (now < sp.rel) {                                            // charging in his hands
         const h = RGWiz.hand(sp.power >= 2 ? 'both' : 'R'); if (h) {
           const p = (now - t0) / (sp.rel - t0), r = base * (.4 + 1.6 * p) * (1 + .12 * Math.sin(now * .03));
-          let g = c.createRadialGradient(h.x, h.y, 0, h.x, h.y, r * 2.6); g.addColorStop(0, 'rgba(255,255,255,' + (.95 * p).toFixed(3) + ')'); g.addColorStop(.25, A.rgba(col[1], (.8 * p).toFixed(3))); g.addColorStop(1, A.rgba(col[2], 0));
-          c.fillStyle = g; c.beginPath(); c.arc(h.x, h.y, r * 2.6, 0, TAU); c.fill();
+          const gz = r * 2.6; c.globalAlpha = p; c.drawImage(sp.power >= 3 ? S.glowRose : S.glowGold, h.x - gz, h.y - gz, gz * 2, gz * 2); c.drawImage(S.glowWhite, h.x - gz * .5, h.y - gz * .5, gz, gz); c.globalAlpha = 1;
           fxSprite(c, FX[sp.power >= 3 ? 'violet' : 'gold'], h.x, h.y, r * 3.4, now * .0016, .35 + .75 * p);   // the painted flare gathering in his hand
           if (Math.random() < .8) { const a = Math.random() * TAU, d = r * (4 + Math.random() * 3); emit({ layer: 'f', kind: 1, x: h.x + Math.cos(a) * d, y: h.y + Math.sin(a) * d, cx: h.x + Math.cos(a + 1) * d * .5, cy: h.y + Math.sin(a + 1) * d * .5, tx: h.x, ty: h.y, max: .35, z: Math.max(1, base * .18), col: col[Math.floor(Math.random() * 3)] }); }
           sp.from = { x: h.x, y: h.y };
@@ -518,7 +584,7 @@ const RG_RUN = () => {
         const at = q => { const v = 1 - q; return [v * v * f.x + 2 * v * q * cx + q * q * sp.tx, v * v * f.y + 2 * v * q * cy + q * q * sp.ty]; };
         for (let i = 16; i >= 0; i--) {                                 // tail: thinning, fading points behind the head
           const q = Math.max(0, e - i * .022), [x, y] = at(q), r = base * (1.4 - i * .07) , al = (1 - i / 17) * .85;
-          const g = c.createRadialGradient(x, y, 0, x, y, r * 1.8); g.addColorStop(0, A.rgba(i < 2 ? '#ffffff' : col[1], al.toFixed(3))); g.addColorStop(1, A.rgba(col[2], 0)); c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 1.8, 0, TAU); c.fill();
+          const gz = r * 1.8; c.globalAlpha = al; c.drawImage(i < 2 ? S.glowWhite : sp.power >= 3 ? S.glowRose : S.glowGold, x - gz, y - gz, gz * 2, gz * 2); c.globalAlpha = 1;
         }
         const [hx, hy] = at(e), z = base * 3.2; c.drawImage(S.spark, hx - z, hy - z, z * 2, z * 2);
         if (Math.random() < .9) emit({ layer: 'f', x: hx, y: hy, vx: (Math.random() - .5) * m * .2, vy: (Math.random() - .5) * m * .2, max: .5, z: Math.max(1, base * .2), col: col[Math.floor(Math.random() * 3)], g: m * .3 });
@@ -544,28 +610,6 @@ const RG_RUN = () => {
     for (let i = 0; i < n; i++) emit({ layer: 'f', kind: 1, x: hd.x, y: hd.y, cx: (hd.x + tx) / 2 + (Math.random() - .5) * cs * 3, cy: Math.min(hd.y, ty) - cs * (1 + Math.random() * 2.5), tx: tx + (Math.random() - .5) * cs * 1.2, ty: ty + (Math.random() - .5) * cs * 1.2, max: .55 + Math.random() * .45, wait: i * .012, z: Math.max(1.4, cs * (.035 + Math.random() * .04)), col: c[i % c.length] });
     S.fxLive = true;
   }
-  // a rune circle on the stage: engraved rings and a star turning opposite ways (time-based, so it survives the hard stop
-  // at the start of a round); while it lives it sheds sparks
-  function runeCircle(x, y, r, dur = 1800, col = '#ffd76a') { if (api.reduced) return; S.circles.push({ x, y, r, t0: performance.now(), dur: dur * api.speed(), col }); S.fxLive = true; }
-  function drawCircles(c, now) {
-    let live = 0;
-    S.circles = S.circles.filter(o => now - o.t0 < o.dur);
-    for (const o of S.circles) {
-      live++;
-      const p = (now - o.t0) / o.dur, inn = Math.min(1, p / .18), out = 1 - Math.max(0, (p - .7) / .3), a = inn * out, R = o.r * (.6 + .4 * backOut(Math.min(1, p / .25))), rot = p * 2.4;
-      c.save(); c.translate(o.x, o.y); c.globalCompositeOperation = 'lighter';
-      c.strokeStyle = A.rgba(o.col, (.85 * a).toFixed(3)); c.lineWidth = Math.max(1.2, o.r * .012);
-      c.beginPath(); c.arc(0, 0, R, 0, TAU); c.stroke(); c.beginPath(); c.arc(0, 0, R * .86, 0, TAU); c.stroke();
-      c.lineWidth = Math.max(1, o.r * .008); c.beginPath(); c.arc(0, 0, R * .62, 0, TAU); c.stroke();
-      c.save(); c.rotate(rot);
-      for (let i = 0; i < 12; i++) { const an = i / 12 * TAU, x1 = Math.cos(an), y1 = Math.sin(an); c.beginPath(); c.moveTo(x1 * R * .86, y1 * R * .86); c.lineTo(x1 * R, y1 * R); c.stroke(); const z = o.r * .05; c.globalAlpha = a; c.drawImage(S.spark, Math.cos(an + .26) * R * .93 - z, Math.sin(an + .26) * R * .93 - z, z * 2, z * 2); c.globalAlpha = 1; }
-      c.restore(); c.save(); c.rotate(-rot * 1.6);
-      c.beginPath(); for (let i = 0; i < 6; i++) { const an = i / 6 * TAU; c.lineTo(Math.cos(an) * R * .62, Math.sin(an) * R * .62); c.lineTo(Math.cos(an + TAU / 12) * R * .36, Math.sin(an + TAU / 12) * R * .36); } c.closePath(); c.stroke();
-      c.restore(); c.restore();
-      if (Math.random() < .5 && a > .3) { const an = Math.random() * TAU; emit({ layer: 'f', x: o.x + Math.cos(an) * R, y: o.y + Math.sin(an) * R, vx: Math.cos(an) * o.r * .4, vy: Math.sin(an) * o.r * .4, max: .5, z: Math.max(1, o.r * .012), col: o.col, g: 0 }); }
-    }
-    return live;
-  }
   // the RETROGRADE buy: a click readies him; confirming it unleashes the summoning (rings round the board, streams, flash)
   function wizHooks() {
     document.addEventListener('click', e => {
@@ -578,7 +622,7 @@ const RG_RUN = () => {
     if (api.reduced) return;
     const mx = S.gx + S.G / 2, my = S.gy + S.G / 2;
     spellTo(mx, my, 3, S.wizPk >= 0 ? S.wizPk : .6);
-    flash(.9, 700); shake(S.cs * .08, 420); Snd.swell(.9); Snd.trigger();
+    flash(.9, 700); shake(S.cs * .08, 420); if (RGS) RGS.emit('buyConfirm'); else { Snd.swell(.9); Snd.trigger(); }
   }
   function amountPicker() {
     const sel = document.getElementById('lzAmtSel'), box = sel && sel.closest('.lz-amount'); if (!box) return;
@@ -606,27 +650,95 @@ const RG_RUN = () => {
   // the resting sway loads at once; the full-turn strips (only for wins and spins) after PLAY: until then a turn uses the
   // still sprite (first load, studio standard 8 MB)
   let turnsAsked = false;
-  function loadTurns() { if (turnsAsked) return; turnsAsked = true; for (const s of PLANETS + 'WA') { const i = new Image(); i.onload = () => { STRIP[s] = i; S.dirty = true; }; i.src = 'assets/sym/' + s + '.webp'; } }
+  // GPU warm-up (2026-11-28, Lidor on a PC in Stake Engine: "still limping"). The first time each picture is drawn, or
+  // drawn in a new way (additive light, rotated, scaled, faded), the graphics card uploads it, builds its smaller
+  // copies and compiles the shader for it: on Windows that froze the screen for 100-330 ms in the middle of the first
+  // win. Every picture a round uses is drawn once, almost invisible, on each game canvas while the intro is showing,
+  // and again after the later pictures arrive.
+  function warmGPU() {
+    if (!el.fxC) return;
+    const ims = [FX.gold, FX.violet, FX.dust, KNOB, KNOBR, S.spark, S.glowGold, S.glowBlue, S.glowRose, S.glowWhite, S.shadow, ...Object.values(S.glowSym || {}), ...Object.values(FCACHE).map(e => e.cv), ...Object.values(BM)]
+      .filter(im => im && (im.width || im.naturalWidth));
+    for (const c of [el.fxC, el.gridC, el.orrC, el.dialC]) {
+      if (!c) continue;
+      c.save();
+      for (const mode of ['source-over', 'lighter']) {
+        c.globalCompositeOperation = mode; c.globalAlpha = .004;
+        for (const im of ims) {
+          c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(im, 0, 0, 40, 40);
+          c.setTransform(.7, .7, -.7, .7, 60, 20); c.drawImage(im, 0, 0, 90, 90);          // rotated and scaled
+        }
+        c.setTransform(1, 0, 0, 1, 0, 0); c.lineCap = 'round'; c.lineWidth = 3; c.strokeStyle = '#fff'; c.beginPath(); c.moveTo(2, 2); c.lineTo(30, 20); c.stroke();
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(20, 20, 10, 0, 6.3); c.fill();   // station:ok invisible GPU warm-up, never seen
+      }
+      c.restore(); c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 200, 200); c.restore();
+    }
+    S.dirty = true;
+  }
+  function loadLater() { if (window.RGWiz && RGWiz.loadRest) RGWiz.loadRest(); if (S.b3d === false) loadTurns(); setTimeout(warmGPU, 2500); if (window.RGSound && RGSound.loadRest) RGSound.loadRest(); }
+  // each strip is decoded off the main thread (createImageBitmap) before it is cut into the small atlas, so neither the
+  // load nor the cut ever decodes a 5000-7000 px picture in the middle of a frame
+  const BM = {};
+  function bitmap(img, key) { if (window.createImageBitmap) createImageBitmap(img).then(b => { BM[key] = b; }, () => { BM[key] = img; }); else BM[key] = img; }
+  function loadTurns() { if (turnsAsked) return; turnsAsked = true; for (const s of PLANETS + 'WA') { const i = new Image(); i.onload = () => { STRIP[s] = i; bitmap(i, s + 't'); S.dirty = true; }; i.src = 'assets/sym/' + s + '.webp'; } }
   function loadStrips() {
-    setTimeout(loadTurns, 9000);
     for (const s of PLANETS + 'WA') {
-      const j = new Image(); j.onload = () => { SWAY[s] = j; S.dirty = true; }; j.src = 'assets/sym/' + s + '-sway.webp';
+      const j = new Image(); j.onload = () => { SWAY[s] = j; bitmap(j, s + 's'); S.dirty = true; }; j.src = 'assets/sym/' + s + '-sway.webp';
     }
   }
   // yaw in degrees (0 = facing the player). Between two baked frames the nearer one leads and the other fades in.
+  // Phones (2026-11-27, "the motion is not smooth"): the strips are 4896-6912 px wide, above many phones' GPU texture
+  // limit, and every token scaled its 192-288 px frame down on every frame. Each strip is now re-cut once into a small
+  // grid atlas at the board's own device size (FCACHE), built one strip per frame so the cut never stalls, and drawn
+  // 1:1. At rest (frames 1.25 degrees apart) only the nearest frame is drawn; the blend stays for spins (10 degrees).
+  const FCACHE = {}, fqueue = [];
+  function fkey(sym, sway) { return sym + (sway ? 's' : 't'); }
+  function fcache(sym, sway) {
+    const src = sway ? SWAY[sym] : STRIP[sym]; if (!src || !src.width || !S.spPx) return null;
+    const k = fkey(sym, sway), e = FCACHE[k];
+    if (e && e.px === S.spPx && e.src === src) return e;
+    if (!fqueue.includes(k)) fqueue.push(k);
+    return null;
+  }
+  function fbuild() {                                       // called once per animation frame: cuts one strip
+    const k = fqueue[0]; if (!k) return;
+    const bm = BM[k]; if (!bm) return;            // still decoding in the background: try again next frame
+    fqueue.shift();
+    const sym = k[0], sway = k[1] === 's', img = sway ? SWAY[sym] : STRIP[sym]; if (!img || !img.width) return;
+    const src = bm;
+    const fp = src.height, n = Math.round(src.width / fp), P = S.spPx, cols = Math.min(n, 8), rows = Math.ceil(n / cols);
+    const cv = document.createElement('canvas'); cv.width = cols * P; cv.height = rows * P;
+    const c = cv.getContext('2d'); c.imageSmoothingQuality = 'high';
+    for (let i = 0; i < n; i++) c.drawImage(src, i * fp, 0, fp, fp, (i % cols) * P, Math.floor(i / cols) * P, P, P);
+    FCACHE[k] = { cv, px: P, n, cols, src: img };
+  }
+  function fdraw(c, e, i, x, y, w, h) { c.drawImage(e.cv, (i % e.cols) * e.px, Math.floor(i / e.cols) * e.px, e.px, e.px, x, y, w, h); }
+  // Medallions off the board (intro orbit, the conjunction, planets flung out of a big win) are live 3D too: the batch
+  // is rendered in one go into a small grid (RGBoard3D.atlas) and each one is copied where it belongs.
+  function live(list, size) {
+    if (!list.length || !window.RGBoard3D || !RGBoard3D.ready) return null;
+    return RGBoard3D.atlas(list, Math.round(clamp(size, 40, 200)));
+  }
+  function atlasDraw(c, at, i, x, y, w, h) {
+    const d = at.d, px = at.px * d;
+    c.drawImage(at.cv, (i % at.cols) * px, Math.floor(i / at.cols) * px, px, px, x, y, w, h);
+  }
   function drawSym(c, sym, yaw, x, y, w, h) {
     const sw = SWAY[sym], ry = ((yaw % 360) + 540) % 360 - 180;
     if (sw && sw.width && Math.abs(ry) <= SA) {
-      const fp = sw.height, f = (ry + SA) / SSTEP, f0 = Math.min(SN - 1, Math.floor(f)), u = f - f0, a = c.globalAlpha;
-      c.drawImage(sw, f0 * fp, 0, fp, fp, x, y, w, h);
-      if (u > .04 && f0 + 1 < SN) { c.globalAlpha = a * u; c.drawImage(sw, (f0 + 1) * fp, 0, fp, fp, x, y, w, h); c.globalAlpha = a; }
+      const f = (ry + SA) / SSTEP, f0 = Math.min(SN - 1, Math.round(f)), e = w * S.dpr > S.spPx * 1.3 ? null : fcache(sym, true);   // big draws (intro, bursts) keep the full frame
+      if (e) { fdraw(c, e, f0, x, y, w, h); return; }
+      const b = BM[sym + 's'], fp = sw.height;
+      if (b) c.drawImage(b, f0 * fp, 0, fp, fp, x, y, w, h); else { const sp = S.sprites[sym]; if (sp) c.drawImage(sp, x, y, w, h); }   // never draw the undecoded strip
       return;
     }
     const st = STRIP[sym];
     if (!st || !st.width) { const sp = S.sprites[sym] || S.sprites.L; if (sp) c.drawImage(sp, x, y, w, h); return; }
-    const fp = st.height, f = ((yaw / 360 * FR) % FR + FR) % FR, f0 = Math.floor(f), u = f - f0, a = c.globalAlpha;
-    c.drawImage(st, f0 * fp, 0, fp, fp, x, y, w, h);
-    if (u > .04) { c.globalAlpha = a * u; c.drawImage(st, ((f0 + 1) % FR) * fp, 0, fp, fp, x, y, w, h); c.globalAlpha = a; }
+    const f = ((yaw / 360 * FR) % FR + FR) % FR, f0 = Math.floor(f), u = f - f0, a = c.globalAlpha, e = w * S.dpr > S.spPx * 1.3 ? null : fcache(sym, false), fp = st.height;
+    const bt = BM[sym + 't'];
+    if (!e && !bt) { const sp = S.sprites[sym] || S.sprites.L; if (sp) c.drawImage(sp, x, y, w, h); return; }   // the strip is still decoding
+    if (e) fdraw(c, e, f0, x, y, w, h); else c.drawImage(bt, f0 * fp, 0, fp, fp, x, y, w, h);
+    if (u > .04) { c.globalAlpha = a * u; if (e) fdraw(c, e, (f0 + 1) % FR, x, y, w, h); else c.drawImage(bt, ((f0 + 1) % FR) * fp, 0, fp, fp, x, y, w, h); c.globalAlpha = a; }
   }
   // the board breathes: a slow wave of sway runs across the orrery (none with reduced motion)
   const sway = tk => (api && api.reduced ? 0 : 9.5 * Math.sin(S.t * 1.05 + tk.col * .85 + tk.row * .55));
@@ -674,25 +786,33 @@ const RG_RUN = () => {
   }
 
   /* ---------- HUD ---------- */
+  // a long amount (BTC with 8 decimals, the max win) shrinks to fit the cartouche instead of being cut (station item 12)
+  function fitTotal(str) {
+    const t = el.total, p = t && t.parentElement; if (!p) return;
+    t.style.removeProperty('font-size'); Gold.into(t, str, true);    // gold digits fit themselves; plain text (BTC) is measured below
+    if (t._gc && t._gc.isConnected) return;
+    requestAnimationFrame(() => { const avail = p.clientWidth * .94, w = t.scrollWidth; if (w > avail && avail > 0) { const f = parseFloat(getComputedStyle(t).fontSize) || 16; t.style.setProperty('font-size', Math.max(7, f * avail / w).toFixed(1) + 'px', 'important'); } });
+  }
   function popTotal() { if (api.reduced) return; el.pl.classList.remove('pop'); void el.pl.offsetWidth; el.pl.classList.add('pop'); }
   function setTotal(units, animate) {
     const from = S.totalShown; S.totalShown = units;
     if (S.totalTw) S.totalTw.dead = true;
     el.total.classList.toggle('zero', units <= 0);
-    if (!animate || units <= from || api.reduced) { Gold.into(el.total, api.winMoney(units), true); return; }
-    S.totalTw = tween(440 * api.speed(), (q, p) => { Gold.into(el.total, p >= 1 ? api.winMoney(units) : api.money(Math.round(from + (units - from) * q)), true); });
+    if (!animate || units <= from || api.reduced) { fitTotal(api.winMoney(units)); return; }
+    S.totalTw = tween(440 * api.speed(), (q, p) => { if (p >= 1) fitTotal(api.winMoney(units)); else Gold.into(el.total, api.money(Math.round(from + (units - from) * q)), true); });
     popTotal();
   }
   function showLeft() { el.left.textContent = String(S.left); el.leftLbl.textContent = S.left === 1 ? 'spin left' : 'spins left'; }
   function setMult(m, step) {
     if (m === Dial.m) return;
+    if (RGS && S.retro) setTimeout(() => RGS.level(rgLevel(S.level)), 0);   // the feature music climbs with ALIGNMENT
     const up = m > Dial.m, was = Dial.m; Dial.m = m; if (m > S.peak) S.peak = m;
     Dial.axisT = -PI / 2 + (S.retro ? -1 : 1) * (m - 1) * (PI / 6);
     if (step && up) {
       Dial.mf = m; Dial.pulse = 1; tween(560 * api.speed(), q => { Dial.pulse = 1 - q; }, { ease: linear });
       const n = api.reduced ? 0 : 9;
       for (let i = 0; i < n; i++) Dial.sp.push({ a: Dial.axisT + (Math.random() - .5) * 1.4, r: .4 + Math.random() * .4, v: .3 + Math.random() * .7, life: 0, max: .4 + Math.random() * .4 });
-      Snd.step(m, S.retro);
+      Sfx.step(m, S.retro);
       // from x3 the alignment announces itself over the board, and the planets turn in a wave as the orrery tightens
       if (m >= 3 && !api.reduced && el.mpop) {
         el.mpop.innerHTML = '<small>ALIGNMENT</small><b></b>'; Gold.into(el.mpop.querySelector('b'), '×' + m); el.mpop.dataset.hot = String(Math.min(4, m - 2));
@@ -700,7 +820,7 @@ const RG_RUN = () => {
         for (const tk of S.tok) if (tk) spin(tk, 1, 560, (S.retro ? 6 - tk.row : tk.row) * 45 + tk.col * 12);
         if (m >= 5) shake(S.cs * Math.min(.08, .02 + m * .006), 260);
       }
-    } else if (!up && was > 1) { Dial.release = 1; tween(700 * api.speed(), q => { Dial.release = 1 - q; }, { ease: linear }); if (was > 2) Snd.unwind(was); }   // the alignment lets go
+    } else if (!up && was > 1) { Dial.release = 1; tween(700 * api.speed(), q => { Dial.release = 1 - q; }, { ease: linear }); if (was > 2) Sfx.unwind(was); }   // the alignment lets go
     else Dial.mf = m;
   }
   function setRetro(on, instant) {
@@ -710,24 +830,24 @@ const RG_RUN = () => {
     if (instant) { S.retroMix = on ? 1 : 0; S.ringV = S.ringTarget; } else { const a = S.retroMix, b = on ? 1 : 0; tween(1300 * api.speed(), q => { S.retroMix = a + (b - a) * q; }, { ease: easeInOut }); }
     S.dirty = true;
   }
+  // one line of text shrunk until it fits its box (2026-11-28 review: card titles spilled a few px)
+  function fitLine(t) {
+    if (!t) return; t.style.removeProperty('font-size');
+    const box = t.parentElement; if (!box || !box.clientWidth) return;
+    let fs = parseFloat(getComputedStyle(t).fontSize) || 16; const max = box.clientWidth * .96;
+    while (fs > 8 && t.scrollWidth > max) { fs -= 1; t.style.setProperty('font-size', fs + 'px', 'important'); }
+  }
   function showCard(kick, title, sub, note, cls) {
     el.cardKick.textContent = kick; el.cardTitle.textContent = title; el.cardSub.innerHTML = sub; el.cardNote.textContent = note;
     el.card.className = 'rg-card ' + (cls || ''); void el.card.offsetWidth; el.card.classList.add('on');
+    fitLine(el.cardTitle);
   }
-  function setLevel(l, now) { S.level = l; Music.set(l, S.retro, now); }
+  function setLevel(l, now) { S.level = l; if (RGS) RGS.music(rgSet(), rgLevel(l)); else Music.set(l, S.retro, now); }
 
   /* ---------- Drawing: the orrery behind the grid ---------- */
   function drawOrrery(dt) {
-    const c = el.orrC, dpr = S.dpr, W = S.W, H = S.H;
+    const c = el.orrC, dpr = S.odpr || S.dpr, W = S.W, H = S.H;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, el.orr.width, el.orr.height);
-    const geo = { cx: S.cx * dpr, cy: S.cy * dpr, G: S.G * dpr, k: dpr };
-    if (!S.room) A.drawRings(c, geo, S.small, S.ringA, S.light, S.retroMix);
-    for (const o of S.room ? [] : A.ORBITS) {
-      if (S.small && o.r > .8) continue;
-      const a = o.a + S.ringA * o.v * 2.4, x = geo.cx + Math.cos(a) * o.r * geo.G, y = geo.cy + Math.sin(a) * o.r * geo.G, z = Math.max(3 * dpr, o.z * geo.G * 1.25);
-      c.globalAlpha = .5; c.drawImage(S.retroMix > .5 ? S.glowRose : S.glowGold, x - z * 2.6, y - z * 2.6, z * 5.2, z * 5.2); c.globalAlpha = 1;
-      c.drawImage(S.bodies[o.s], x - z, y - z, z * 2, z * 2);
-    }
     c.globalCompositeOperation = 'lighter';
     for (const t of S.tw) { const al = Math.pow(Math.max(0, Math.sin(S.t * t.sp + t.ph)), 3); if (al < .04) continue; c.globalAlpha = al; const z = t.z * dpr; c.drawImage(S.spark, t.x * dpr - z, t.y * dpr - z, z * 2, z * 2); }
     // near dust: slow soft motes; they sink in the base game and rise in RETROGRADE
@@ -740,29 +860,61 @@ const RG_RUN = () => {
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     const sh = S.shoot;
     if (sh) {
-      const p = sh.p, x = (sh.x + sh.dx * p) * dpr, y = (sh.y + sh.dy * p) * dpr, tx = x - sh.dx * .16 * dpr, ty = y - sh.dy * .16 * dpr, g = c.createLinearGradient(x, y, tx, ty);
+      const p = sh.p, x = (sh.x + sh.dx * p) * dpr, y = (sh.y + sh.dy * p) * dpr, tx = x - sh.dx * .16 * dpr, ty = y - sh.dy * .16 * dpr, g = c.createLinearGradient(x, y, tx, ty); // station:ok the fading light trail of a shooting star in the painted sky
       g.addColorStop(0, `rgba(255,255,255,${(Math.sin(p * PI) * .9).toFixed(3)})`); g.addColorStop(1, 'rgba(255,255,255,0)');
       c.strokeStyle = g; c.lineWidth = 1.6 * dpr; c.lineCap = 'round'; c.beginPath(); c.moveTo(x, y); c.lineTo(tx, ty); c.stroke();
     }
   }
 
   /* ---------- Drawing: the grid ---------- */
-  function drawToken(c, tk) {
-    if (tk.al <= .01) return;
+  // a medallion on the board. With the 3D board (board3d.js) its body is a live model: under it (2D, el.gund) its lift
+  // shadow and glow, then the model, then over it (2D, el.grid) the passing shine. Without 3D: the old baked sprites.
+  function tokenGeo(tk) {
     const cs = S.cs, lift = tk.lift, x = (tk.col + .5 + tk.ox) * cs, y0 = (tk.row + .5 + tk.oy) * cs, y = y0 - lift * cs * .06, z = cs * 1.08 * tk.sc * (1 + lift * .1);
+    return { cs, lift, x, y0, y, z };
+  }
+  function drawTokenUnder(c, tk) {
+    if (tk.al <= .01) return;
+    const { cs, lift, x, y0, y, z } = tokenGeo(tk);
     if (y0 < -cs || y0 > S.G + cs) return;
     const special = tk.sym === 'A', beat = special ? (S.antic ? .8 + .35 * Math.sin(S.t * 9 + tk.col) : .32 + .14 * Math.sin(S.t * 3.2 + tk.col)) : 0, gl = Math.max(tk.glow, beat);
     if (lift > .02) { c.globalAlpha = Math.min(1, .5 * lift) * tk.al; c.drawImage(S.shadow, x - z * .55 + cs * .07 * lift, y0 - z * .5 + cs * .12 * lift, z * 1.1, z * 1.1); }
     if (gl > .01) { c.globalAlpha = Math.min(1, gl) * tk.al * .85; const gz = cs * 1.8; c.drawImage(special ? S.glowRose : tk.hue && S.glowSym ? S.glowSym[tk.sym] || S.glowGold : tk.sym === 'W' ? S.glowBlue : S.glowGold, x - gz / 2, y - gz / 2, gz, gz); }
-    // two astrolabes: the landed planets step back into the dark, the astrolabes turn and burn
-    c.globalAlpha = S.antic && !special && tk.col < S.antic.col && tk.oy === 0 ? tk.al * .42 : tk.al;
-    const yaw = tk.yaw + sway(tk) + (special && S.antic ? S.t * 320 : 0);
-    if (tk.sq > .004) { const sy = 1 - tk.sq, sx = 1 + tk.sq * .55, d = (S.retro ? -1 : 1) * z * tk.sq * .5; drawSym(c, tk.sym, yaw, x - z * sx / 2, y - z * sy / 2 + d, z * sx, z * sy); }
-    else drawSym(c, tk.sym, yaw, x - z / 2, y - z / 2, z, z);
-    if (tk.shine > .01 && tk.shine < .99) { const s = tk.shine, gz = cs * .62; c.globalCompositeOperation = 'lighter'; c.globalAlpha = Math.sin(s * PI) * .8 * tk.al; c.drawImage(S.glowWhite, x + (s - .5) * cs * .7 - gz / 2, y + (s - .5) * cs * .5 - gz / 2, gz, gz); c.globalCompositeOperation = 'source-over'; }
+    c.globalAlpha = 1;
   }
+  function tokenItem(tk, M) {
+    if (tk.al <= .01) return null;
+    const { cs, lift, x, y0, y, z } = tokenGeo(tk);
+    if (y0 < -cs || y0 > S.G + cs) return null;
+    const special = tk.sym === 'A', a = S.antic && !special && tk.col < S.antic.col && tk.oy === 0 ? tk.al * .42 : tk.al;
+    const yaw = tk.yaw + sway(tk) + (special && S.antic ? S.t * 320 : 0), sq = tk.sq > .004 ? tk.sq : 0;
+    const sx = 1 + sq * .55, sy = 1 - sq, d = sq ? (S.retro ? -1 : 1) * z * sq * .5 : 0;
+    // a slow nod (pitch) on top of the sway, so the light rolls over the brass at rest
+    const pitch = api && api.reduced ? 0 : 4 * Math.sin(S.t * .8 + tk.col * .6 - tk.row * .4);
+    return { sym: tk.sym, x: x + M, y: y + d + M, z, sx, sy, yaw, pitch, a, lift };
+  }
+  function drawTokenOver(c, tk) {
+    if (tk.al <= .01) return;
+    const { cs, x, y0, y } = tokenGeo(tk);
+    if (y0 < -cs || y0 > S.G + cs) return;
+    if (tk.shine > .01 && tk.shine < .99) { const s = tk.shine, gz = cs * .62; c.globalCompositeOperation = 'lighter'; c.globalAlpha = Math.sin(s * PI) * .8 * tk.al; c.drawImage(S.glowWhite, x + (s - .5) * cs * .7 - gz / 2, y + (s - .5) * cs * .5 - gz / 2, gz, gz); c.globalCompositeOperation = 'source-over'; }
+    c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+  }
+  function drawToken(c, tk) {               // the 2D fallback (no WebGL): everything on one canvas, as before
+    drawTokenUnder(c, tk);
+    if (tk.al <= .01) return;
+    const it = tokenItem(tk, 0); if (!it) return;
+    c.globalAlpha = it.a;
+    if (it.sx !== 1) drawSym(c, tk.sym, it.yaw, it.x - it.z * it.sx / 2, it.y - it.z * it.sy / 2, it.z * it.sx, it.z * it.sy);
+    else drawSym(c, tk.sym, it.yaw, it.x - it.z / 2, it.y - it.z / 2, it.z, it.z);
+    drawTokenOver(c, tk);
+  }
+
   function drawParticles(c, layer) {
     c.globalCompositeOperation = 'lighter';
+    const flung = [];
+    for (const p of POOL) if (p.on && p.layer === layer && p.kind === 3 && p.wait <= 0 && p.life < p.max) flung.push(p);
+    const fat = live(flung.map(p => ({ sym: p.sym, yaw: p.yaw + p.life * p.spin, pitch: p.life * p.spin * .35 })), Math.max(0, ...flung.map(p => p.z)));
     let n = 0;
     for (const p of POOL) {
       if (!p.on || p.layer !== layer) continue;
@@ -771,43 +923,64 @@ const RG_RUN = () => {
       const u = p.life / p.max, al = p.kind === 1 ? Math.min(1, u * 6) * (1 - Math.max(0, u - .85) / .15) : 1 - u;
       if (al <= 0) continue;
       c.globalAlpha = al * p.a;
-      if (p.kind === 3) { const z = p.z; c.globalCompositeOperation = 'source-over'; c.globalAlpha = Math.min(1, (1 - u) * 3) * p.a; drawSym(c, p.sym, p.yaw + p.life * p.spin, p.x - z / 2, p.y - z / 2, z, z); c.globalCompositeOperation = 'lighter'; }
+      if (p.kind === 3) { const z = p.z; c.globalCompositeOperation = 'source-over'; c.globalAlpha = Math.min(1, (1 - u) * 3) * p.a; if (fat) atlasDraw(c, fat, flung.indexOf(p), p.x - z / 2, p.y - z / 2, z, z); else drawSym(c, p.sym, p.yaw + p.life * p.spin, p.x - z / 2, p.y - z / 2, z, z); c.globalCompositeOperation = 'lighter'; }
       else if (p.kind === 2) {
-        const g = c.createLinearGradient(p.x, p.y, p.x - p.vx * .09, p.y - p.vy * .09); g.addColorStop(0, p.col); g.addColorStop(1, 'rgba(255,255,255,0)');
+        const g = c.createLinearGradient(p.x, p.y, p.x - p.vx * .09, p.y - p.vy * .09); g.addColorStop(0, p.col); g.addColorStop(1, 'rgba(255,255,255,0)'); // station:ok the fading light trail of a meteor particle
         c.strokeStyle = g; c.lineWidth = p.z; c.lineCap = 'round'; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x - p.vx * .09, p.y - p.vy * .09); c.stroke();
         const z = p.z * 3.2; c.drawImage(S.spark, p.x - z, p.y - z, z * 2, z * 2);
-      } else if (p.kind === 1) { const z = p.z * 2.6; c.drawImage(S.glowGold, p.x - z, p.y - z, z * 2, z * 2); c.fillStyle = '#fff'; c.beginPath(); c.arc(p.x, p.y, p.z * .5, 0, TAU); c.fill(); }
-      else { c.fillStyle = p.col; c.beginPath(); c.arc(p.x, p.y, p.z * (.5 + al * .6), 0, TAU); c.fill(); }
+      } else if (p.kind === 1) { const z = p.z * 2.6; c.drawImage(S.glowGold, p.x - z, p.y - z, z * 2, z * 2); c.fillStyle = '#fff'; c.beginPath(); c.arc(p.x, p.y, p.z * .5, 0, TAU); c.fill(); }   // station:ok the 1-3 px white core of a light mote (a particle, not a ring)
+      else { c.fillStyle = p.col; c.beginPath(); c.arc(p.x, p.y, p.z * (.5 + al * .6), 0, TAU); c.fill(); }   // station:ok a dust particle (a 1-4 px dot, not a ring)
     }
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     return n;
   }
   function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
-  function drawGrid() {
-    const c = el.gridC, dpr = S.dpr, M = S.M, G = S.G, cs = S.cs, b = S.b;
-    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, G + M * 2, G + M * 2);
-    c.imageSmoothingQuality = 'high';
+  function drawGridBg() {
+    const c = el.gbgC, dpr = S.dpr, M = S.M, G = S.G, cs = S.cs, b = S.b;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, G + M * 2, G + M * 2); c.imageSmoothingQuality = 'high';
     // a soft shadow lifts the whole instrument off the sky
     c.globalAlpha = .6; c.drawImage(S.shadow, M - b - cs * .55, M - b - cs * .35, G + b * 2 + cs * 1.1, G + b * 2 + cs * 1.2); c.globalAlpha = 1;
     c.drawImage(S.plateN, M - b, M - b, G + b * 2, G + b * 2);
     if (S.retroMix > .01) { c.globalAlpha = S.retroMix; c.drawImage(S.ecl && S.plateE ? S.plateE : S.plateR, M - b, M - b, G + b * 2, G + b * 2); c.globalAlpha = 1; }
+  }
+  function drawGrid() {
+    const c = el.gridC, dpr = S.dpr, M = S.M, G = S.G, cs = S.cs, b = S.b;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, G + M * 2, G + M * 2);
+    c.imageSmoothingQuality = 'high';
+    // the painted plate is on its own canvas below (el.gbg, drawGridBg): phones no longer redraw it 60 times a second
+    const mix = Math.round((S.retroMix || 0) * 64) / 64 + (S.ecl ? 2 : 0);
+    if (mix !== S.bgMix) { S.bgMix = mix; drawGridBg(); }
     c.save(); c.translate(M, M);
-    if (S.antic) { const x = S.antic.col * cs, g = c.createLinearGradient(0, 0, 0, G), a = .13 + .09 * Math.sin(S.t * 14); g.addColorStop(0, `rgba(255,120,170,${a})`); g.addColorStop(.5, `rgba(255,214,120,${a * 1.6})`); g.addColorStop(1, `rgba(255,120,170,${a})`); c.fillStyle = g; c.fillRect(x, 0, cs, G); }
+    const B3 = window.RGBoard3D && RGBoard3D.ready && S.b3d !== false;
+    const u = el.gundC;
+    if (B3) { u.setTransform(dpr, 0, 0, dpr, 0, 0); u.clearRect(0, 0, G + M * 2, G + M * 2); u.save(); u.translate(M, M); }
+    { const c = B3 ? u : el.gridC;                 // under the medallions
+    if (S.antic) { const x = S.antic.col * cs, a = .16 + .1 * Math.sin(S.t * 14); c.fillStyle = `rgba(255,170,150,${a.toFixed(3)})`; c.fillRect(x, 0, cs, G); }
     for (const q of S.cellGlow) {
       if (q.al <= .01) continue;
       const x = (q.k % 7) * cs, y = ((q.k / 7) | 0) * cs, i = cs * .035;
       rr(c, x + i, y + i, cs - i * 2, cs - i * 2, cs * .18);
       c.fillStyle = `rgba(255,214,120,${(.2 * q.al).toFixed(3)})`; c.fill(); c.strokeStyle = `rgba(255,232,160,${(.7 * q.al).toFixed(3)})`; c.lineWidth = Math.max(1, cs * .022); c.stroke();
     }
-    c.save(); c.beginPath(); c.rect(0, 0, G, G); c.clip();
-    for (const tk of S.exiting) drawToken(c, tk);
-    let lifted = false;
-    for (const tk of S.tok) if (tk) { if (tk.lift > .02) lifted = true; else drawToken(c, tk); }
-    if (lifted) for (const tk of S.tok) if (tk && tk.lift > .02) drawToken(c, tk);       // lifted medallions pass over their neighbours
-    for (const tk of S.dying) drawToken(c, tk);
-    c.globalAlpha = 1; c.restore();
-    // glass over the plate
-    c.drawImage(S.retroMix > .5 ? S.glassR : S.glassN, -b, -b, G + b * 2, G + b * 2);
+    }
+    if (B3) u.restore();
+    const order = [...S.exiting], lifted = [];
+    for (const tk of S.tok) if (tk) (tk.lift > .02 ? lifted : order).push(tk);
+    order.push(...lifted, ...S.dying);                                    // lifted medallions pass over their neighbours
+    if (B3) {
+      u.save(); u.translate(M, M); u.beginPath(); u.rect(0, 0, G, G); u.clip();
+      const items = [];
+      for (const tk of order) { drawTokenUnder(u, tk); const it = tokenItem(tk, M); if (it) items.push(it); }
+      u.restore();
+      RGBoard3D.render(items, { w: G + M * 2, h: G + M * 2, dpr, clip: [M, M, G, G] });
+      c.save(); c.beginPath(); c.rect(0, 0, G, G); c.clip();
+      for (const tk of order) drawTokenOver(c, tk);
+      c.globalAlpha = 1; c.restore();
+    } else {
+      c.save(); c.beginPath(); c.rect(0, 0, G, G); c.clip();
+      for (const tk of order) drawToken(c, tk);
+      c.globalAlpha = 1; c.restore();
+    }
     for (const r of S.rings) drawBurst(c, r, r.x, r.y, cs * 1.25);            // a painted light burst on the cell
     // constellation lines, each drawn cell to cell behind a travelling spark
     c.lineCap = 'round';
@@ -837,18 +1010,13 @@ const RG_RUN = () => {
         const x = clamp(l.x, Math.min(half, G / 2), Math.max(G - half, G / 2)), y = clamp(l.y + l.oy * cs, bh, G - bh * .6);
         l.px = x; l.py = y; l.fs = fs;
         c.save(); c.globalAlpha = l.al; c.translate(x, y); c.scale(l.sc, l.sc);
-        c.shadowColor = 'rgba(0,0,0,.7)'; c.shadowBlur = fs * .5; c.shadowOffsetY = fs * .14;
-        let g = c.createLinearGradient(0, -bh / 2, 0, bh / 2); g.addColorStop(0, S.retro ? '#5c1240' : '#1c2a6e'); g.addColorStop(1, S.retro ? '#22061a' : '#080d2c');
-        rr(c, -bw / 2, -bh / 2, bw, bh, bh / 2); c.fillStyle = g; c.fill(); c.shadowColor = 'transparent';
-        g = c.createLinearGradient(0, -bh / 2, 0, bh / 2); g.addColorStop(0, '#fff3c4'); g.addColorStop(.5, '#c9963a'); g.addColorStop(1, '#f6dc93');
-        c.strokeStyle = g; c.lineWidth = Math.max(1.2, fs * .1); c.stroke();
-        g = c.createLinearGradient(0, -fs * .5, 0, fs * .5); g.addColorStop(0, '#fffbe0'); g.addColorStop(.55, '#ffd76a'); g.addColorStop(1, '#e79a1c');
-        if (gold) Gold.draw(c, l.text, 0, fs * .5, fs * 1.05); else { c.fillStyle = g; c.fillText(l.text, 0, fs * .05); }
+        rr(c, -bw / 2, -bh / 2, bw, bh, bh / 2); c.fillStyle = S.retro ? '#3a0a2a' : '#101a4a'; c.fill();
+        c.strokeStyle = '#d9ae52'; c.lineWidth = Math.max(1.2, fs * .1); c.stroke();
+        if (gold) Gold.draw(c, l.text, 0, fs * .5, fs * 1.05); else { c.fillStyle = '#ffd76a'; c.fillText(l.text, 0, fs * .05); }
         if (l.tag) {
-          const r = fs * .62, tx = bw / 2 - r * .15, ty = -bh / 2 + r * .1;
-          g = c.createRadialGradient(tx - r * .3, ty - r * .35, 0, tx, ty, r); g.addColorStop(0, '#fff6cf'); g.addColorStop(.55, S.retro ? '#ff8fb0' : '#f0c865'); g.addColorStop(1, S.retro ? '#8a1440' : '#8a5f1c');
-          c.beginPath(); c.arc(tx, ty, r, 0, TAU); c.fillStyle = g; c.fill(); c.strokeStyle = 'rgba(20,8,0,.85)'; c.lineWidth = Math.max(1, fs * .06); c.stroke();
-          c.font = `800 ${fs * (l.tag.length > 3 ? .5 : .62)}px Jost, system-ui, sans-serif`; c.fillStyle = '#1c1103'; c.fillText(l.tag, tx, ty + fs * .03);
+          const r = fs * .66, tx = bw / 2 - r * .15, ty = -bh / 2 + r * .1;
+          if (KNOB.complete && KNOB.naturalWidth) c.drawImage(KNOB, tx - r, ty - r, r * 2, r * 2);
+          c.font = `800 ${fs * (l.tag.length > 3 ? .46 : .56)}px Jost, system-ui, sans-serif`; c.fillStyle = '#ffe7a6'; c.fillText(l.tag, tx, ty + fs * .03);
         }
         if (l.name) {
           const ns = Math.max(7, fs * .46);
@@ -894,7 +1062,7 @@ const RG_RUN = () => {
     const ax = Dial.axis, ca = Math.cos(ax), sa = Math.sin(ax);
     // the alignment line
     const reach = R * (A.DIAL_ORBIT(Math.max(0, aligned - 1)) + .02), power = Math.min(1, .35 + m * .06) + Dial.pulse * .4;
-    const g = c.createLinearGradient(ca * R * .3, sa * R * .3, ca * reach, sa * reach); g.addColorStop(0, 'rgba(255,236,170,0)'); g.addColorStop(.3, `rgba(255,226,150,${Math.min(1, power).toFixed(3)})`); g.addColorStop(1, `rgba(255,206,110,${Math.min(1, power * .8).toFixed(3)})`);
+    const g = c.createLinearGradient(ca * R * .3, sa * R * .3, ca * reach, sa * reach); // station:ok the alignment line is a ray of light that fades in from the hub g.addColorStop(0, 'rgba(255,236,170,0)'); g.addColorStop(.3, `rgba(255,226,150,${Math.min(1, power).toFixed(3)})`); g.addColorStop(1, `rgba(255,206,110,${Math.min(1, power * .8).toFixed(3)})`);
     c.strokeStyle = g; c.lineWidth = Math.max(1.5, px * (.016 + Math.min(.02, m * .0012))); c.lineCap = 'round'; c.beginPath(); c.moveTo(ca * R * .34, sa * R * .34); c.lineTo(ca * reach, sa * reach); c.stroke();
     c.strokeStyle = 'rgba(255,226,150,.16)'; c.lineWidth = Math.max(1, px * .006); c.beginPath(); c.moveTo(ca * R * .34, sa * R * .34); c.lineTo(ca * R * .84, sa * R * .84); c.stroke();
     // planets: the first `aligned` snap onto the line, the others keep orbiting (and scatter when the line lets go)
@@ -904,7 +1072,7 @@ const RG_RUN = () => {
       const r = R * A.DIAL_ORBIT(i), x = Math.cos(p.a) * r, y = Math.sin(p.a) * r, z = R * (DIAL_ORDER[i] === 'G' ? .062 : .048) * (on ? 1.15 + Dial.pulse * .5 : 1);
       if (!on) c.globalAlpha = .72;
       if (on) { c.globalAlpha = .85; const gz = z * 3.4; c.drawImage(S.glowGold, x - gz, y - gz, gz * 2, gz * 2); c.globalAlpha = 1; }
-      c.drawImage(S.bodies[DIAL_ORDER[i]], x - z * 1.28, y - z * 1.28, z * 2.56, z * 2.56); c.globalAlpha = 1;
+      const ps = S.sprites[DIAL_ORDER[i]]; if (ps) c.drawImage(ps, x - z * 1.4, y - z * 1.4, z * 2.8, z * 2.8); c.globalAlpha = 1;
     }
     // sparks thrown off by a step
     if (Dial.sp.length) {
@@ -918,18 +1086,15 @@ const RG_RUN = () => {
       c.globalCompositeOperation = 'lighter'; c.globalAlpha = Dial.pulse * .5; c.drawImage(retro ? S.glowRose : S.glowGold, -R, -R, R * 2, R * 2); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     }
     // hub with the multiplier: it runs hotter as the alignment climbs
-    let hg = c.createLinearGradient(-R * .33, -R * .33, R * .33, R * .33); hg.addColorStop(0, '#fff0b8'); hg.addColorStop(.5, '#b8862e'); hg.addColorStop(1, '#5a3a0c');
-    c.beginPath(); c.arc(0, 0, R * .325, 0, TAU); c.fillStyle = hg; c.fill();
-    hg = c.createRadialGradient(0, -R * .1, 0, 0, 0, R * .29); hg.addColorStop(0, retro ? '#8a1c50' : '#2c46b8'); hg.addColorStop(1, retro ? '#22061a' : '#0a1034');
-    c.beginPath(); c.arc(0, 0, R * .29, 0, TAU); c.fillStyle = hg; c.fill();
+    if (KNOB.complete && KNOB.naturalWidth) { const hr = R * .36; c.drawImage(retro && KNOBR ? KNOBR : KNOB, -hr, -hr, hr * 2, hr * 2); }
     if (hot > .02) { c.globalCompositeOperation = 'lighter'; c.globalAlpha = hot * (.5 + .15 * Math.sin(S.t * 6)); c.drawImage(retro ? S.glowRose : S.glowGold, -R * .42, -R * .42, R * .84, R * .84); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
     const shown = Math.round(Dial.mf), txt = '×' + shown, fs = R * (shown < 10 ? .38 : shown < 100 ? .29 : .22), punch = Dial.pulse > .5 ? backOut((1 - Dial.pulse) * 2) : 1, sc = (Dial.pulse > .5 ? .55 + .75 * punch : 1 + Dial.pulse * .6) + Dial.kick * .2;
     if (Gold.can(txt)) { c.save(); c.scale(sc, sc); Gold.draw(c, txt, 0, fs * .52, fs * 1.08); c.restore(); } else {
     c.save(); c.scale(sc, sc); c.font = `800 ${fs}px Jost, system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
     c.lineWidth = fs * .18; c.strokeStyle = 'rgba(4,6,20,.9)'; c.strokeText(txt, 0, fs * .04);
-    const tg = c.createLinearGradient(0, -fs * .5, 0, fs * .5); tg.addColorStop(0, '#fffbe0'); tg.addColorStop(.55, Dial.pulse > .6 ? '#ffffff' : '#ffd76a'); tg.addColorStop(1, '#f0a626'); c.fillStyle = tg; c.fillText(txt, 0, fs * .04);
+    c.fillStyle = Dial.pulse > .6 ? '#ffffff' : '#ffd76a'; c.fillText(txt, 0, fs * .04);
     c.restore(); }
-    c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(S.dialG, o, o, ps, ps);
+    c.setTransform(1, 0, 0, 1, 0, 0);
     // the whole dial jumps with a step and trembles when it is wound far up in RETROGRADE
     const wound = retro && !api.reduced ? Math.min(1, (m - 1) / 20) : 0, ks = 1 + Dial.pulse * .07 + Dial.kick * .03;
     el.dial.style.transform = ks !== 1 || wound ? `translate(${(wound * (Math.random() - .5) * 1.4).toFixed(2)}px,${(wound * (Math.random() - .5) * 1.4).toFixed(2)}px) scale(${ks.toFixed(4)})` : '';
@@ -953,7 +1118,7 @@ const RG_RUN = () => {
       while (bw.rain >= 1) { bw.rain -= 1; const list = bw.tier >= 3 ? PLANETS + 'GGSS' : PLANETS; emit({ layer: 'f', kind: 3, sym: list[Math.floor(Math.random() * list.length)], x: Math.random() * W, y: -m * .08, vx: (Math.random() - .5) * m * .15, vy: m * (.25 + Math.random() * .35), g: m * .55, drag: .3, max: 2.6 + Math.random(), z: m * (.045 + Math.random() * .05), yaw: Math.random() * 360, spin: (Math.random() < .5 ? -1 : 1) * (150 + Math.random() * 300) }); }
     }
     c.globalAlpha = vis; c.globalCompositeOperation = 'lighter';
-    if (hit >= 0) { const gy = H / 2 + m * (bw.tier >= 2 ? .17 : .06), gr = m * .62, lg = c.createRadialGradient(cx, gy, 0, cx, gy, gr), la = .22 * clamp(hit / (400 * bw.sp), 0, 1); lg.addColorStop(0, `rgba(255,210,120,${la.toFixed(3)})`); lg.addColorStop(1, 'rgba(255,170,80,0)'); c.fillStyle = lg; c.save(); c.translate(cx, gy); c.scale(1.6, .55); c.translate(-cx, -gy); c.beginPath(); c.arc(cx, gy, gr, 0, TAU); c.fill(); c.restore(); }
+    if (hit >= 0) { const gy = H / 2 + m * (bw.tier >= 2 ? .17 : .06), gr = m * .62, la = .24 * clamp(hit / (400 * bw.sp), 0, 1); c.save(); c.globalAlpha = vis * la; c.translate(cx, gy); c.scale(1.6, .55); c.drawImage(S.glowGold, -gr, -gr, gr * 2, gr * 2); c.restore(); c.globalAlpha = vis; }
     // implosion: in the last part of a tier's build-up the light is sucked into one point, and sparks stream in from all
     // around, so the hit lands on a held breath
     if (hit < 0 && !bw.outAt && !api.reduced && pre > .55) {
@@ -979,46 +1144,46 @@ const RG_RUN = () => {
     if (bw.tier >= 3) {
       const R = m * .105, e = easeInOut(pre), tot = hit >= 0 ? clamp(hit / (500 * bw.sp), 0, 1) : 0;
       if (tot > 0) {                                      // corona: long soft streamers once the Sun is covered
-        const cg = c.createRadialGradient(cx, ay, R * .9, cx, ay, R * 4.2); cg.addColorStop(0, `rgba(255,236,190,${(.85 * tot).toFixed(3)})`); cg.addColorStop(.25, `rgba(255,170,120,${(.4 * tot).toFixed(3)})`); cg.addColorStop(1, 'rgba(255,120,160,0)');
-        c.fillStyle = cg; c.beginPath(); c.arc(cx, ay, R * 4.2, 0, TAU); c.fill();
+        c.globalAlpha = vis * tot * .85; c.drawImage(S.glowGold, cx - R * 4.2, ay - R * 4.2, R * 8.4, R * 8.4); c.globalAlpha = vis * tot * .4; c.drawImage(S.glowRose, cx - R * 3.2, ay - R * 3.2, R * 6.4, R * 6.4); c.globalAlpha = vis;
         c.fillStyle = `rgba(255,240,205,${(.3 * tot).toFixed(3)})`;
         for (let i = 0; i < 18; i++) { const a = i / 18 * TAU + Math.sin(now * .0004 + i) * .12, len = R * (1.6 + 1.5 * Math.abs(Math.sin(i * 2.3 + now * .0011))) * tot; c.beginPath(); c.moveTo(cx + Math.cos(a - .09) * R, ay + Math.sin(a - .09) * R); c.lineTo(cx + Math.cos(a) * (R + len), ay + Math.sin(a) * (R + len)); c.lineTo(cx + Math.cos(a + .09) * R, ay + Math.sin(a + .09) * R); c.closePath(); c.fill(); }
       }
-      const sg = c.createRadialGradient(cx, ay, 0, cx, ay, R * 2.2); sg.addColorStop(0, `rgba(255,255,255,${(1 - tot * .7).toFixed(3)})`); sg.addColorStop(.42, `rgba(255,214,110,${(.95 - tot * .5).toFixed(3)})`); sg.addColorStop(.5, `rgba(255,170,60,${(.5 - tot * .2).toFixed(3)})`); sg.addColorStop(1, 'rgba(255,140,40,0)');
-      c.fillStyle = sg; c.beginPath(); c.arc(cx, ay, R * 2.2, 0, TAU); c.fill();
+      c.globalAlpha = vis * (1 - tot * .5); c.drawImage(S.glowGold, cx - R * 2.2, ay - R * 2.2, R * 4.4, R * 4.4); c.globalAlpha = vis * (1 - tot * .7); c.drawImage(S.glowWhite, cx - R * 1.3, ay - R * 1.3, R * 2.6, R * 2.6); c.globalAlpha = vis;
       c.globalCompositeOperation = 'source-over';
-      const mx = cx - (1 - e) * R * 2.6, mg = c.createRadialGradient(mx - R * .3, ay - R * .3, 0, mx, ay, R); mg.addColorStop(0, '#1a1c3a'); mg.addColorStop(1, '#04040c');
-      c.fillStyle = mg; c.beginPath(); c.arc(mx, ay, R * 1.005, 0, TAU); c.fill();
+      // the Moon slides over the Sun: the painted disc (art/ui2/moon, 2026-11-28); a flat dark disc until it has loaded
+      const mx = cx - (1 - e) * R * 2.6;
+      if (MOON.complete && MOON.naturalWidth) { const z = R * 1.005 * 2 / .82; c.drawImage(MOON, mx - z / 2, ay - z / 2, z, z); }
+      else { c.fillStyle = '#080a1a'; c.beginPath(); c.arc(mx, ay, R * 1.005, 0, TAU); c.fill(); }   // station:ok fallback disc until the painting is in
       c.globalCompositeOperation = 'lighter';
       if (hit >= 0) {                                     // the diamond ring
         const d = Math.max(0, 1 - hit / (900 * bw.sp)), z = R * (1.2 + d * 2.4);
         c.globalAlpha = vis * (.55 + d * .45); c.drawImage(S.spark, cx + R * .72 - z, ay - R * .7 - z, z * 2, z * 2); c.globalAlpha = vis;
-        c.strokeStyle = 'rgba(255,244,214,.9)'; c.lineWidth = Math.max(1, R * .05); c.beginPath(); c.arc(cx, ay, R * 1.03, 0, TAU); c.stroke();
       }
     }
     // the conjunction: planets sweep in and stop in one line
     if (bw.tier === 2 || bw.tier === 4) {
       const list = bw.tier === 4 ? 'LTICQS' : 'LTIGCQS', n = list.length, gap = m * (bw.tier === 4 ? .15 : .128), z = m * (bw.tier === 4 ? .12 : .135);
       if (hit >= 0) {
-        const bp = clamp(hit / (350 * bw.sp), 0, 1), bl = m * .62 * bp, bg = c.createLinearGradient(cx - bl, 0, cx + bl, 0); bg.addColorStop(0, 'rgba(255,220,130,0)'); bg.addColorStop(.5, `rgba(255,244,205,${(.85 - .3 * Math.min(1, hit / (1500 * bw.sp))).toFixed(3)})`); bg.addColorStop(1, 'rgba(255,220,130,0)');
+        const bp = clamp(hit / (350 * bw.sp), 0, 1), bl = m * .62 * bp, bg = c.createLinearGradient(cx - bl, 0, cx + bl, 0); // station:ok the beam of light the planets line up on bg.addColorStop(0, 'rgba(255,220,130,0)'); bg.addColorStop(.5, `rgba(255,244,205,${(.85 - .3 * Math.min(1, hit / (1500 * bw.sp))).toFixed(3)})`); bg.addColorStop(1, 'rgba(255,220,130,0)');
         c.fillStyle = bg; c.fillRect(cx - bl, ay - m * .012, bl * 2, m * .024); c.fillRect(cx - bl, ay - m * .003, bl * 2, m * .006);
       }
       c.globalCompositeOperation = 'source-over';
+      const cyaw = i => (1 - backOut(clamp((pre - i * .06) / .58, 0, 1))) * 540 + (hit >= 0 ? 18 * Math.sin(now * .002 + i) : 0);
+      const cat = live([...list].map((sym, i) => ({ sym, yaw: cyaw(i) })), z);
       for (let i = 0; i < n; i++) {
         const slot = bw.tier === 4 ? (i < 3 ? i - 3 : i - 2) : i - 3, e = backOut(clamp((pre - i * .06) / .58, 0, 1)), a0 = i * 2.1 + 1 + (1 - e) * 2.2, r0 = m * .7 * (1 - e);
         const x = cx + Math.cos(a0) * r0 + slot * gap * e, y = ay + Math.sin(a0) * r0 * .7 + (hit >= 0 ? Math.sin(now * .003 + i) * m * .004 : 0);
         if (hit >= 0) { c.globalCompositeOperation = 'lighter'; c.globalAlpha = vis * .7; c.drawImage(S.glowGold, x - z * .95, y - z * .95, z * 1.9, z * 1.9); c.globalCompositeOperation = 'source-over'; c.globalAlpha = vis; }
-        drawSym(c, list[i], (1 - e) * 540 + (hit >= 0 ? 18 * Math.sin(now * .002 + i) : 0), x - z / 2, y - z / 2, z, z);   // they spin in and settle facing us
+        if (cat) atlasDraw(c, cat, i, x - z / 2, y - z / 2, z, z); else drawSym(c, list[i], cyaw(i), x - z / 2, y - z / 2, z, z);   // they spin in and settle facing us
       }
     }
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   }
   function drawFx(now) {
-    const c = el.fxC, dpr = S.dpr, W = S.W, H = S.H, bw = S.bw;
+    const c = el.fxC, dpr = S.fdpr || S.dpr, W = S.W, H = S.H, bw = S.bw;
     c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
     let live = 0;
     if (bw) { live = 1; drawCelebration(c, now, bw); }
-    if (S.circles.length) live += drawCircles(c, now);
     if (S.spells.length) live += drawSpells(c, now);
     if (S.beams.length || S.stars.length) live += drawBeams(c, now);
     for (const s of S.shocks) {
@@ -1029,8 +1194,8 @@ const RG_RUN = () => {
     }
     for (const f of S.flyers) {
       live++;
-      const gz = f.h * 2.6; c.globalCompositeOperation = 'lighter'; c.globalAlpha = .55; c.drawImage(S.glowGold, f.x - gz / 2, f.y - gz / 2, gz, gz);
-      c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; Gold.draw(c, f.text, f.x, f.y + f.h * .45, f.h);
+      const fa = f.a == null ? 1 : f.a, gz = f.h * 2.6; c.globalCompositeOperation = 'lighter'; c.globalAlpha = .55 * fa; c.drawImage(S.glowGold, f.x - gz / 2, f.y - gz / 2, gz, gz);
+      c.globalCompositeOperation = 'source-over'; c.globalAlpha = fa; Gold.draw(c, f.text, f.x, f.y + f.h * .45, f.h); c.globalAlpha = 1;
     }
     live += drawParticles(c, 'f');
     S.fxLive = live > 0;
@@ -1048,6 +1213,7 @@ const RG_RUN = () => {
         if (S.ftN >= 90) { if (S.ftSum / S.ftN > 24) { S.lite = true; window.RG_LITE = true; } S.ftSum = 0; S.ftN = 0; }
       }
     }
+    if (fqueue.length) fbuild();
     stepTweens(now);
     let live = false;
     for (const p of POOL) {
@@ -1074,11 +1240,11 @@ const RG_RUN = () => {
       const sh = { x: Math.random() * S.W * .8, y: Math.random() * S.H * .3, dx: S.W * (.25 + Math.random() * .2), dy: S.H * (.18 + Math.random() * .2), p: 0 }; S.shoot = sh;
       tween(900, q => { sh.p = q; }, { ease: linear, done: () => { S.shoot = null; } }); S.nextShoot = S.t + 7 + Math.random() * 9;
     }
-    if (S.shake) { const k = (now - S.shake.t0) / S.shake.dur; if (k >= 1) { S.shake = null; el.grid.style.transform = ''; if (el.big) el.big.style.translate = ''; if (el.fx) el.fx.style.translate = ''; if (el.room) el.room.style.translate = ''; } else { const a = S.shake.amp * (1 - k); el.grid.style.transform = `translate(${((Math.random() - .5) * 2 * a).toFixed(1)}px,${((Math.random() - .5) * 2 * a).toFixed(1)}px)`; if (S.bw) { const dx = ((Math.random() - .5) * 1.6 * a).toFixed(1) + 'px', dy = ((Math.random() - .5) * 1.6 * a).toFixed(1) + 'px'; el.big.style.translate = dx + ' ' + dy; el.fx.style.translate = dx + ' ' + dy; el.room.style.translate = (parseFloat(dx) * .5).toFixed(1) + 'px ' + (parseFloat(dy) * .5).toFixed(1) + 'px'; } } }
+    if (S.shake) { const k = (now - S.shake.t0) / S.shake.dur; if (k >= 1) { S.shake = null; el.grid.style.transform = el.gbg.style.transform = el.gund.style.transform = el.b3d.style.transform = ''; if (el.big) el.big.style.translate = ''; if (el.fx) el.fx.style.translate = ''; if (el.room) el.room.style.translate = ''; } else { const a = S.shake.amp * (1 - k); el.gund.style.transform = el.b3d.style.transform = el.gbg.style.transform = el.grid.style.transform = `translate(${((Math.random() - .5) * 2 * a).toFixed(1)}px,${((Math.random() - .5) * 2 * a).toFixed(1)}px)`; if (S.bw) { const dx = ((Math.random() - .5) * 1.6 * a).toFixed(1) + 'px', dy = ((Math.random() - .5) * 1.6 * a).toFixed(1) + 'px'; el.big.style.translate = dx + ' ' + dy; el.fx.style.translate = dx + ' ' + dy; el.room.style.translate = (parseFloat(dx) * .5).toFixed(1) + 'px ' + (parseFloat(dy) * .5).toFixed(1) + 'px'; } } }
     drawOrrery(dt); drawDial(dt);
-    if (S.dirty || S.antic || S.hasScat || (STRIP.L && !api.reduced)) { S.dirty = false; drawGrid(); }   // the sway keeps the board alive
+    if (S.dirty || S.antic || S.hasScat || ((STRIP.L || (window.RGBoard3D && RGBoard3D.ready)) && !api.reduced)) { S.dirty = false; drawGrid(); }   // the sway keeps the board alive
     if (S.bw) S.bw.dt = dt;
-    if (S.fxLive || S.bw || S.shocks.length || S.circles.length || S.spells.length || S.beams.length || S.stars.length) drawFx(now);
+    if (S.fxLive || S.bw || S.shocks.length || S.spells.length || S.beams.length || S.stars.length) drawFx(now);
   }
   function startLoop() { if (!S.raf && !document.hidden) { S.last = performance.now(); S.raf = requestAnimationFrame(frame); } }
   function stopLoop() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = 0; }
@@ -1093,7 +1259,7 @@ const RG_RUN = () => {
     setMult(Number(e.mult) || 1, false);              // a base spin lets the alignment go: the dial unwinds to ×1
     setLevel(free ? 3 : 1);
     clearFx(); S.spinCast = 0;
-    Snd.whoosh(up);
+    Sfx.whoosh(up);
     // The old board leaves column by column, pushed out by the new column falling in right behind it, so the board is
     // never empty. Each column falls as one block; the first medallion down kicks up a little dust.
     const old = S.tok.filter(Boolean), oldCol = [[], [], [], [], [], [], []]; S.tok = new Array(49).fill(null);
@@ -1105,7 +1271,7 @@ const RG_RUN = () => {
     for (let col = 0; col < 7; col++) {
       const antic = seen === 2, fall = antic ? 900 : FALL;
       // two astrolabes are showing and columns are still to come: the instrument holds its breath
-      if (antic) { S.antic = { col }; Snd.antic(col); el.root.classList.add('tense'); if (!S.wizWorried) { S.wizWorried = true; wiz('worried', { hold: true }); } for (let k = 0; k < 49; k++) if (S.tok[k] && S.tok[k].sym === 'A') pulseRing(k, '#ff9ec0', 520); }
+      if (antic) { S.antic = { col }; Sfx.antic(col); el.root.classList.add('tense'); if (!S.wizWorried) { S.wizWorried = true; wiz('worried', { hold: true }); } for (let k = 0; k < 49; k++) if (S.tok[k] && S.tok[k].sym === 'A') pulseRing(k, '#ff9ec0', 520); }
       // in suspense every column still to come empties at once, so the slow columns fall into empty slots
       const outCols = antic && !S.anticOut ? [col, 1, 2, 3, 4, 5, 6].filter((c, i) => !i || c > col) : [col];
       if (antic) S.anticOut = true;
@@ -1120,14 +1286,14 @@ const RG_RUN = () => {
             tk.glow = 1.3; pulseRing(i, '#ff9ec0', 900); after(110, () => pulseRing(i, '#ffe9a8', 800));
             burst(...cellXY(i), 16, { cols: ['#ffd0e0', '#ffe9a8', '#c9a0ff'], speed: .9 }); shake(S.cs * .05, 240);
             spin(tk, 1, 760);
-            Snd.scatter(n); tween(1000 * api.speed(), q => { tk.glow = 1.3 * (1 - q); tk.sc = 1 + .18 * Math.sin(q * PI) * (1 - q * .5); tk.shine = q; }, { done: () => { tk.shine = 0; } });
+            Sfx.scatter(n); tween(1000 * api.speed(), q => { tk.glow = 1.3 * (1 - q); tk.sc = 1 + .18 * Math.sin(q * PI) * (1 - q * .5); tk.shine = q; }, { done: () => { tk.shine = 0; } });
           });
         } else if (order === 0 && !api.reduced) after(fall * .72, () => { const [x, y] = cellXY(i); burst(x, y + (up ? -1 : 1) * S.cs * .42, S.small ? 2 : 4, { cols: ['#e8ecff', '#ffe9a8', '#cfd8ff'], speed: .35, life: .55, grav: 1.2 }); });
       }
-      Snd.land(col, up, fall * .72 * sp / 1000);
+      Sfx.land(col, up, fall * .72 * sp / 1000);
       await ctx.sleep(antic ? 420 : 48);
     }
-    S.antic = null; S.anticOut = false; S.dirty = true; el.root.classList.remove('tense'); if (S.wizWorried) { S.wizWorried = false; wiz(g.filter(x => x === 'A').length >= 3 ? 'surprised' : 'idle'); }
+    S.antic = null; S.anticOut = false; S.dirty = true; el.root.classList.remove('tense'); if (RGS) RGS.tension(false); if (S.wizWorried) { S.wizWorried = false; wiz(g.filter(x => x === 'A').length >= 3 ? 'surprised' : 'idle'); }
     preCast(next);
     await ctx.sleep(FALL + 6 * 10 + 30);
     await ctx.sleep(next && next.type === 'cascade' ? 110 : 340);
@@ -1142,6 +1308,10 @@ const RG_RUN = () => {
   async function doCascade(e, ctx, nextEv) {
     const next = String(e.grid || '').split('');
     if (next.length !== 49) return;
+    // A round that ends below its cost is shown quickly (catalog item 3: at most 0.6 s longer than a loss): the same
+    // steps at about three times the pace, no wait for the wizard, the amount simply lands on TOTAL WIN.
+    const quick = !S.featOn && ctx.winX < ctx.cost;
+    if (quick) { const s0 = ctx.sleep, sp0 = ctx.speed; ctx = Object.assign(Object.create(ctx), { sleep: ms => s0.call(ctx, ms * .3), speed: () => sp0.call(ctx) * .3 }); }
     const sp = ctx.speed(), wins = Array.isArray(e.wins) ? e.wins : [], mult = Number(e.mult) || 1, up = S.retro;
     setMult(mult, false);
     setLevel(up ? 3 : 2);
@@ -1159,7 +1329,7 @@ const RG_RUN = () => {
     if (S.wiz && !api.reduced && wins.some(w => Array.isArray(w.cells) && w.cells.length)) {
       // the clip runs in real seconds, while ctx.sleep and after() are scaled by the speed: convert. In fast mode the
       // win never waits for him: the stream leaves at once, and he raises his hand only if he is free right now.
-      const sp = api.speed();
+      const sp = quick ? .3 : api.speed();
       if (sp < .9) { const ci = RGWiz.castIn(); if (ci >= 0 && ci <= 1.05) RGWiz.cast(mult >= 5 ? 'open' : 'reach', 1.1); castAt = 0; }
       else {
         const d = RGWiz.cast(mult >= 5 ? 'open' : 'reach', 1.1);
@@ -1169,7 +1339,7 @@ const RG_RUN = () => {
     // 1. gold lines link each cluster cell to cell behind a travelling spark; its medallions lift and catch the light
     const gone = new Uint8Array(49), lines = [];
     let biggest = 0;
-    Snd.run(mult, wins.length, up);
+    Sfx.run(mult, wins.length, up);
     wins.forEach((w, wi) => {
       const cells = (Array.isArray(w.cells) ? w.cells : []).filter(k => k >= 0 && k < 49);
       if (!cells.length) return;
@@ -1201,15 +1371,15 @@ const RG_RUN = () => {
       tween(280 * sp, q => { lab.sc = .4 + .6 * q; lab.al = Math.min(1, q * 1.6); }, { ease: backOut });
     }
     Dial.kick = 1; tween(380 * sp, q => { Dial.kick = 1 - q; }, { ease: linear }); roomPulse(Math.min(1.6, .7 + mult * .12));
-    Snd.win(mult, big, up);
+    Sfx.win(mult, big, up);
     if (grand) { flash(.8, 420); shake(S.cs * .07, 300); await ctx.sleep(110); }           // hit-stop on the biggest moments
     await ctx.sleep(240);
     // 3. the cluster dissolves into stardust that streams to the total; a cluster of 7+ leaves a comet behind
     const born = new Set((Array.isArray(e.wilds) ? e.wilds : []).filter(k => gone[k]));
-    Snd.dust(up);
+    Sfx.dust(up);
     for (const L of S.lines) tween(240 * sp, q => { L.al = 1 - q; });
     for (const q0 of S.cellGlow) tween(240 * sp, q => { q0.al = 1 - q; });
-    const fl = api.reduced ? [] : S.labels.filter(l => l.px !== undefined && Gold.can(l.text));
+    const fl = api.reduced || quick ? [] : S.labels.filter(l => l.px !== undefined && Gold.can(l.text));
     for (const lab of S.labels) if (fl.includes(lab)) tween(160 * sp, q => { lab.al = 1 - q; }, { delay: 60 * sp }); else tween(560 * sp, q => { lab.oy = -.45 * q; lab.al = 1 - Math.max(0, q - .6) / .4; }, { delay: 160 * sp });
     let count = 0;
     for (let k = 0; k < 49; k++) if (gone[k] && !born.has(k)) count++;
@@ -1229,7 +1399,7 @@ const RG_RUN = () => {
       tween(440 * sp, q => { tk.sc = .2 + .8 * q; }, { ease: backOut }); spin(tk, 2, 900);
       tween(900 * sp, q => { tk.glow = 1 - q; }, { delay: 300 * sp });
       pulseRing(k, '#bfe0ff', 800); burst(...cellXY(k), 16, { cols: ['#ffffff', '#bfe0ff', '#ffe9a8'], speed: 1.2, grav: 0 });
-      Snd.wild(bn++ * .06);
+      Sfx.wild(bn++ * .06);
     }
     await ctx.sleep(190);
     // the amount lands on TOTAL WIN: the totals move then
@@ -1258,7 +1428,7 @@ const RG_RUN = () => {
     }
     if (ok) S.tok = tok; else { flushTweens(); buildTokens(next); }      // never trust the animation over the book
     S.grid = next;
-    Snd.land(3, up, .3 * sp);
+    Sfx.land(3, up, .3 * sp);
     setMult(mult + 1, true);                                              // the alignment tightens by one
     await ctx.sleep(Math.max(450, flightMs - 190 + 60));
   }
@@ -1268,20 +1438,20 @@ const RG_RUN = () => {
     const sp = ctx.speed(), n = Number(e.spins) || 0, mid = [S.gx + S.G / 2, S.gy + S.G / 2];
     const ecl = !!e.eclipse, m0 = ecl ? (Number(e.mult) || ECLIPSE_MULT) : 1;
     S.featOn = true; S.feat = 0; S.left = n; S.spins = 0; S.ecl = ecl;
-    Snd.trigger();
+    Sfx.trigger();
     for (let k = 0; k < 49; k++) { const tk = S.tok[k]; if (tk && tk.sym === 'A') { pulseRing(k, '#ff9ec0', 1000); spin(tk, 2, 900); tween(900 * sp, q => { tk.glow = Math.sin(q * PI) * 1.2 + .3; tk.lift = Math.sin(q * PI); tk.sc = 1 + .2 * Math.sin(q * PI); }); burst(...cellXY(k), 16, { cols: ['#ffd0e0', '#ffe9a8', '#c9a0ff'], speed: 1.1, grav: 0 }); } }
     wiz('surprised');
     await ctx.sleep(850);
     { wiz('summon'); const sc = []; for (let k = 0; k < 49; k++) if (S.tok[k] && S.tok[k].sym === 'A') sc.push(k); if (sc.length) streamWin(sc.map(k => ({ L: { root: k, depth: { [k]: 0 }, maxD: 0 }, w: { cells: [k] } })), 3); }
     // wind down: rings, dust and the dial slow to a halt
-    S.ringTarget = 0; Snd.windDown(.75 * sp); Snd.swell(.95 * sp);
+    S.ringTarget = 0; Sfx.windDown(.75 * sp); Sfx.swell(.95 * sp);
     if (ecl) showCard('The sun goes dark', 'ECLIPSE', `<b>${n}</b> free spins`, `ALIGNMENT starts at ×${m0} · never resets`, 'start ecl');
     else showCard('The planets turn', 'RETROGRADE', `<b>${n}</b> free spins`, 'Gravity reverses · ALIGNMENT never resets', 'start');
     await ctx.sleep(750);
     S.ringV = 0;
     await ctx.sleep(200);                                                 // a held breath
     // ... and reverse: a shock ring leaves the grid, the sky turns crimson, the rings snap backwards, the medallions float up and away
-    Snd.flip();
+    Sfx.flip();
     el.root.classList.toggle('ecl', ecl);
     { const em = el.spinsBox.querySelector('em'); if (em) em.textContent = ecl ? 'ECLIPSE' : 'RETROGRADE'; }
     setRetro(true); setLevel(3, true);
@@ -1304,7 +1474,7 @@ const RG_RUN = () => {
     for (let k = 0; k < 49; k++) { const tk = S.tok[k]; if (tk && tk.sym === 'A') { pulseRing(k, '#ff9ec0', 900); spin(tk, 1, 700); burst(...cellXY(k), 10, { cols: ['#ffd0e0', '#ffe9a8'], grav: 0 }); } }
     el.plus.innerHTML = `<b>+${add}</b> free spins`; el.plus.classList.remove('on'); void el.plus.offsetWidth; el.plus.classList.add('on');
     el.spinsBox.classList.remove('pop'); void el.spinsBox.offsetWidth; el.spinsBox.classList.add('pop');
-    Snd.more(); wiz('cheer');
+    Sfx.more(); wiz('cheer');
     await ctx.sleep(1050);
     el.plus.classList.remove('on');
   }
@@ -1314,7 +1484,7 @@ const RG_RUN = () => {
     const total = ctx.units(Number(e.total) || 0), good = total >= ctx.amount * ctx.cost, sp = ctx.speed(), mid = [S.gx + S.G / 2, S.gy + S.G / 2];
     await ctx.sleep(300);
     // release
-    S.ringTarget = 0; Snd.release();
+    S.ringTarget = 0; Sfx.release();
     setMult(1, false); Dial.axisT = -PI / 2;
     await ctx.sleep(420);
     setRetro(false); setLevel(1, true); S.ringV = 4; el.root.classList.remove('ecl');
@@ -1323,8 +1493,8 @@ const RG_RUN = () => {
     await ctx.sleep(480);
     // summary
     showCard(S.ecl ? 'ECLIPSE complete' : 'RETROGRADE complete', ctx.winMoney(total), `${S.spins} free ${S.spins === 1 ? 'spin' : 'spins'} · ALIGNMENT reached <b>×${S.peak}</b>`, '', 'end' + (good ? ' good' : ''));
-    if (total > 0 && !api.reduced) { tween(950 * sp, (q, p) => { el.cardTitle.textContent = p >= 1 ? ctx.winMoney(total) : ctx.money(Math.round(total * q)); }); Snd.count(.9 * sp, 1); }
-    after(950, () => Snd.end(good)); if (good) wiz('cheer');
+    if (total > 0 && !api.reduced) { tween(950 * sp, (q, p) => { el.cardTitle.textContent = p >= 1 ? ctx.winMoney(total) : ctx.money(Math.round(total * q)); }); Sfx.count(.9 * sp, 1); }
+    after(950, () => Sfx.end(good)); if (good) wiz('cheer');
     if (good && !api.reduced) for (let i = 0; i < 5; i++) after(i * 130, () => burst(S.G * (.2 + Math.random() * .6), S.G * (.25 + Math.random() * .5), 14, { speed: 1.4, grav: 1.5 }));
     await ctx.sleep(2000);
     el.card.classList.remove('on');
@@ -1342,6 +1512,32 @@ const RG_RUN = () => {
     for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = m * speed * (.5 + Math.random()); emit({ layer: 'f', kind: 3, sym: list[Math.floor(Math.random() * list.length)], x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - m * .3, g: m * .9, drag: .5, max: 1.6 + Math.random() * 1.2, z: m * (.05 + Math.random() * .06), yaw: Math.random() * 360, spin: (Math.random() < .5 ? -1 : 1) * (240 + Math.random() * 420) }); }
     S.fxLive = true;
   }
+  /* A win from 2x to 5x the round's cost (standard 7.2, from 1.2): a short celebration of its own, about 1.8 s and
+   * skippable with a tap. The wizard cheers, a painted burst of light opens over the board, a few planets spill out, and
+   * the amount rises in gold in the middle, counts up, punches, and lands on TOTAL WIN. */
+  async function glint(ctx) {
+    const sp = ctx.speed(), red = api.reduced, mid = [S.W / 2, S.H / 2 - Math.min(S.W, S.H) * .06];
+    let skipped = false, wake = null;
+    S.skip = () => { skipped = true; if (wake) wake(); };
+    const wait = ms => (skipped ? Promise.resolve() : new Promise(res => { const id = setTimeout(() => { wake = null; res(); }, Math.max(0, ms * sp)); wake = () => { clearTimeout(id); wake = null; res(); }; }));
+    wiz('cheer');
+    el.big.dataset.tier = '0'; el.bigKick.textContent = 'A fine alignment'; bigTitle('');
+    Gold.into(el.bigAmt, ctx.money(0)); el.bigX.textContent = ctx.fmtX(ctx.winX);
+    el.big.classList.add('on');
+    if (!red) { shock(mid[0], mid[1], '#ffe9a8', 1000, .8); burstF(mid[0], mid[1], S.small ? 10 : 24, { speed: .6, grav: .5, life: 1.2 }); planetBurst(mid[0], mid[1], S.small ? 3 : 6, .8); roomPulse(1.1); }
+    Sfx.skyStart(0, .2);
+    if (red) Gold.into(el.bigAmt, ctx.winMoney(ctx.winUnits));
+    else { tween(900 * sp, (q, p) => { el.bigAmt.style.scale = (.92 + .12 * p).toFixed(3); Gold.into(el.bigAmt, p >= 1 ? ctx.winMoney(ctx.winUnits) : ctx.money(Math.round(ctx.winUnits * (1 - Math.pow(1 - p, 2))))); }, { ease: linear }); Sfx.count(.9 * sp, 0); }
+    await wait(red ? 300 : 950);
+    flushTweens();
+    Gold.into(el.bigAmt, ctx.winMoney(ctx.winUnits)); el.big.classList.add('done'); el.bigAmt.style.scale = '';
+    if (!red) { flash(.5, 360); shake(S.cs * .05, 260); }
+    popTotal(); Sfx.win(2, false, false);
+    await wait(650);
+    S.skip = null;
+    el.big.classList.remove('on', 'done'); delete el.big.dataset.tier;
+    await ctx.sleep(260);
+  }
   async function celebrate(ctx) {
     const rel = ctx.winX / (ctx.cost || 1), top = ctx.capped || rel >= SKY[4].x ? 4 : rel >= SKY[3].x ? 3 : rel >= SKY[2].x ? 2 : 1, sp = ctx.speed(), red = api.reduced;
     const T = [null, { pre: 650, count: 2100, hold: 2100 }, { pre: 1300, count: 2300, hold: 2300 }, { pre: 1700, count: 2700, hold: 2600 }, { pre: 2000, count: 3700, hold: 3200 }];
@@ -1351,6 +1547,7 @@ const RG_RUN = () => {
     const lineAt = k => (k > top ? ctx.winUnits : Math.min(ctx.winUnits, Math.round(ctx.amount * (ctx.cost || 1) * SKY[k].x)));
     const restart = node => { const n = node.cloneNode(true); node.replaceWith(n); return n; };   // re-runs the slam animation
     Gold.into(el.bigAmt, ctx.money(0)); el.bigX.textContent = ctx.fmtX(ctx.winX);
+    if (RGS) RGS.hold(.05);
     S.bw = { tier: 1, t0: performance.now(), start: performance.now(), sp, pre: 1, out: Math.max(1, 380 * sp), acc: 0, rain: 0, dt: 0, hitAt: 0, outAt: 0 }; S.fxLive = true;
     setLevel(2, true);
     let shown = 0;
@@ -1358,12 +1555,12 @@ const RG_RUN = () => {
       const t = T[tier], mid = [S.W / 2, S.H / 2 - Math.min(S.W, S.H) * (tier >= 2 ? .2 : .1)];
       // stage this tier's sky: the conjunction sweeps in, the Moon slides over the Sun ...
       Object.assign(S.bw, { tier, t0: performance.now(), pre: Math.max(1, t.pre * sp), hitAt: 0 });
-      Snd.skyStart(tier, t.pre * sp / 1000);
+      Sfx.skyStart(tier, t.pre * sp / 1000);
       await wait(red ? 150 : t.pre);
       if (skipped) break;
       // ... and the hit: title slams in, flash, shake, shock rings, planets burst out
       S.bw.hitAt = performance.now();
-      Snd.skyHit(tier);
+      Sfx.skyHit(tier);
       if (tier === 3) wiz('summon');
       el.big.dataset.tier = String(tier);
       el.bigKick.textContent = SKY[tier].kick; bigTitle(tier === 4 && ctx.capped ? 'MAX WIN' : SKY[tier].title);
@@ -1376,7 +1573,7 @@ const RG_RUN = () => {
       // count up to the next tier's line (or to the final amount on the last tier)
       const from = shown, to = lineAt(tier + 1), dur = tier < top ? t.count * .85 : t.count;
       if (red) Gold.into(el.bigAmt, ctx.money(to));
-      else { tween(dur * sp, (q, p) => { el.bigAmt.style.scale = (1 + .05 * (tier - 1) + .14 * p).toFixed(3); shown = Math.round(from + (to - from) * (1 - Math.pow(1 - p, tier < top ? 1.4 : 2.2))); Gold.into(el.bigAmt, p >= 1 && tier === top ? ctx.winMoney(ctx.winUnits) : ctx.money(shown)); }, { ease: linear }); Snd.count(dur * sp / 1000, tier); }
+      else { tween(dur * sp, (q, p) => { el.bigAmt.style.scale = (1 + .05 * (tier - 1) + .14 * p).toFixed(3); shown = Math.round(from + (to - from) * (1 - Math.pow(1 - p, tier < top ? 1.4 : 2.2))); Gold.into(el.bigAmt, p >= 1 && tier === top ? ctx.winMoney(ctx.winUnits) : ctx.money(shown)); }, { ease: linear }); Sfx.count(dur * sp / 1000, tier); }
       await wait(red ? 200 : dur);
       shown = to;
     }
@@ -1385,7 +1582,7 @@ const RG_RUN = () => {
     el.big.dataset.tier = String(top); S.bw.tier = top; if (!S.bw.hitAt) S.bw.hitAt = performance.now();
     el.bigKick.textContent = SKY[top].kick; bigTitle(top === 4 && ctx.capped ? 'MAX WIN' : SKY[top].title);
     Gold.into(el.bigAmt, ctx.winMoney(ctx.winUnits)); el.big.classList.add('on');
-    Snd.skyEnd(top); wiz('cheer');
+    Sfx.skyEnd(top); wiz('cheer');
     el.big.classList.add('done'); el.bigAmt.style.scale = '';
     if (!red) { const fm = [S.W / 2, S.H / 2]; flash(1, 700); shake(S.cs * (.14 + top * .05), 700); camPunch(1.06); shock(fm[0], fm[1], '#ffe9a8', 1400, 1.3); after(120, () => shock(fm[0], fm[1], top >= 3 ? '#ff9ec0' : '#bfe0ff', 1600, 1.5)); S.bw.hitAt = performance.now(); }
     if (!red) { burstF(S.W / 2, S.H / 2 + Math.min(S.W, S.H) * .12, (S.small ? 16 : 40) + top * 10, { speed: .9, grav: .6, life: 1.6 }); planetBurst(S.W / 2, S.H / 2, (S.small ? 6 : 12) + top * 4, 1.1); }
@@ -1394,6 +1591,7 @@ const RG_RUN = () => {
     el.big.classList.remove('on', 'done'); el.bigAmt.style.scale = '';
     if (S.bw) S.bw.outAt = performance.now();
     await ctx.sleep(380);
+    if (RGS) RGS.hold(1);
     S.bw = null;
   }
 
@@ -1419,10 +1617,13 @@ const RG_RUN = () => {
       el.cap.textContent = 'TOTAL WIN'; setTotal(ctx.winUnits, false);
       // A win below what the round was played for is simply shown. From 5x the round's cost the sky answers.
       if (ctx.winX >= ctx.cost && (ctx.winX >= SKY[1].x * ctx.cost || ctx.capped)) await celebrate(ctx);
-      else if (ctx.winX >= ctx.cost && ctx.winUnits > 0) popTotal();
+      else if (ctx.winX >= 2 * ctx.cost && ctx.winUnits > 0) await glint(ctx);
+      else if (ctx.winX >= ctx.cost && ctx.winUnits > 0) { popTotal(); if (RGS) RGS.countEnd(ctx.winX / ctx.cost); }
+      else if (ctx.winUnits > 0 && RGS) RGS.emit('lossSmall');
     } finally {
       if (S.retro) setRetro(false);
       S.featOn = false; S.playing = false;
+      setTimeout(loadLater, 3000);   // a moment after the first round, when the player is reading the result
     }
     return { feature };
   }
@@ -1465,49 +1666,6 @@ const RG_RUN = () => {
     <p>A round can win at most ${group(MAX_WIN)}× the play amount. If the total reaches that amount, the round ends at once and wins exactly ${group(MAX_WIN)}×.</p>
     <p>The names shown over large clusters and big wins are decoration only and do not change any win.</p>`;
 
-  // The logo is rendered twice by the shell (intro and top bar): the gold gradient sits in its own always-rendered <svg>.
-  document.body.insertAdjacentHTML('afterbegin', '<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="rgGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6cf"/><stop offset=".46" stop-color="#f0c865"/><stop offset=".56" stop-color="#c48f33"/><stop offset="1" stop-color="#f8e3a0"/></linearGradient></defs></svg>');
-  const LOGO = `<svg class="rg-logo" viewBox="0 0 332 44" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Retrograde">
-    <g class="rg-logo-orb"><g fill="none" stroke="url(#rgGold)"><circle cx="22" cy="22" r="19.5" stroke-width="1.7"/><circle cx="22" cy="22" r="12.5" stroke-width="1"/><ellipse cx="22" cy="22" rx="19" ry="6.4" transform="rotate(-28 22 22)" stroke-width="1.1"/></g>
-    <circle cx="22" cy="22" r="5.2" fill="url(#rgGold)"/><circle cx="38.7" cy="13.1" r="2.7" fill="#fff6cf"/><circle cx="9.2" cy="29" r="1.7" fill="#f0c865"/></g>
-    <text class="rg-logo-word" x="54" y="33" font-family="Cinzel, Georgia, serif" font-weight="700" font-size="30" textLength="274" lengthAdjust="spacingAndGlyphs" fill="url(#rgGold)">RETROGRADE</text></svg>`;
-
-  /* Intro cards: three small pictures drawn with the game's own art. */
-  function cardArt(kind) {
-    const N = 300, cv = A.mk(N), c = cv.getContext('2d'), put = (s, cx0, cy0, z) => c.drawImage(A.sprite(s, Math.round(z)), cx0 - z / 2, cy0 - z / 2, z, z);
-    c.imageSmoothingQuality = 'high';
-    if (kind === 'cluster') {
-      c.drawImage(A.plate(264, 14, 1, 'night'), 4, 4, 292, 292);
-      const cs = 264 / 3, at = (i, j) => [18 + (i + .5) * cs, 18 + (j + .5) * cs], lay = ['C', 'C', 'S', 'L', 'C', 'T', 'Q', 'C', 'C'];
-      lay.forEach((s, k) => put(s, ...at(k % 3, (k / 3) | 0), cs * 1.04));
-      const path = [at(0, 0), at(1, 0), at(1, 1), at(1, 2), at(2, 2)];
-      c.lineCap = 'round'; c.lineJoin = 'round';
-      for (const [lw, col] of [[16, 'rgba(255,194,74,.3)'], [7, 'rgba(255,224,138,.6)'], [3, '#fffbe6']]) { c.lineWidth = lw; c.strokeStyle = col; c.beginPath(); path.forEach((p, i) => c[i ? 'lineTo' : 'moveTo'](p[0], p[1])); c.stroke(); }
-      const sp = A.spark(96); c.globalCompositeOperation = 'lighter'; path.forEach(p => c.drawImage(sp, p[0] - 30, p[1] - 30, 60, 60));
-    } else if (kind === 'align') {
-      c.drawImage(A.dialFace(N, 'night'), 0, 0);
-      const R = N / 2 * .97, ax = -PI / 2 + .9, gl = A.glow(96, '#ffd978');
-      c.translate(N / 2, N / 2);
-      c.lineCap = 'round'; c.lineWidth = 5; c.strokeStyle = '#ffe9a8';
-      for (let i = 0; i < 14; i++) { const a = -PI / 2 + (i + .5) / 60 * TAU; c.beginPath(); c.moveTo(Math.cos(a) * R * .895, Math.sin(a) * R * .895); c.lineTo(Math.cos(a) * R * .955, Math.sin(a) * R * .955); c.stroke(); }
-      c.lineWidth = 7; c.strokeStyle = 'rgba(255,226,150,.9)'; c.beginPath(); c.moveTo(Math.cos(ax) * R * .34, Math.sin(ax) * R * .34); c.lineTo(Math.cos(ax) * R * .84, Math.sin(ax) * R * .84); c.stroke();
-      [...DIAL_ORDER].forEach((s, i) => { const on = i < 5, a = on ? ax : i * 2.3 + 2.4, r = R * A.DIAL_ORBIT(i), z = R * (on ? .15 : .12); if (on) c.drawImage(gl, Math.cos(a) * r - z * 1.4, Math.sin(a) * r - z * 1.4, z * 2.8, z * 2.8); c.drawImage(A.body(64, s), Math.cos(a) * r - z, Math.sin(a) * r - z, z * 2, z * 2); });
-      let g = c.createLinearGradient(-R * .33, -R * .33, R * .33, R * .33); g.addColorStop(0, '#fff0b8'); g.addColorStop(.5, '#b8862e'); g.addColorStop(1, '#5a3a0c'); c.beginPath(); c.arc(0, 0, R * .325, 0, TAU); c.fillStyle = g; c.fill();
-      g = c.createRadialGradient(0, -R * .1, 0, 0, 0, R * .29); g.addColorStop(0, '#2c46b8'); g.addColorStop(1, '#0a1034'); c.beginPath(); c.arc(0, 0, R * .29, 0, TAU); c.fillStyle = g; c.fill();
-      c.fillStyle = '#ffd76a'; A.starPath(c, 0, 0, R * .22, R * .1, R * .04); c.fill();
-    } else {
-      c.drawImage(A.plate(264, 14, 1, 'retro'), 4, 4, 292, 292);
-      const gl = A.glow(128, '#ff7aa8');
-      c.lineCap = 'round';
-      for (const [s, px, py, z] of [['G', 70, 78, 74], ['S', 232, 96, 68], ['C', 150, 58, 62]]) {
-        for (const dx of [-.22, 0, .22]) { const g = c.createLinearGradient(0, py + z * .4, 0, py + z * 1.5); g.addColorStop(0, 'rgba(255,208,138,.7)'); g.addColorStop(1, 'rgba(255,208,138,0)'); c.strokeStyle = g; c.lineWidth = 4; c.beginPath(); c.moveTo(px + dx * z, py + z * .4); c.lineTo(px + dx * z, py + z * (1.2 + Math.abs(dx))); c.stroke(); }
-        put(s, px, py, z);
-      }
-      c.drawImage(gl, 150 - 110, 196 - 110, 220, 220); put('A', 150, 196, 150);
-    }
-    return `<img alt="" src="${cv.toDataURL('image/png')}">`;
-  }
-
   cfg = {
     id: 'retrograde', title: 'Retrograde', tagline: 'Seven planets. One alignment. Then gravity turns.',
     rtp: '96.30', layout: 'bar', logo: '<img class="rg-logo-img" src="assets/logo.webp" alt="Retrograde">', celebrate: false,   // illustrated logo (art/logo, job 1bb47daa); the shell's plain big-win banner is off: the game celebrates itself
@@ -1518,9 +1676,9 @@ const RG_RUN = () => {
       { name: 'retro', kind: 'feature', label: 'RETROGRADE', cost: RETRO_COST, maxWin: MAX_WIN, blurb: 'The spin lands 3 to 5 astrolabes and RETROGRADE begins.', confirmTitle: 'Enter RETROGRADE?', confirmLabel: 'Begin' },
     ],
     introCards: [
-      { art: cardArt('cluster'), title: 'CLUSTERS', text: 'Link 5 or more of one planet. Winners dissolve and new medallions drop in.' },
-      { art: cardArt('align'), title: 'ALIGNMENT', text: 'Every cascade lines up another planet and raises the multiplier by 1.' },
-      { art: cardArt('retro'), title: 'RETROGRADE', text: '3 astrolabes reverse gravity for free spins where the multiplier never resets.' },
+      { title: 'CLUSTERS', text: 'Link 5 or more of one planet. Winners dissolve and new medallions drop in.' },
+      { title: 'ALIGNMENT', text: 'Every cascade lines up another planet and raises the multiplier by 1.' },
+      { title: 'RETROGRADE', text: '3 astrolabes reverse gravity for free spins where the multiplier never resets.' },
     ],
     featureName: 'RETROGRADE', statLabel: 'Retrogrades', playLabel: 'PLAY', busyLabel: 'TURNING',
     rules: RULES,
@@ -1528,9 +1686,8 @@ const RG_RUN = () => {
       api = a;
       const h = a.h, img = s => { const i = document.createElement('span'); i.innerHTML = ICON[s]; return i.firstChild; };
       el.root = h('div', { class: 'rg-root' });
-      el.neb1 = h('canvas', { class: 'rg-neb' }); el.neb2 = h('canvas', { class: 'rg-neb rg-neb2' }); el.stars = h('canvas', { class: 'rg-stars' });
       el.sky = h('div', { class: 'rg-sky', 'aria-hidden': 'true' }); el.room = h('div', { class: 'rg-room', 'aria-hidden': 'true' }); el.wiz = h('canvas', { class: 'rg-wiz', 'aria-hidden': 'true' });
-      el.orr = h('canvas', { class: 'rg-orrery' }); el.vig = h('div', { class: 'rg-vig' }); el.grid = h('canvas', { class: 'rg-grid' });
+      el.orr = h('canvas', { class: 'rg-orrery' }); el.vig = h('div', { class: 'rg-vig' }); el.grid = h('canvas', { class: 'rg-grid' }); el.gbg = h('canvas', { class: 'rg-grid rg-gbg', 'aria-hidden': 'true' }); el.gund = h('canvas', { class: 'rg-grid rg-gund', 'aria-hidden': 'true' }); el.b3d = h('canvas', { class: 'rg-grid rg-b3d', 'aria-hidden': 'true' });
       el.dial = h('canvas', { class: 'rg-dial' });
       el.dialBox = h('div', { class: 'rg-dialbox' }, el.dial, h('img', { class: 'rg-dialring', src: 'assets/ui/dial-ring.webp', alt: '' }));
       el.align = h('div', { class: 'rg-align' }, el.dialBox, h('div', { class: 'rg-cap rg-acap', text: 'ALIGNMENT' }));
@@ -1555,9 +1712,12 @@ const RG_RUN = () => {
       el.mpop = h('div', { class: 'rg-mpop', 'aria-hidden': 'true' });
       el.bigKick = h('div', { class: 'rg-big-kick' }); el.bigTitle = h('div', { class: 'rg-big-title' }); el.bigAmt = h('div', { class: 'rg-big-amt' }); el.bigX = h('div', { class: 'rg-big-x' });
       el.big = h('div', { class: 'rg-big', role: 'status' }, el.bigKick, el.bigTitle, el.bigAmt, el.bigX);
-      el.root.append(el.sky, el.neb1, el.neb2, el.stars, el.orr, el.room, el.vig, el.wiz, el.grid, el.align, el.plaque, el.fx, el.card, el.plus, el.mpop, el.big);
+      el.root.append(el.sky, el.orr, el.room, el.vig, el.wiz, el.gbg, el.gund, el.b3d, el.grid, el.align, el.plaque, el.fx, el.card, el.plus, el.mpop, el.big);
+      // the four painted big-win titles are painted once, almost transparent, under everything: the browser decodes them now
+      // and not at the first big win, where the decode froze a phone for up to a quarter of a second (2026-11-27)
+      { const warm = h('div', { class: 'rg-warm', 'aria-hidden': 'true' }); for (const t of ['grand', 'celestial', 'cosmic', 'heavenly']) { const i = h('i'); i.dataset.art = t; warm.append(i); } el.root.prepend(warm); }
       stage.append(el.root);
-      el.orrC = el.orr.getContext('2d'); el.gridC = el.grid.getContext('2d'); el.dialC = el.dial.getContext('2d'); el.fxC = el.fx.getContext('2d');
+      el.orrC = el.orr.getContext('2d'); el.gridC = el.grid.getContext('2d'); el.gbgC = el.gbg.getContext('2d'); el.gundC = el.gund.getContext('2d'); el.dialC = el.dial.getContext('2d'); el.fxC = el.fx.getContext('2d');
       // the legend under the win cartouche shows only when all of it fits inside the stage; otherwise it is hidden
       // whole (never cut by the frame). Checked on every resize and when the retrograde rows swap in.
       const fitLegend = () => { const lg = el.legend; if (!lg || !lg.isConnected) return; lg.classList.remove('lg-off'); if (getComputedStyle(lg).display === 'none') return; const r = lg.getBoundingClientRect(), st = el.root.getBoundingClientRect(); if (r.height && (r.bottom > st.bottom - 4 || r.top < st.top || r.right > st.right)) lg.classList.add('lg-off'); };
@@ -1565,14 +1725,16 @@ const RG_RUN = () => {
       new MutationObserver(() => requestAnimationFrame(fitLegend)).observe(el.root, { attributes: true, attributeFilter: ['class', 'data-land', 'data-small'] });
       setTimeout(fitLegend, 300); if (document.fonts) document.fonts.ready.then(fitLegend);
       layout();
-      loadStrips(); loadRoom(); amountPicker();
+      // the board in real 3D (board3d.js); the baked strips are the fallback only
+      if (window.RGBoard3D) RGBoard3D.init(el.b3d).then(ok => { if (!ok) { S.b3d = false; loadStrips(); } S.dirty = true; }); else { S.b3d = false; loadStrips(); }
+      loadRoom(); amountPicker();
       if (window.RGWiz) RGWiz.init(el.wiz).then(ok => { S.wiz = !!ok; if (ok) { el.root.classList.add('has-wiz'); placeWiz(); } });
       wizHooks();
-      el.root.addEventListener('pointerdown', () => { if (S.bw && S.skip) S.skip(); });   // a tap hurries a celebration to its end
+      el.root.addEventListener('pointerdown', () => { if (S.skip) S.skip(); });   // a tap hurries a celebration to its end
       buildTokens(restingGrid());
       setTotal(0, false); Gold.later(() => { Gold.into(el.total, api.winMoney(S.totalShown), true); });
       if ('ResizeObserver' in window) new ResizeObserver(() => layout()).observe(el.root); else window.addEventListener('resize', layout);
-      document.addEventListener('visibilitychange', () => { if (document.hidden) { stopLoop(); Music.stop(); } else { startLoop(); if (S.started && api.sound.on) Music.start(); } });
+      document.addEventListener('visibilitychange', () => { if (document.hidden) { stopLoop(); if (RGS) RGS.pause(true); else Music.stop(); } else { startLoop(); if (RGS) RGS.pause(false); else if (S.started && api.sound.on) Music.start(); } });
       if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('800 20px Jost'), document.fonts.load('700 20px Cinzel')]).then(() => { S.dirty = true; }, () => {});
       S.attract = true;
       startLoop();
@@ -1581,8 +1743,8 @@ const RG_RUN = () => {
     // STARGAZE on: the telescope is open, the sky brightens and the astrolabes in the legend glow (game.css .gaze)
     onMode(name) { if (el.root) el.root.classList.toggle('gaze', name === 'stargaze'); },
     idle() { S.attract = true; S.nextGlint = S.t + 1; el.root.classList.remove('live'); setLevel(0); },
-    onStart() { S.attract = true; S.started = true; Snd.start(); Music.start(); },
-    onSound(on) { if (!on) Music.stop(); else if (S.started) Music.start(); },
+    onStart() { setTimeout(warmGPU, 300); S.attract = true; S.started = true; if (RGS) { RGS.init(api); RGS.wake(); RGS.start(); RGS.ambience(true); } else { Snd.start(); Music.start(); } },
+    onSound(on) { if (RGS) { if (on && S.started) { RGS.wake(); RGS.music(rgSet(), rgLevel(S.level || 0)); RGS.ambience(true); } return; } if (!on) Music.stop(); else if (S.started) Music.start(); },
   };
   LZ.boot(cfg);
   // The intro also shows the seven medallions under the logo on frames too small for the cards.
@@ -1613,7 +1775,7 @@ const RG_RUN = () => {
       busy = true;
       lf.innerHTML = layer(right(P[cur])); lb.innerHTML = layer(left(P[next]));
       R.innerHTML = right(P[next]);                                   // the page under the leaf already holds the next rule
-      leaf.classList.remove('go'); void leaf.offsetWidth; leaf.classList.add('on', 'go'); try { Snd.page(); } catch (e) {}
+      leaf.classList.remove('go'); void leaf.offsetWidth; leaf.classList.add('on', 'go'); try { Sfx.page(); } catch (e) {}
       setTimeout(() => { L.innerHTML = left(P[next]); leaf.classList.remove('on', 'go'); cur = next; busy = false; }, 1000);
     }
     const loop = () => { clearInterval(timer); timer = setInterval(() => { if (document.getElementById('lzIntro').classList.contains('out')) { clearInterval(timer); return; } turn(); }, 5200); };
@@ -1622,10 +1784,10 @@ const RG_RUN = () => {
   }
   // the PLAY seal: its word is drawn in gold under the wax (CSS reads data-label), kept in step with the shell's text
   const playBtn = document.getElementById('lzIntroPlay');
-  if (playBtn) playBtn.addEventListener('click', () => { if (window.RGWiz && RGWiz.loadRest) RGWiz.loadRest(); loadTurns(); });
+  // the heavier extras (the wizard's cheer and suspense clips, the full-turn symbol strips) load once the first round is
+  // over, so the first load (up to the end of the first round, standard: 8 MB) stays light; a fallback 30 s after PLAY
+  if (playBtn) playBtn.addEventListener('click', () => setTimeout(loadLater, 30000));
   if (playBtn) { const sync = () => playBtn.setAttribute('data-label', LZ.params && LZ.params.replay && /^play$/i.test(playBtn.textContent.trim()) ? 'START REPLAY' : playBtn.textContent.trim()); sync(); new MutationObserver(sync).observe(playBtn, { childList: true, characterData: true, subtree: true }); }
-  // the RETROGRADE button: a turning 3D astrolabe (the symbol's 24-frame turntable strip) sits in it, left of the name
-  document.querySelectorAll('.lz-feat[data-mode="retro"]').forEach(b => { if (!b.querySelector('.rg-feat-astro')) { const i = document.createElement('i'); i.className = 'rg-feat-astro'; i.setAttribute('aria-hidden', 'true'); b.prepend(i); } });
   const actBtn = document.getElementById('lzAction');
   if (actBtn && window.LZ && LZ.state) {
     const hurry = document.createElement('button'); hurry.type = 'button'; hurry.className = 'rg-hurry'; hurry.hidden = true; hurry.setAttribute('aria-label', 'Speed up this round');
@@ -1659,6 +1821,13 @@ const RG_RUN = () => {
         const rd = LZ.state.replayData, amt = LZ.state.amount;
         if (rd && amt && api && api.winMoney) set('w', api.winMoney(Math.round(amt * (Number(rd.payoutMultiplier) || 0))));
         else if (rd && amt && LZ.api && LZ.api.winMoney) set('w', LZ.api.winMoney(Math.round(amt * (Number(rd.payoutMultiplier) || 0))));
+        // the bar's replay facts end with Total Win too, as on Engine's example card
+        const dl = document.querySelector('#lzReplay dl'), w = card.querySelector('[data-k="w"]').textContent;
+        if (dl) {
+          let dd = dl.querySelector('dd[data-rg="w"]');
+          if (!dd) { const dt = document.createElement('dt'); dt.textContent = 'Total Win'; dd = document.createElement('dd'); dd.dataset.rg = 'w'; const box = dl.querySelector('.rg-fact') ? document.createElement('span') : null; if (box) { box.className = 'rg-fact'; box.append(dt, dd); dl.append(box); } else dl.append(dt, dd); }
+          if (dd.textContent !== w) dd.textContent = w;
+        }
       };
       // the bar's replay facts in the same wording
       const names = { Amount: 'Base Play', 'Cost multiplier': 'Feature Multiplier', 'Real cost': 'Total Play Worth', Result: 'Final Multiplier' };
@@ -1673,7 +1842,19 @@ const RG_RUN = () => {
   const logo = document.querySelector('.lz-intro-logo');
   if (logo) { const row = document.createElement('div'); row.className = 'rg-intro-row'; row.setAttribute('aria-hidden', 'true'); row.innerHTML = [...PLANETS].map(s => ICON[s]).join(''); logo.after(row); }
   introStage();
+  setTimeout(warmGPU, 1500); setTimeout(warmGPU, 5000);   // while the intro shows (see warmGPU)
   barB();
+  // the floating bar changes the room above it: lay the stage out again once the bar's own style is in place
+  for (const ms of [0, 300, 1200]) setTimeout(() => { if (el.root) { S.W = 0; layout(); } }, ms);
+  // UI sounds (recorded): a click on every button (the bet arrows and the buys have their own), a soft hover on desktop,
+  // the bet arrows' pitch climbs with the amount's place in the list (standard 6.6), the buy menu opening
+  if (RGS) {
+    document.addEventListener('click', e => { const b = e.target.closest('#lzApp button, .rg-amt [role=option], .rg-amt button'); if (!b || b.matches('#lzMinus, #lzPlus') || b.closest('.lz-feat')) return; RGS.emit('click'); }, true);
+    if (window.matchMedia && matchMedia('(hover: hover)').matches) document.addEventListener('pointerover', e => { const b = e.target.closest('#lzApp button'); if (b && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('button') === b)) RGS.emit('hover'); });
+    const lvl = () => { const sel = document.getElementById('lzAmtSel'); return sel && sel.options.length ? sel.selectedIndex / Math.max(1, sel.options.length - 1) : 0; };
+    for (const [id, ev] of [['lzPlus', 'betUp'], ['lzMinus', 'betDown']]) { const b = document.getElementById(id); if (b) b.addEventListener('click', () => setTimeout(() => RGS.emit(ev, { level: lvl() }), 0), true); }
+    document.addEventListener('click', e => { if (e.target.closest('.lz-feat')) RGS.emit('buyOpen'); }, true);
+  }
 
   /* The bar, direction B (2026-11-26, after the Stake review tagged "Poor bet UI bar"): no header and no framed panel.
    * One low row on a dark floor fade: info, sound, balance on the left; the spin medallion in the CENTRE with the bet
@@ -1691,14 +1872,14 @@ const RG_RUN = () => {
     const stepper = document.querySelector('#lzField .lz-stepper'), amount = document.querySelector('#lzField .lz-amount');
     // in a replay the shell hides the bet field, so the (replay) button must not live inside it
     let C;
-    if (!replay && stepper && $('lzAction')) { stepper.insertBefore(box('rg-spinw', [$('lzAction'), amount]), $('lzPlus')); C = box('rg-bc', [$('lzField')]); }
+    if (!replay && stepper && $('lzAction')) { stepper.insertBefore(box('rg-spinw', [$('lzAction')]), $('lzPlus')); C = box('rg-bc', [$('lzField')]); if (amount) L.append(amount); }
     else C = box('rg-bc', [$('lzField'), $('lzAction')]);
     // replay facts: each label + value kept together so the line wraps between facts, never inside one
     if (replay) document.querySelectorAll('#lzReplay dt').forEach(dt => { const dd = dt.nextElementSibling, s = document.createElement('span'); s.className = 'rg-fact'; dt.before(s); s.append(dt); if (dd && dd.tagName === 'DD') s.append(dd); });
     panel.prepend(L, C, R);
     const brand = document.querySelector('.lz-brand'), tags = document.querySelector('.lz-tags');
     stage.append(box('rg-brand', [brand, tags]));
-    const side = box('rg-side', [box('rg-modesw', [$('lzModes')]), $('lzFeats')]);
+    const modesw = box('rg-modesw', [$('lzModes')]), side = box('rg-side', [modesw, $('lzFeats')]), quick = $('lzQuick'), row1 = box('rg-row1', []);
     app.classList.add('rg-barB');
     // the play amount is the badge under the medallion; the medallion's own cost line only shows when it differs
     // (STARGAZE costs 3x the amount)
@@ -1709,20 +1890,79 @@ const RG_RUN = () => {
     // phone and tiny frames: on the stage just above the bar. On a phone the info/sound knobs go to the stage's top right.
     const put = () => {
       if (!el.root) return;
-      const land = el.root.dataset.land === '1', plq = el.plaque && el.plaque.querySelector('.rg-plq');
+      const land = el.root.dataset.land === '1', plq = S.plqEl || (S.plqEl = el.plaque && el.plaque.querySelector('.rg-plq'));
       const col = land && el.root.dataset.small !== '1' && innerHeight > 330;
-      if (col && plq) { if (side.previousSibling !== plq) plq.after(side); side.classList.add('in-col'); }
-      else { if (side.parentNode !== stage) stage.append(side); side.classList.remove('in-col'); }
-      side.style.zoom = '';
-      if (col) {   // shrink to the column: its width, and the height left under the cartouche
-        const w = el.plaque.clientWidth - 4, sr = side.getBoundingClientRect(), pr = el.plaque.getBoundingClientRect();
-        const h = pr.bottom - sr.top - 8, mw = side.firstChild ? side.firstChild.getBoundingClientRect().width : 0;
-        const z = Math.min(1, w > 0 && mw > w ? w / mw : 1, h > 0 ? h / sr.height : 1);   // width: only the mode knob can be too wide (the buys flex)
-        if (z < 1) side.style.zoom = Math.max(.4, z).toFixed(3);
+      // landscape (Lidor 2026-11-28, with a picture of the bar): the mode knob stands in the bar left of the minus, and
+      // TOTAL WIN right of the plus; the right column keeps the ALIGNMENT dial and the buy plates. Elsewhere (phone,
+      // Popout S) both stay where they were.
+      const knobUp = !!(col && C);
+      if (plq) {
+        // TOTAL WIN fills the bar between the plus and turbo (Lidor: "take a good share of the width"); it keeps the
+        // cartouche's proportions, so a wide one rises above the bar, standing on its bottom edge
+        if (knobUp) {
+          if (plq.parentNode !== R || plq.nextSibling !== quick) R.insertBefore(plq, quick && quick.parentNode === R ? quick : null);
+          plq.classList.add('in-bar'); plq.style.width = '';
+          requestAnimationFrame(() => {
+            const plus = document.getElementById('lzPlus'), qk = quick && quick.parentNode === R ? quick : null; if (!plus) return;
+            const room = (qk ? qk.getBoundingClientRect().left : R.getBoundingClientRect().right) - plus.getBoundingClientRect().right - 36;
+            const w = Math.round(clamp(Math.min(room, panel.clientHeight * 1.35 * 900 / 490), 120, 460));   // at most a little taller than the bar
+            plq.style.width = w + 'px'; if (S.totalShown != null) fitTotal(api.winMoney(S.totalShown));
+          });
+        }
+        else { plq.classList.remove('in-bar'); plq.style.width = ''; if (plq.parentNode !== el.plaque) el.plaque.prepend(plq); }
       }
-      if (!land) { if (icons.parentNode !== stage) stage.append(icons); icons.classList.add('on-stage'); }
-      else { if (icons.parentNode !== L) L.prepend(icons); icons.classList.remove('on-stage'); }
+      if (col) { if (side.parentNode !== el.plaque) el.plaque.append(side); side.classList.add('in-col'); }
+      else { if (side.parentNode !== stage) stage.append(side); side.classList.remove('in-col'); }
+      if (knobUp) { if (modesw.parentNode !== C || C.firstChild !== modesw) C.prepend(modesw); modesw.classList.add('in-bar'); }
+      else { modesw.classList.remove('in-bar'); if (land && modesw.parentNode !== side) side.prepend(modesw); }
+      side.style.zoom = ''; side.classList.remove('stack');
+      side.classList.toggle('narrow', !!(col && el.plaque && el.plaque.clientWidth < 230 && innerHeight >= 600));   // upright knob only in a tall narrow column (4:3)
+      if (col) {
+        // in the column under the cartouche (as wide as the column; each label fitted by fitSide). The two buy plates
+        // side by side or one above the other: both are tried, each shrunk to the height left under the cartouche,
+        // and the layout whose smallest label is larger wins (2026-11-28, Lidor: "the words come out, it is all cut")
+        const trial = st => {
+          side.classList.toggle('stack', st); side.style.zoom = '';
+          const r0 = side.getBoundingClientRect(), p0 = el.plaque.getBoundingClientRect(), bar = panel.getBoundingClientRect().top, hh = Math.min(p0.bottom, bar) - r0.top - 8;   // never under the bar
+          const z = Math.max(.4, Math.min(1, hh > 0 ? hh / (r0.height + 26) : 1));   // +26: the plates' moon hangs below their box
+          if (z < 1) side.style.zoom = z.toFixed(3);
+          fitSide();
+          let least = 99;
+          for (const t of side.querySelectorAll('.lz-feat span, .lz-feat small, .lz-modes b')) if (t.clientWidth) least = Math.min(least, parseFloat(getComputedStyle(t).fontSize) * z);
+          return least;
+        };
+        const flat = trial(false), stacked = trial(true);
+        if (flat >= stacked) trial(false);
+      } else fitSide();
+      // phone: turbo + auto stand beside the mode knob above the bar (the bar has no room for 44px buttons at 360px)
+      // the play amount: right of the bar on a phone (mirrors the balance), next to the balance in landscape
+      if (amount && !replay && el.root) { if (!land || innerHeight <= 330) { if (amount.parentNode !== R) R.prepend(amount); } else if (amount.parentNode !== L) L.append(amount); }
+      if (!land && quick) { if (row1.parentNode !== side) side.prepend(row1); if (modesw.parentNode !== row1) row1.append(modesw); if (quick.parentNode !== row1) row1.append(quick); }
+      else if (quick) { if (!knobUp && modesw.parentNode !== side) side.prepend(modesw); row1.remove(); if (quick.parentNode !== R) R.append(quick); }
+      const tiny = land;     // landscape: info and sound go on the stage under the logo, so the bar keeps at most 7 controls
+      if (!land || tiny) { if (icons.parentNode !== stage) stage.append(icons); icons.classList.add('on-stage'); icons.classList.toggle('tiny', tiny); }
+      else { if (icons.parentNode !== L) L.prepend(icons); icons.classList.remove('on-stage', 'tiny'); }
+      // landscape: the knobs sit right under the logo and its RTP line (measured, so they never cover it)
+      // landscape: the knobs follow the RTP line in the logo's own column, so they can never cover it (2026-11-28 review)
+      const brandBox = document.querySelector('.rg-brand');
+      if (tiny && brandBox) { if (icons.parentNode !== brandBox) brandBox.append(icons); icons.classList.add('in-brand'); icons.style.top = ''; }
+      else { icons.classList.remove('in-brand'); if (!land && icons.parentNode !== stage) stage.append(icons); icons.style.top = ''; }
+      requestAnimationFrame(() => { if (S.totalShown != null) fitTotal(api.winMoney(S.totalShown)); });   // redraw the amount at the cartouche's new size
+      // the knob in the bar: as tall as the bar allows
+      if (knobUp) { modesw.style.zoom = ''; const kh = modesw.getBoundingClientRect().height, bh = panel.clientHeight * .86; if (kh > 0) modesw.style.zoom = clamp(bh / kh, .55, 1).toFixed(3); }
+      else modesw.style.zoom = '';
     };
+    // 2026-11-28 (Lidor: "the words come out of their place, everything is cut"): every label of the mode knob and the
+    // buy plates is fitted to its own box: the largest size from the style sheet, then smaller until nothing overflows
+    function fitSide() {
+      for (const t of side.querySelectorAll('.lz-feat span, .lz-feat small, .lz-modes b, .lz-modes small')) {
+        t.style.removeProperty('font-size');
+        if (getComputedStyle(t).display === 'none' || !t.clientWidth) continue;
+        let fs = parseFloat(getComputedStyle(t).fontSize) || 12;
+        while (fs > 6 && t.scrollWidth > t.clientWidth + .5) { fs -= .5; t.style.setProperty('font-size', fs + 'px', 'important'); }
+      }
+    }
+    new MutationObserver(() => requestAnimationFrame(fitSide)).observe(side, { childList: true, characterData: true, subtree: true });   // prices change with the amount
     put();
     if (el.root) new MutationObserver(() => requestAnimationFrame(put)).observe(el.root, { attributes: true, attributeFilter: ['data-land', 'data-small'] });
     window.addEventListener('resize', () => requestAnimationFrame(put));
@@ -1759,11 +1999,12 @@ const RG_RUN = () => {
       const enter = Math.min(1, t / 1.6), ease = 1 - Math.pow(1 - enter, 3);
       for (const c of [cb, cf]) { c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H); }
       const items = [...list].map((s, i) => { const a = t * .26 + i / list.length * TAU + (1 - ease) * 2.2; return { s, a, d: Math.sin(a) }; }).sort((p, q) => p.d - q.d);
+      const zmax = base * 1.15 * 1.06, iat = live(items.map(p => ({ sym: p.s, yaw: -Math.cos(p.a) * 26 + 6 * Math.sin(t * 1.3 + p.a), pitch: 6 })), zmax);   // a medallion is a disc: it turns to follow its path, never edge-on
       for (const p of items) {
         const r = rx * (.55 + .45 * ease), x0 = Math.cos(p.a) * r, y0 = Math.sin(p.a) * ry, x = cx + x0 * Math.cos(tilt) - y0 * Math.sin(tilt), y = cy + x0 * Math.sin(tilt) + y0 * Math.cos(tilt);
         const z = base * (p.s === 'G' ? 1.15 : 1) * (.72 + .34 * (p.d + 1) / 2), c = p.d > 0 ? cf : cb;
         c.globalAlpha = ease * (p.d > 0 ? 1 : .55 + .45 * (p.d + 1));
-        drawSym(c, p.s, -Math.cos(p.a) * 22, x - z / 2, y - z / 2, z, z);      // each turns to follow its path (sharp sway frames)
+        if (iat) atlasDraw(c, iat, items.indexOf(p), x - z / 2, y - z / 2, z, z); else drawSym(c, p.s, -Math.cos(p.a) * 22, x - z / 2, y - z / 2, z, z);      // each turns as it follows its path
       }
       cb.globalAlpha = cf.globalAlpha = 1;
     };

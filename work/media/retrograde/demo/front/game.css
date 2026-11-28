@@ -16,69 +16,46 @@
   --lz-radius:12px;
   --lz-font-display:"Cinzel",Georgia,"Times New Roman",serif;
   --lz-font-body:"Jost",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --lz-action-bg:linear-gradient(180deg,#fff0b8 0%,#edc968 22%,#c9963a 55%,#9a6c1f 100%);
-  --lz-shadow:inset 0 1px 0 rgba(255,236,180,.1),0 18px 44px -26px rgba(0,0,0,.95);
-  --rg-brass:linear-gradient(135deg,#fff0b8 0%,#e0b85c 26%,#93681f 52%,#e9c874 76%,#70501a 100%);
-  --rg-enamel:linear-gradient(180deg,#16204f 0%,#0b1130 100%);
-  --rg-leaf:linear-gradient(180deg,#fff6cf 0%,#f0c865 46%,#c48f33 56%,#f8e3a0 100%);
+  --lz-action-bg:url(assets/ui/button.webp) center/100% 100% no-repeat;   /* the painted brass pill (art/ui2) */
+  --lz-shadow:none;
+  --rg-leaf:linear-gradient(180deg,#fff6cf 0%,#f0c865 46%,#c48f33 56%,#f8e3a0 100%); /* station:ok gold-leaf text fill of the title cards (no painted lettering for them) */
 }
-body{background:
-  radial-gradient(ellipse 120% 80% at 50% -10%,rgba(58,84,190,.42),transparent 62%),
-  radial-gradient(ellipse 90% 60% at 80% 110%,rgba(110,40,150,.3),transparent 60%),
-  linear-gradient(180deg,#050817,#0a1130 70%,#070b20);font-weight:500}
+body{background:#060a1c;font-weight:500}
 
 /* ---------- Shell restyle: engraved brass on enamel ---------- */
 .lz-lbl{font-family:var(--lz-font-display);font-weight:700;letter-spacing:.2em;color:#cdb47c}
 .lz-brand{letter-spacing:.08em}
 .lz-tag{font-family:var(--lz-font-body);background:rgba(6,9,26,.6);border-color:var(--lz-line);color:#cdb47c}
-.lz-wallet,.lz-win,.lz-icon{background:var(--rg-enamel);border:1px solid rgba(222,184,104,.42);box-shadow:inset 0 0 0 2px rgba(6,9,26,.7),inset 0 0 0 3px rgba(222,184,104,.14),0 10px 26px -16px #000}
 .lz-wallet b,.lz-win b,.lz-amount b,.lz-stats b{font-family:var(--lz-font-body);font-weight:600;letter-spacing:.01em}
 .lz-win b{color:#8f8a78}
 .lz-win.has b{color:#ffe08a}
 .lz-icon{color:#e9cf8e;border-radius:50%}
 .lz-icon:hover{color:#fff3c4}
-.lz-stage{border:1px solid rgba(222,184,104,.5);border-radius:14px;background:#060a1c;
-  box-shadow:0 0 0 1px rgba(6,9,26,.9),0 0 0 2px rgba(222,184,104,.16),0 24px 60px -30px #000}
-.lz-stepper>button,.lz-quick button{background:var(--rg-enamel);border:1px solid rgba(222,184,104,.4);color:#ecd9a4;font-family:var(--lz-font-display);
-  box-shadow:inset 0 1px 0 rgba(255,236,180,.1),inset 0 -2px 0 rgba(0,0,0,.35)}
+.lz-stage{border:1px solid rgba(222,184,104,.5);border-radius:14px;background:#060a1c}
 .lz-stepper>button:not(:disabled):active,.lz-quick button:not(:disabled):active{transform:translateY(1px)}
 .lz-quick button{letter-spacing:.14em;font-weight:700;font-size:10px}
-.lz-quick button[aria-pressed="true"],.lz-quick button.on{background:var(--rg-brass);color:#1c1103;border-color:#5a3a0c;text-shadow:0 1px 0 rgba(255,246,207,.5)}
-.lz-amount{background:#060a1c;border:1px solid rgba(222,184,104,.4);box-shadow:inset 0 2px 8px rgba(0,0,0,.7)}
 .lz-amount b{color:#f5ecd4}
-.lz-action{border-radius:12px;border:1px solid #4d350f;color:#1c1103;
-  box-shadow:inset 0 0 0 2px rgba(255,246,207,.55),inset 0 0 0 3px rgba(90,58,12,.75),inset 0 -5px 10px rgba(90,58,12,.35),0 12px 26px -14px rgba(226,180,85,.75)}
-.lz-action span{font-weight:800;letter-spacing:.24em;text-indent:.24em;text-shadow:0 1px 0 rgba(255,246,207,.65)}
-.lz-action small{font-family:var(--lz-font-body);font-weight:600;opacity:.82}
-.lz-action.busy{filter:saturate(.55) brightness(.72)}
-.lz-action.auto{background:linear-gradient(180deg,#ff9bb3,#c8244f 60%,#7c0f2e);color:#fff;border-color:#4a0a1c}
-.lz-action.auto span{text-shadow:0 1px 0 rgba(0,0,0,.4)}
-.lz-feat{border-radius:12px;border:1px solid rgba(255,170,190,.55);color:#ffd9e2;
-  background:radial-gradient(ellipse at 50% 0,rgba(255,120,160,.35),transparent 70%),linear-gradient(180deg,#5c1140,#2a0722);
-  box-shadow:inset 0 0 0 2px rgba(20,4,16,.7),inset 0 0 0 3px rgba(255,190,205,.2)}
 .lz-feat span{letter-spacing:.14em;font-weight:800}
 .lz-feat small{font-family:var(--lz-font-body);color:#ffe9a8;opacity:1}
 .lz-pill{font-family:var(--lz-font-body);background:rgba(222,184,104,.1);color:#a9a48f}
 .lz-pill.mid{color:#f5ecd4;background:rgba(222,184,104,.22)}
-.lz-pill.hi{background:var(--rg-brass);color:#1c1103}
-.lz-pill.max{background:linear-gradient(180deg,#ff9bb3,#c8244f);color:#fff}
+.lz-pill.hi{background:#e2b455;color:#1c1103}
+.lz-pill.max{background:#c8244f;color:#fff}
 .lz-msg{font-family:var(--lz-font-body)}
 
 /* sheets */
 .lz-modal{background:rgba(3,5,16,.78)}
-.lz-sheet{border-radius:16px;border:1px solid rgba(222,184,104,.5);background:
-  radial-gradient(ellipse 100% 50% at 50% 0,rgba(58,84,190,.25),transparent 70%),linear-gradient(180deg,#121b46,#0a1030);
-  box-shadow:inset 0 0 0 3px rgba(6,9,26,.8),inset 0 0 0 4px rgba(222,184,104,.2),0 40px 90px -30px #000}
+.lz-sheet{border-radius:16px;border:1px solid rgba(222,184,104,.5);background:#0e1640}
 .lz-sheet h2{font-weight:700;letter-spacing:.06em;color:#f4d27a}
 .lz-sheet h3{letter-spacing:.16em;color:#e2b455;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(222,184,104,.22);padding-bottom:4px}
 .lz-sheet h3 img{width:26px;height:26px}
 .lz-btns button{font-family:var(--lz-font-display);letter-spacing:.12em;border-color:rgba(222,184,104,.4);color:#ecd9a4}
-.lz-btns .lz-go{border:1px solid #4d350f;color:#1c1103;box-shadow:inset 0 0 0 2px rgba(255,246,207,.5)}
+.lz-btns .lz-go{border:1px solid #4d350f;color:#1c1103}
 .lz-seg{background:#060a1c;border-color:rgba(222,184,104,.3)}
 .lz-seg button{font-family:var(--lz-font-body);font-weight:600}
-.lz-seg button[aria-pressed="true"]{background:var(--rg-brass);color:#1c1103}
+.lz-seg button[aria-pressed="true"]{background:#e2b455;color:#1c1103}
 .lz-rules .lz-facts{background:rgba(6,9,26,.55);border-color:rgba(222,184,104,.3)}
-.rg-tablewrap{overflow-x:auto;margin:10px 0;border-radius:12px;border:1px solid rgba(222,184,104,.35);background:linear-gradient(180deg,rgba(6,9,26,.7),rgba(6,9,26,.35));box-shadow:inset 0 0 0 2px rgba(6,9,26,.7),inset 0 0 0 3px rgba(222,184,104,.12)}
+.rg-tablewrap{overflow-x:auto;margin:10px 0;border-radius:12px;border:1px solid rgba(222,184,104,.35);background:rgba(6,9,26,.55)}
 .lz-sheet table.rg-table{margin:0;font-size:13px;min-width:520px}
 .lz-sheet .rg-table th,.lz-sheet .rg-table td{padding:5px 6px;text-align:center!important;font-family:var(--lz-font-body);white-space:nowrap;border-bottom:1px solid rgba(222,184,104,.14)}
 .lz-sheet .rg-table thead th{font-size:11px;letter-spacing:.06em;color:#e2b455;background:rgba(222,184,104,.08);padding:8px 6px}
@@ -87,13 +64,13 @@ body{background:
 .lz-sheet .rg-table td:first-child span{display:flex;flex-direction:column;line-height:1.15}
 .lz-sheet .rg-table td:first-child b{font-family:var(--lz-font-display);font-size:12px;letter-spacing:.06em;color:#f5ecd4}
 .lz-sheet .rg-table td:first-child small{font-size:10px;color:#a9a48f;text-transform:capitalize}
-.lz-sheet .rg-table img{width:38px;height:38px;margin:0;flex:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.lz-sheet .rg-table img{width:38px;height:38px;margin:0;flex:none}
 .lz-sheet .rg-table td:not(:first-child){font-weight:600;color:#f5ecd4;font-variant-numeric:tabular-nums}
 .lz-sheet .rg-table td:last-child{color:#ffe08a}
 .lz-sheet .rg-table tbody tr:nth-child(odd){background:rgba(222,184,104,.05)}
 .lz-sheet .rg-table tbody tr:last-child td{border-bottom:0}
 .rg-sym{display:flex;gap:14px;align-items:flex-start;margin:10px 0;padding:10px 12px;border-radius:12px;border:1px solid rgba(222,184,104,.3);background:rgba(6,9,26,.45)}
-.rg-sym img{width:64px;height:64px;flex:none;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
+.rg-sym img{width:64px;height:64px;flex:none}
 .rg-sym b{font-family:var(--lz-font-display);letter-spacing:.08em;color:#f4d27a;font-size:13px}
 .rg-sym p{margin:3px 0 0!important}
 @media (max-height:330px){ .rg-sym img{width:36px;height:36px} .lz-sheet .rg-table img{width:24px;height:24px} }
@@ -107,58 +84,32 @@ body{background:
 .rg-ib-sky{inset:-8%!important;background:#0b1236 url("assets/bg/sky.jpg") center/cover no-repeat;animation:rgIntroPush 14s cubic-bezier(.2,.7,.3,1) both,rgSkyDrift 90s 14s ease-in-out infinite alternate}
 .rg-ib-room{background:url("assets/bg/room-wide.webp") center bottom/cover no-repeat;animation:rgIntroRoom 9s cubic-bezier(.2,.7,.3,1) both}
 @media (max-aspect-ratio:1/1){ .rg-ib-room{background-image:url("assets/bg/room-tall.webp")} }
-.rg-ib-shade{background:radial-gradient(ellipse 62% 54% at 50% 46%,rgba(4,7,22,.62),rgba(4,7,22,.2) 70%,transparent),linear-gradient(180deg,rgba(4,7,22,.35),transparent 30%,transparent 70%,rgba(4,7,22,.55))}
+.rg-ib-shade{background:radial-gradient(ellipse 62% 54% at 50% 46%,rgba(4,7,22,.62),rgba(4,7,22,.2) 70%,transparent),linear-gradient(180deg,rgba(4,7,22,.35),transparent 30%,transparent 70%,rgba(4,7,22,.55))} /* station:ok vignette over the painted room so the logo and the book read */
 @keyframes rgIntroPush{from{transform:scale(1.18) translateY(3%)}to{transform:scale(1)}}
 @keyframes rgIntroRoom{from{transform:scale(1.12);filter:brightness(.4)}to{transform:scale(1);filter:brightness(.95)}}
 .rg-orbit{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .rg-orbit-back{z-index:0}.rg-orbit-front{z-index:2}
 .lz-intro-in{position:relative;z-index:1}
-.lz-intro-logo,.lz-intro.has-cards .lz-intro-logo{display:block;width:100%;height:auto;animation:rgSheen 5s 1.4s ease-in-out infinite;filter:drop-shadow(0 6px 18px rgba(0,0,0,.7)) drop-shadow(0 0 22px rgba(240,200,101,.25))}
-.lz-intro-logo svg{display:block;height:auto;width:min(100%,calc(clamp(26px,12vh,78px)*7.55));max-width:none;margin:0 auto;overflow:visible}
-.lz-intro-logo .rg-logo-word{animation:rgLogoWord .9s .1s cubic-bezier(.2,.8,.2,1) both}
-.lz-intro-logo .rg-logo-orb{transform-box:fill-box;transform-origin:center;animation:rgLogoOrb 1s cubic-bezier(.2,.9,.2,1) both}
+.lz-intro-logo,.lz-intro.has-cards .lz-intro-logo{display:block;width:100%;height:auto}
 .rg-intro-row{display:none;justify-content:center;gap:clamp(3px,1.2vw,10px);width:100%}
-.rg-intro-row img{width:clamp(22px,min(9.5vh,11vw),56px);height:auto;aspect-ratio:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6));animation:rgBob 4.2s ease-in-out infinite}
+.rg-intro-row img{width:clamp(22px,min(9.5vh,11vw),56px);height:auto;aspect-ratio:1;animation:rgBob 4.2s ease-in-out infinite}
 .rg-intro-row img:nth-child(2n){animation-delay:-1.4s}.rg-intro-row img:nth-child(3n){animation-delay:-2.8s}
 @media (max-height:500px) and (min-height:331px){.rg-intro-row{display:flex}}
 @media (max-aspect-ratio:1/1) and (max-height:620px) and (min-height:331px){.rg-intro-row{display:flex}}
-.lz-intro-card{border-radius:14px;border:1px solid rgba(222,184,104,.5);background:radial-gradient(ellipse 100% 60% at 50% 0,rgba(58,84,190,.3),transparent 70%),linear-gradient(180deg,rgba(18,27,70,.92),rgba(8,12,38,.92));
-  box-shadow:inset 0 0 0 2px rgba(6,9,26,.8),inset 0 0 0 3px rgba(222,184,104,.18),0 18px 40px -22px #000}
-.lz-intro-card:nth-child(3){border-color:rgba(255,170,190,.55);background:radial-gradient(ellipse 100% 60% at 50% 0,rgba(255,90,140,.28),transparent 70%),linear-gradient(180deg,rgba(74,14,52,.92),rgba(30,5,22,.92))}
-.lz-intro-card b{letter-spacing:.2em;color:#f4d27a;font-weight:700}
-.lz-intro-card span{font-family:var(--lz-font-body);color:#cfc6a8}
-.lz-ic-art img{filter:drop-shadow(0 6px 10px rgba(0,0,0,.6));border-radius:10px}
 .lz-intro-tag{font-family:var(--lz-font-display);letter-spacing:.14em;color:#cdb47c;text-transform:uppercase;font-size:clamp(9px,2vh,13px);max-width:44ch}
 .lz-intro-load{height:3px;background:rgba(222,184,104,.18)}
-.lz-intro-load i{background:linear-gradient(90deg,#c48f33,#fff6cf)}
-.lz-intro-play{border-radius:12px;border:1px solid #4d350f;letter-spacing:.3em;text-indent:.3em;font-weight:800;
-  box-shadow:inset 0 0 0 2px rgba(255,246,207,.55),inset 0 0 0 3px rgba(90,58,12,.75),0 16px 36px -14px rgba(226,180,85,.8)}
+.lz-intro-load i{background:#e2b455}
+.lz-intro-play{font-weight:800}
 .lz-intro-fine,.lz-studio{font-family:var(--lz-font-body);letter-spacing:.3em;color:#8f8a78}
 .lz-intro-fine{letter-spacing:.12em}
 
-/* the big-win banner: gold leaf on the night */
-.lz-bigwin{background:radial-gradient(ellipse at center,rgba(4,6,20,.86),rgba(4,6,20,.5) 55%,transparent 80%)}
-.lz-bigwin strong{font-weight:800;letter-spacing:.12em;background:var(--rg-leaf);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
-  text-shadow:none;filter:drop-shadow(0 .05em 0 rgba(60,34,0,.9)) drop-shadow(0 0 .5em rgba(255,200,90,.55));padding:0 .2em}
-.lz-bigwin[data-tier="2"] strong,.lz-bigwin[data-tier="3"] strong{color:transparent}
-.lz-bigwin b{font-family:var(--lz-font-body);font-weight:700;color:#fff8e0;letter-spacing:.02em}
-.lz-big-rays{opacity:.3;background:repeating-conic-gradient(from 0deg,rgba(244,210,122,.9) 0 1.2deg,transparent 1.2deg 9deg);
-  -webkit-mask:radial-gradient(circle,transparent 6%,#000 9%,transparent 40%);mask:radial-gradient(circle,transparent 6%,#000 9%,transparent 40%);animation-duration:40s}
 
 /* ---------- Stage ---------- */
 .rg-root{position:absolute;inset:0;overflow:hidden;border-radius:13px;--k:4px;--m:4px;--vx:50%;--vy:50%;contain:strict;background:#040716}
 .rg-root canvas{position:absolute;display:block}
-/* the sky: nebula, then stars and constellations, each a little larger than the stage and drifting at its own pace */
-.rg-neb,.rg-stars{left:-4%;top:-4%;width:108%;height:108%;will-change:transform}
-.rg-neb{animation:rgDriftA 80s ease-in-out infinite alternate}
-.rg-stars{animation:rgDriftB 56s ease-in-out infinite alternate}
-.rg-neb2{opacity:0;transition:opacity 1.5s ease}
 /* STARGAZE: brighter, clearer sky and a turquoise telescope light on the board; the legend's astrolabe glows */
-.rg-neb,.rg-stars{transition:filter 1s ease}
-.rg-root.gaze .rg-neb{filter:brightness(1.35) saturate(1.2)}
-.rg-root.gaze .rg-stars{filter:brightness(1.7)}
 .rg-root.gaze .rg-vig{opacity:.8}
-.rg-root.gaze .rg-lg-base:nth-child(3) img{filter:drop-shadow(0 0 6px rgba(95,201,192,.95));animation:rgGaze 1.6s ease-in-out infinite alternate}
+.rg-root.gaze .rg-lg-base:nth-child(3) img{animation:rgGaze 1.6s ease-in-out infinite alternate}
 /* small frames (Popout S): the two mode buttons stack in a narrow column so the amount stepper keeps its room */
 @media (max-height:330px){
   .lz-app[data-game="retrograde"][data-layout="bar"] .lz-modes{flex:0 0 54px;grid-auto-flow:row;grid-auto-rows:1fr}
@@ -167,60 +118,45 @@ body{background:
   .lz-app[data-game="retrograde"][data-layout="bar"] .lz-quick{flex:0 1 62px}
   .lz-app[data-game="retrograde"][data-layout="bar"] .lz-field{flex:1 0 92px}
 }
-@keyframes rgGaze{to{filter:drop-shadow(0 0 12px rgba(95,201,192,1)) brightness(1.15)}}
-.lz-app[data-game="retrograde"][data-mode="stargaze"] .lz-modes button[data-mode="stargaze"][aria-pressed="true"]{background:linear-gradient(180deg,#7fe0d6,#2fa79c);color:#04201c;box-shadow:0 0 14px rgba(95,201,192,.6)}
-.rg-root.retro .rg-neb2{opacity:1}
-.rg-root.snap .rg-neb2,.rg-root.snap .rg-vig::after{transition:none}
+@keyframes rgGaze{to{filter:brightness(1.35);scale:1.08}}
+.rg-root.snap .rg-vig::after{transition:none}
 .rg-orrery,.rg-fx{left:0;top:0;width:100%;height:100%}
 .rg-fx{pointer-events:none}
 /* the rings fade into the dark instead of being cut by the frame */
-.rg-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 66% 86% at var(--vx) var(--vy),rgba(3,4,14,0) 46%,rgba(3,4,14,.5) 70%,rgba(3,4,14,.94) 100%)}
-.rg-vig::after{content:"";position:absolute;inset:0;opacity:0;transition:opacity 1.5s ease;background:radial-gradient(ellipse 66% 86% at var(--vx) var(--vy),rgba(20,2,14,0) 46%,rgba(20,2,14,.5) 70%,rgba(14,1,10,.95) 100%)}
+.rg-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 66% 86% at var(--vx) var(--vy),rgba(3,4,14,0) 46%,rgba(3,4,14,.5) 70%,rgba(3,4,14,.94) 100%)} /* station:ok vignette: the edges of the stage fade into the dark over the painted room */
+.rg-vig::after{content:"";position:absolute;inset:0;opacity:0;transition:opacity 1.5s ease;background:radial-gradient(ellipse 66% 86% at var(--vx) var(--vy),rgba(20,2,14,0) 46%,rgba(20,2,14,.5) 70%,rgba(14,1,10,.95) 100%)} /* station:ok vignette (RETROGRADE colour) over the painted room */
 .rg-root.retro .rg-vig::after{opacity:1}
-.rg-root[data-land="0"] .rg-vig,.rg-root[data-land="0"] .rg-vig::after{background:radial-gradient(ellipse 120% 70% at var(--vx) var(--vy),rgba(3,4,14,0) 52%,rgba(3,4,14,.55) 80%,rgba(3,4,14,.9) 100%)}
-.rg-root[data-land="0"] .rg-vig::after{background:radial-gradient(ellipse 120% 70% at var(--vx) var(--vy),rgba(20,2,14,0) 52%,rgba(20,2,14,.55) 80%,rgba(14,1,10,.9) 100%)}
-.rg-dial{position:static!important;flex:none;filter:drop-shadow(0 calc(var(--k)*1.2) calc(var(--k)*2.4) rgba(0,0,0,.65))}
+.rg-root[data-land="0"] .rg-vig,.rg-root[data-land="0"] .rg-vig::after{background:radial-gradient(ellipse 120% 70% at var(--vx) var(--vy),rgba(3,4,14,0) 52%,rgba(3,4,14,.55) 80%,rgba(3,4,14,.9) 100%)} /* station:ok vignette over the painted room (phone shape) */
+.rg-root[data-land="0"] .rg-vig::after{background:radial-gradient(ellipse 120% 70% at var(--vx) var(--vy),rgba(20,2,14,0) 52%,rgba(20,2,14,.55) 80%,rgba(14,1,10,.9) 100%)} /* station:ok vignette over the painted room (phone shape, RETROGRADE) */
+.rg-dial{position:static!important;flex:none}
 .rg-align,.rg-plaque{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
 .rg-align{gap:calc(var(--k)*2)}
-.rg-cap{font:700 clamp(7px,calc(var(--k)*2.5),13px)/1 var(--lz-font-display);letter-spacing:.3em;text-indent:.3em;color:#e6cd92;text-transform:uppercase;white-space:nowrap;
-  text-shadow:0 1px 2px #000,0 0 10px rgba(4,6,20,.95),0 0 4px rgba(4,6,20,.95)}
+.rg-cap{font:700 clamp(7px,calc(var(--k)*2.5),13px)/1 var(--lz-font-display);letter-spacing:.3em;text-indent:.3em;color:#e6cd92;text-transform:uppercase;white-space:nowrap}
 /* the ALIGNMENT caption sits on a small engraved tag */
-.rg-acap{padding:calc(var(--k)*1.1) calc(var(--k)*2.6) calc(var(--k)*1);border-radius:999px;background:linear-gradient(180deg,rgba(20,30,78,.92),rgba(8,12,38,.92));border:1px solid rgba(230,205,146,.55);box-shadow:inset 0 0 0 2px rgba(4,6,20,.7),0 4px 12px -4px #000;transition:background 1.2s,border-color 1.2s}
-.rg-root.retro .rg-acap{background:linear-gradient(180deg,rgba(100,16,56,.94),rgba(40,6,26,.94));border-color:rgba(255,190,205,.6)}
 
 /* the plaque: an engraved brass cartouche that carries the totals (and the free spins in RETROGRADE) */
 .rg-plaque{gap:calc(var(--k)*3)}
-.rg-plq{width:min(100%,calc(var(--k)*66));filter:drop-shadow(0 calc(var(--k)*1.4) calc(var(--k)*2.6) rgba(0,0,0,.7))}
-.rg-pl{--c:calc(var(--k)*3.2);padding:calc(var(--k)*.85);background:var(--rg-brass);
-  clip-path:polygon(var(--c) 0,calc(100% - var(--c)) 0,100% var(--c),100% calc(100% - var(--c)),calc(100% - var(--c)) 100%,var(--c) 100%,0 calc(100% - var(--c)),0 var(--c))}
-.rg-pl-in{--c:calc(var(--k)*2.7);position:relative;display:flex;flex-direction:column;align-items:center;gap:calc(var(--k)*1.6);padding:calc(var(--k)*3.2) calc(var(--k)*3) calc(var(--k)*3.4);
-  background:radial-gradient(ellipse 90% 70% at 50% 0,rgba(70,100,230,.4),transparent 70%),linear-gradient(180deg,#131d52,#070b24);
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.8),inset 0 0 0 calc(var(--k)*.55) rgba(4,6,20,.55),inset 0 0 0 calc(var(--k)*.55 + 1px) rgba(230,205,146,.4),inset 0 calc(var(--k)*3) calc(var(--k)*5) rgba(0,0,0,.55);
-  clip-path:polygon(var(--c) 0,calc(100% - var(--c)) 0,100% var(--c),100% calc(100% - var(--c)),calc(100% - var(--c)) 100%,var(--c) 100%,0 calc(100% - var(--c)),0 var(--c));transition:background 1.2s}
-.rg-pl-in::before,.rg-pl-in::after{content:"";position:absolute;top:50%;width:calc(var(--k)*1.5);height:calc(var(--k)*1.5);border-radius:50%;translate:0 -50%;background:radial-gradient(circle at 35% 30%,#fffbe6,#d9ae52 45%,#5a3c0e);box-shadow:0 0 0 1px rgba(20,10,0,.8)}
-.rg-pl-in::before{left:calc(var(--k)*1.4)}.rg-pl-in::after{right:calc(var(--k)*1.4)}
-.rg-root.retro .rg-pl{background:linear-gradient(135deg,#ffe0c4 0%,#e08e62 26%,#7a2a18 52%,#f0b088 76%,#5a180c 100%)}
-.rg-root.retro .rg-pl-in{background:radial-gradient(ellipse 90% 70% at 50% 0,rgba(255,90,140,.4),transparent 70%),linear-gradient(180deg,#5a1140,#1c0414)}
+.rg-pl-in{display:flex;flex-direction:column;align-items:center}
 .rg-pl.pop{animation:rgPlaque .45s cubic-bezier(.23,1,.32,1)}
 .rg-tot{display:flex;flex-direction:column;align-items:center;gap:calc(var(--k)*1.3);min-width:0;max-width:100%}
 .rg-total{font:600 clamp(13px,calc(var(--k)*8),48px)/1 var(--lz-font-body);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.01em;
-  background:var(--rg-leaf);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 1px 0 rgba(40,20,0,.9));padding:.06em .1em}
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  padding:.06em .1em}
 .rg-total.zero{opacity:.5}
 .rg-totcap{position:relative;padding-bottom:calc(var(--k)*1.5)}
-.rg-totcap::after{content:"";position:absolute;left:50%;bottom:0;width:calc(var(--k)*26);height:1px;translate:-50% 0;background:linear-gradient(90deg,transparent,rgba(230,205,146,.85),transparent)}
+.rg-totcap::after{content:"";position:absolute;left:50%;bottom:0;width:calc(var(--k)*26);height:1px;translate:-50% 0;background:rgba(230,205,146,.6)}
 /* free spins left: only in RETROGRADE */
 .rg-spins{display:none;flex-direction:column;align-items:center;gap:calc(var(--k)*1.2);padding-bottom:calc(var(--k)*2);margin-bottom:calc(var(--k)*.6);border-bottom:1px solid rgba(255,190,205,.35);width:100%}
 .rg-root.retro .rg-spins{display:flex}
 .rg-spins em{font:700 clamp(7px,calc(var(--k)*2.8),14px)/1 var(--lz-font-display);font-style:normal;letter-spacing:.24em;text-indent:.24em;color:#ffd0dc}
 .rg-spins div{display:flex;align-items:baseline;gap:.45em;white-space:nowrap}
-.rg-spins b{font:700 clamp(15px,calc(var(--k)*8.6),50px)/1 var(--lz-font-body);color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 0 calc(var(--k)*3) rgba(255,90,140,.9),0 2px 0 rgba(40,0,16,.9)}
+.rg-spins b{font:700 clamp(15px,calc(var(--k)*8.6),50px)/1 var(--lz-font-body);color:#fff;font-variant-numeric:tabular-nums}
 .rg-spins span{font:600 clamp(8px,calc(var(--k)*3),15px)/1 var(--lz-font-body);letter-spacing:.08em;color:#ffe9a8;text-transform:uppercase}
 .rg-spins.pop b{animation:rgPunch .5s cubic-bezier(.23,1,.32,1)}
 /* a tidy legend under the plaque */
 .rg-legend{display:grid;gap:calc(var(--k)*1.5);width:min(100%,calc(var(--k)*64));padding:0 calc(var(--k)*1.5)}
-.rg-legend div{display:flex;align-items:center;gap:calc(var(--k)*2);text-align:left;font:500 clamp(9px,calc(var(--k)*2.7),13.5px)/1.25 var(--lz-font-body);letter-spacing:.03em;color:#d6cdae;text-shadow:0 1px 2px #000,0 0 8px rgba(4,6,20,.95)}
-.rg-legend img{width:calc(var(--k)*6.4);height:calc(var(--k)*6.4);flex:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
+.rg-legend div{display:flex;align-items:center;gap:calc(var(--k)*2);text-align:left;font:500 clamp(9px,calc(var(--k)*2.7),13.5px)/1.25 var(--lz-font-body);letter-spacing:.03em;color:#d6cdae}
+.rg-legend img{width:calc(var(--k)*6.4);height:calc(var(--k)*6.4);flex:none}
 .rg-lg-retro{display:none!important}
 .rg-root.retro .rg-lg-base{display:none}
 .rg-root.retro .rg-lg-retro{display:flex!important}
@@ -233,8 +169,6 @@ body{background:
 .rg-root[data-land="0"] .rg-plq{width:100%}
 .rg-root[data-land="0"] .rg-pl{--c:9px;padding:3px}
 .rg-root[data-land="0"] .rg-pl-in{--c:7px;flex-direction:row;justify-content:center;align-items:center;gap:14px;padding:10px 20px}
-.rg-root[data-land="0"] .rg-pl-in::before{left:6px}.rg-root[data-land="0"] .rg-pl-in::after{right:6px}
-.rg-root[data-land="0"] .rg-pl-in::before,.rg-root[data-land="0"] .rg-pl-in::after{width:5px;height:5px}
 .rg-root[data-land="0"] .rg-spins{width:auto;padding:0 14px 0 0;margin:0;border-bottom:0;border-right:1px solid rgba(255,190,205,.35);gap:4px}
 .rg-root[data-land="0"] .rg-spins div{flex-direction:column;align-items:center;gap:2px}
 .rg-root[data-land="0"] .rg-spins em{display:none}
@@ -247,7 +181,6 @@ body{background:
 .rg-root[data-small="1"] .rg-plq{width:100%}
 .rg-root[data-small="1"] .rg-pl{--c:6px;padding:2px}
 .rg-root[data-small="1"] .rg-pl-in{--c:5px;padding:7px 6px 8px;gap:4px}
-.rg-root[data-small="1"] .rg-pl-in::before,.rg-root[data-small="1"] .rg-pl-in::after{display:none}
 .rg-root[data-small="1"] .rg-spins{gap:3px;padding-bottom:4px;margin-bottom:1px}
 .rg-root[data-small="1"] .rg-spins span{font-size:7.5px;letter-spacing:.04em}
 .rg-root[data-small="1"] .rg-acap{padding:2px 6px}
@@ -255,12 +188,12 @@ body{background:
 
 /* title cards */
 .rg-card,.rg-plus{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s}
-.rg-card{gap:calc(var(--k)*2.2);background:radial-gradient(ellipse at center,rgba(8,3,16,.92),rgba(8,3,16,.66) 52%,transparent 74%)}
+.rg-card{gap:calc(var(--k)*2.2);background:radial-gradient(ellipse at center,rgba(8,3,16,.92),rgba(8,3,16,.66) 52%,transparent 74%)} /* station:ok dark vignette behind the title card so it reads over the board */
 .rg-card.on,.rg-plus.on{opacity:1;visibility:visible}
 .rg-card-kick{font:700 clamp(7px,calc(var(--k)*3),16px)/1 var(--lz-font-display);letter-spacing:.42em;text-indent:.42em;color:#ffd9e2;text-transform:uppercase}
 .rg-card-title{font:800 clamp(15px,calc(var(--k)*10.6),70px)/1 var(--lz-font-display);letter-spacing:.06em;white-space:nowrap;
   background:var(--rg-leaf);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 .04em 0 rgba(60,20,0,.95)) drop-shadow(0 0 .35em rgba(255,110,150,.6));padding:.06em .1em}
+  filter:drop-shadow(0 .04em 0 rgba(60,20,0,.95));padding:.06em .1em} /* station:ok one dark edge under the gold-leaf title over the board */
 .rg-card-sub{font:600 clamp(9px,calc(var(--k)*4.2),26px)/1 var(--lz-font-body);letter-spacing:.2em;color:#fff3d6;text-transform:uppercase}
 .rg-card-sub b{font-weight:800;color:#ffd76a;font-size:1.25em;letter-spacing:.02em}
 .rg-card-note{font:500 clamp(7px,calc(var(--k)*2.5),14px)/1.3 var(--lz-font-body);letter-spacing:.14em;color:#d9b9c6;text-transform:uppercase}
@@ -269,11 +202,11 @@ body{background:
 .rg-card.start.on .rg-card-kick{animation:rgRise .7s .1s cubic-bezier(.23,1,.32,1) both}
 .rg-card.start.on .rg-card-sub{animation:rgRise .7s 1.25s cubic-bezier(.23,1,.32,1) both}
 .rg-card.start.on .rg-card-note{animation:rgRise .7s 1.45s cubic-bezier(.23,1,.32,1) both}
-.rg-card.end .rg-card-title{font-family:var(--lz-font-body);font-weight:700;font-size:clamp(17px,calc(var(--k)*11.5),72px);letter-spacing:.01em;filter:drop-shadow(0 .04em 0 rgba(60,20,0,.95)) drop-shadow(0 0 .3em rgba(255,200,90,.45))}
+.rg-card.end .rg-card-title{font-family:var(--lz-font-body);font-weight:700;font-size:clamp(17px,calc(var(--k)*11.5),72px);letter-spacing:.01em}
 .rg-card.end .rg-card-kick{color:#ffe9a8}
 .rg-card.end .rg-card-sub{font-size:clamp(8px,calc(var(--k)*3.1),18px);letter-spacing:.12em;text-transform:none}
 .rg-card.end.on .rg-card-title{animation:rgPop .6s cubic-bezier(.23,1,.32,1) both}
-.rg-plus{font:600 clamp(10px,calc(var(--k)*5),30px)/1 var(--lz-font-body);letter-spacing:.2em;text-transform:uppercase;color:#fff3d6;text-shadow:0 2px 0 #1a0412,0 0 18px #1a0412,0 0 30px rgba(255,90,140,.7)}
+.rg-plus{font:600 clamp(10px,calc(var(--k)*5),30px)/1 var(--lz-font-body);letter-spacing:.2em;text-transform:uppercase;color:#fff3d6;text-shadow:0 2px 4px #000} /* station:ok one readability shadow over the medallions */
 .rg-plus b{font-size:2.6em;font-weight:800;letter-spacing:.02em;color:#ffd76a;display:block;margin-bottom:.1em}
 .rg-plus.on{animation:rgPop .5s cubic-bezier(.23,1,.32,1) both}
 
@@ -281,13 +214,10 @@ body{background:
 .rg-big{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--m)*1.6);padding-top:calc(var(--m)*30);text-align:center;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .35s ease,visibility .35s}
 .rg-big[data-tier="1"]{padding-top:calc(var(--m)*12)}
 .rg-big.on{opacity:1;visibility:visible}
-.rg-big-kick{font:700 clamp(7px,calc(var(--m)*3.1),20px)/1 var(--lz-font-display);letter-spacing:.44em;text-indent:.44em;text-transform:uppercase;color:#ffe9a8;text-shadow:0 1px 3px #000,0 0 12px #000}
-.rg-big-title{font:800 clamp(15px,calc(var(--m)*10.5),84px)/1 var(--lz-font-display);letter-spacing:.08em;white-space:nowrap;
-  background:var(--rg-leaf);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 .04em 0 rgba(60,30,0,.95)) drop-shadow(0 0 .4em rgba(255,200,90,.6));padding:.06em .1em}
-.rg-big[data-tier="3"] .rg-big-title,.rg-big[data-tier="4"] .rg-big-title{filter:drop-shadow(0 .04em 0 rgba(60,20,0,.95)) drop-shadow(0 0 .45em rgba(255,130,160,.75))}
-.rg-big-amt{font:700 clamp(15px,calc(var(--m)*9.4),76px)/1 var(--lz-font-body);font-variant-numeric:tabular-nums;color:#fff8e0;letter-spacing:.01em;text-shadow:0 .05em 0 rgba(30,14,0,.9),0 0 .5em rgba(0,0,0,.8)}
-.rg-big-x{font:600 clamp(8px,calc(var(--m)*3.4),22px)/1 var(--lz-font-body);letter-spacing:.2em;color:#e6cd92;text-shadow:0 1px 3px #000;font-variant-numeric:tabular-nums}
+.rg-big-kick{font:700 clamp(7px,calc(var(--m)*3.1),20px)/1 var(--lz-font-display);letter-spacing:.44em;text-indent:.44em;text-transform:uppercase;color:#ffe9a8}
+.rg-big-title{font:800 clamp(15px,calc(var(--m)*10.5),84px)/1 var(--lz-font-display);letter-spacing:.08em;white-space:nowrap;background:var(--rg-leaf);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 .12em rgba(12,5,0,.95));padding:.06em .1em} /* station:ok gold-leaf fill and one dark halo for MAX WIN, the one title with no painted lettering, over the celebration light */
+.rg-big-amt{font:700 clamp(15px,calc(var(--m)*9.4),76px)/1 var(--lz-font-body);font-variant-numeric:tabular-nums;color:#fff8e0;letter-spacing:.01em;text-shadow:0 0 .25em rgba(0,0,0,.9)} /* station:ok one readability halo when the amount is text (a currency the gold digits cannot write) */
+.rg-big-x{font:600 clamp(8px,calc(var(--m)*3.4),22px)/1 var(--lz-font-body);letter-spacing:.2em;color:#e6cd92;font-variant-numeric:tabular-nums}
 .rg-big.on .rg-big-title{animation:rgSlam .55s cubic-bezier(.2,1.2,.3,1) both}
 .rg-big.on .rg-big-kick{animation:rgRise .6s .05s cubic-bezier(.23,1,.32,1) both}
 .rg-big.on .rg-big-amt{animation:rgRise .5s .12s cubic-bezier(.23,1,.32,1) both}
@@ -297,8 +227,6 @@ body{background:
 
 @keyframes rgTurn{to{rotate:360deg}}
 @keyframes rgBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7%)}}
-@keyframes rgDriftA{from{transform:translate(-2.4%,-1.4%)}to{transform:translate(2.4%,1.6%)}}
-@keyframes rgDriftB{from{transform:translate(2.8%,2%)}to{transform:translate(-2.8%,-1.8%)}}
 @keyframes rgPop{0%{transform:scale(.6)}55%{transform:scale(1.12)}100%{transform:scale(1)}}
 @keyframes rgPlaque{0%{transform:scale(1);filter:brightness(1)}30%{transform:scale(1.06);filter:brightness(1.35)}100%{transform:scale(1);filter:brightness(1)}}
 @keyframes rgPunch{0%{transform:scale(1)}30%{transform:scale(1.16)}100%{transform:scale(1)}}
@@ -307,9 +235,6 @@ body{background:
 /* the word arrives mirrored, as if read backwards, holds while the instrument is stopped, then turns to face the player */
 @keyframes rgFlip{0%{opacity:0;transform:perspective(600px) rotateY(180deg) scale(.8);letter-spacing:.14em}18%{opacity:1;transform:perspective(600px) rotateY(180deg) scale(1);letter-spacing:.1em}52%{opacity:1;transform:perspective(600px) rotateY(180deg) scale(1);letter-spacing:.1em}74%,100%{opacity:1;transform:perspective(600px) rotateY(0) scale(1);letter-spacing:.06em}}
 /* logo entrance on the intro */
-@keyframes rgLogoWord{0%{opacity:0;letter-spacing:.3em;filter:blur(6px)}35%{opacity:1}100%{opacity:1;letter-spacing:0;filter:none}}
-@keyframes rgLogoOrb{0%{opacity:0;transform:rotate(-200deg) scale(.3)}100%{opacity:1;transform:none}}
-@keyframes rgSheen{0%,100%{filter:drop-shadow(0 6px 18px rgba(0,0,0,.7)) drop-shadow(0 0 22px rgba(240,200,101,.25)) brightness(1)}50%{filter:drop-shadow(0 6px 18px rgba(0,0,0,.7)) drop-shadow(0 0 34px rgba(240,200,101,.55)) brightness(1.18)}}
 
 /* ---------- Frame sizes ---------- */
 .lz-brand{height:clamp(18px,4.6vh,34px)}
@@ -326,14 +251,10 @@ body{background:
   .lz-app{gap:3px;padding:3px}
   .lz-brand{height:17px}
   .lz-icon{width:22px;height:22px}
-  .lz-wallet{padding:1px 7px;box-shadow:none}
-  .lz-win{padding:1px 7px;box-shadow:none}
   .lz-win b{font-size:11px;letter-spacing:0}
   .lz-lbl{letter-spacing:.1em}
-  .lz-action{border-radius:8px;padding:1px 6px;box-shadow:inset 0 0 0 1px rgba(255,246,207,.55)}
   .lz-action span{font-size:12px;letter-spacing:.16em;text-indent:.16em;line-height:1.05}
   .lz-action small{font-size:8px;line-height:1}
-  .lz-feat{border-radius:8px;box-shadow:none}
   .lz-feat span{font-size:7px;letter-spacing:0}
   .lz-feat small{font-size:8px}
   .lz-quick button{font-size:7px;letter-spacing:.06em}
@@ -348,19 +269,17 @@ body{background:
 @media (max-aspect-ratio:1/1){ .lz-ic-art img{height:clamp(50px,9vh,76px)} }
 /* ALIGNMENT x3 and up: the new multiplier is announced over the board (hotter colours as it climbs) */
 .rg-mpop{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;visibility:hidden}
-.rg-mpop small{font:700 clamp(7px,calc(var(--k)*2.6),16px)/1 var(--lz-font-display);letter-spacing:.42em;text-indent:.42em;color:#ffe9a8;text-shadow:0 1px 3px #000,0 0 10px #000}
-.rg-mpop b{font:800 clamp(24px,calc(var(--k)*14),112px)/1 var(--lz-font-display);color:#fff6d8;letter-spacing:.02em;
-  text-shadow:0 .03em 0 #6a4310,0 .06em 0 #2a1604,0 0 .25em rgba(255,200,90,.9),0 0 .6em rgba(255,170,60,.6)}
+.rg-mpop small{font:700 clamp(7px,calc(var(--k)*2.6),16px)/1 var(--lz-font-display);letter-spacing:.42em;text-indent:.42em;color:#ffe9a8}
+.rg-mpop b{font:800 clamp(24px,calc(var(--k)*14),112px)/1 var(--lz-font-display);color:#fff6d8;letter-spacing:.02em}
 .rg-mpop[data-hot="2"] b{color:#ffe2a0}
-.rg-mpop[data-hot="3"] b{color:#ffc27a;text-shadow:0 .03em 0 #6a2a10,0 .06em 0 #2a0c04,0 0 .3em rgba(255,140,90,.95),0 0 .7em rgba(255,90,120,.7)}
-.rg-mpop[data-hot="4"] b{color:#ff9ec0;text-shadow:0 .03em 0 #5a1030,0 .06em 0 #22040f,0 0 .3em rgba(255,120,170,1),0 0 .8em rgba(255,60,140,.8)}
+.rg-mpop[data-hot="3"] b{color:#ffc27a}
+.rg-mpop[data-hot="4"] b{color:#ff9ec0}
 .rg-mpop.on{visibility:visible;animation:rgMpop 1.15s cubic-bezier(.2,1,.3,1) both}
 @keyframes rgMpop{0%{opacity:0;transform:scale(2.2)}14%{opacity:1;transform:scale(.94)}24%{transform:scale(1.04)}32%{transform:scale(1)}72%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.86) translateY(-6%)}}
 /* two astrolabes are down and columns are still to come: the sky holds its breath */
 .rg-root .rg-vig{transition:opacity .4s ease}
-.rg-root.tense .rg-neb,.rg-root.tense .rg-stars{filter:brightness(.55) saturate(.8)}
 .rg-root.tense .rg-orrery{filter:brightness(.6)}
-.rg-root.tense .rg-grid{filter:drop-shadow(0 0 calc(var(--k)*4) rgba(255,120,170,.55));scale:1.035}
+.rg-root.tense .rg-grid{scale:1.035}
 .rg-root .rg-grid{transition:scale .6s cubic-bezier(.2,.8,.2,1)}
 @media (prefers-reduced-motion:reduce){ .rg-mpop.on{animation:none;opacity:0} }
 
@@ -369,7 +288,6 @@ body{background:
    mouse. RETROGRADE turns the sky crimson and the brass ruddy; a cascade brightens the lamps for a beat (.lit). */
 .rg-sky,.rg-room{position:absolute;pointer-events:none;opacity:0;transition:opacity .8s ease,filter 1.5s ease}
 .rg-root.room .rg-sky,.rg-root.room .rg-room{opacity:1}
-.rg-root.room :is(.rg-neb,.rg-stars){display:none}
 .rg-sky{left:-8%;top:-8%;width:116%;height:116%;background:#0b1236 url("assets/bg/sky.jpg") center/cover no-repeat;animation:rgSkyDrift 90s ease-in-out infinite alternate}
 @keyframes rgSkyDrift{0%{transform:translate(-2.5%,1%) scale(1)}100%{transform:translate(2.5%,-1.5%) scale(1.06)}}
 .rg-room{inset:-1.5%;background:url("assets/bg/room-wide.webp") center bottom/cover no-repeat;animation:rgRoomBreath 26s ease-in-out infinite alternate;filter:brightness(.92)}
@@ -383,142 +301,100 @@ body{background:
 .rg-root.room.tense .rg-sky{filter:brightness(.55)}
 .rg-root.room.tense .rg-room{filter:brightness(.5) saturate(.85)}
 .rg-root.room.lit .rg-room{animation:rgRoomBreath 26s ease-in-out infinite alternate,rgLamp .7s ease-out}
-@keyframes rgLamp{0%{filter:brightness(calc(.92 + var(--pulse,1) * .32)) saturate(1.15)}100%{filter:brightness(.92)}}
+@keyframes rgLamp{0%{filter:brightness(1.24) saturate(1.15)}100%{filter:brightness(.92) saturate(1)}}
 .rg-root.room.retro.lit .rg-room{animation:rgRoomBreath 26s ease-in-out infinite alternate,rgLampR .7s ease-out}
-@keyframes rgLampR{0%{filter:sepia(.3) hue-rotate(-22deg) saturate(1.7) brightness(calc(.78 + var(--pulse,1) * .3))}100%{filter:sepia(.3) hue-rotate(-22deg) saturate(1.5) brightness(.78)}}
+@keyframes rgLampR{0%{filter:sepia(.3) hue-rotate(-22deg) saturate(1.7) brightness(1.08)}100%{filter:sepia(.3) hue-rotate(-22deg) saturate(1.5) brightness(.78)}}
 @media (prefers-reduced-motion:reduce){ .rg-sky,.rg-room{animation:none!important} }
 /* over the painted room the legend sits on a dark enamel card so it stays readable */
-.rg-root.room .rg-legend{padding:calc(var(--k)*2.2) calc(var(--k)*2.6);border-radius:calc(var(--k)*2.4);background:linear-gradient(180deg,rgba(10,15,44,.86),rgba(5,8,26,.9));border:1px solid rgba(222,184,104,.35);box-shadow:0 10px 26px -12px #000,inset 0 0 0 2px rgba(4,6,20,.6)}
+.rg-root.room .rg-legend{padding:calc(var(--k)*2.2) calc(var(--k)*2.6);border-radius:calc(var(--k)*2.4);background:rgba(6,10,32,.88);border:1px solid rgba(222,184,104,.35)}
 .rg-root.room .rg-legend div{color:#eadfbe}
 
-/* intro, a level up: gold tagline, brass-framed enamel cards that rise one by one and float, a PLAY medallion with a sheen */
-.lz-intro-tag{background:linear-gradient(180deg,#fff3c8,#d9ad55);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.9));font-weight:700;letter-spacing:.22em;animation:rgRise .8s .5s cubic-bezier(.23,1,.32,1) both}
-.lz-intro-card{position:relative;border:0;padding-top:clamp(12px,2vh,18px);background:
-  linear-gradient(180deg,rgba(255,255,255,.06),transparent 40%),
-  radial-gradient(ellipse 100% 60% at 50% 0,rgba(58,84,190,.35),transparent 70%),linear-gradient(180deg,rgba(14,22,62,.9),rgba(6,10,32,.94));
-  box-shadow:0 0 0 1px #3a2708,0 0 0 2.5px #d9ad55,0 0 0 3.5px #5a3c0e,inset 0 0 0 1px rgba(255,236,180,.18),0 24px 50px -20px #000,0 0 40px -14px rgba(240,200,101,.35);
-  animation:rgCardIn .9s cubic-bezier(.2,1,.3,1) both,rgCardFloat 6s 1.2s ease-in-out infinite alternate;backdrop-filter:blur(3px)}
-.lz-intro-card:nth-child(1){animation-delay:.7s,1.6s}.lz-intro-card:nth-child(2){animation-delay:.85s,2.4s}.lz-intro-card:nth-child(3){animation-delay:1s,3.2s}
-.lz-intro-card:nth-child(3){background:linear-gradient(180deg,rgba(255,255,255,.06),transparent 40%),radial-gradient(ellipse 100% 60% at 50% 0,rgba(255,90,140,.34),transparent 70%),linear-gradient(180deg,rgba(70,12,48,.9),rgba(28,4,20,.94));
-  box-shadow:0 0 0 1px #3a0a18,0 0 0 2.5px #e8a088,0 0 0 3.5px #5a180c,inset 0 0 0 1px rgba(255,210,220,.2),0 24px 50px -20px #000,0 0 40px -14px rgba(255,120,160,.4)}
-.lz-intro-card b{font-size:clamp(13px,2.1vh,17px);background:linear-gradient(180deg,#fff3c8,#e0b35a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 1px rgba(0,0,0,.9))}
-.lz-intro-card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 35%,rgba(255,244,214,.16) 48%,transparent 60%);background-size:260% 100%;animation:rgCardSheen 7s 2.2s ease-in-out infinite}
-.lz-intro-card:nth-child(2)::after{animation-delay:3s}.lz-intro-card:nth-child(3)::after{animation-delay:3.8s}
-.lz-ic-art img{transition:transform .4s cubic-bezier(.2,1,.3,1)}
-.lz-intro-card:hover .lz-ic-art img{transform:scale(1.06) rotate(-1deg)}
-@keyframes rgCardIn{from{opacity:0;transform:translateY(40px) scale(.9) rotateX(25deg)}to{opacity:1;transform:none}}
-@keyframes rgCardFloat{to{translate:0 -5px}}
-@keyframes rgCardSheen{0%,70%{background-position:130% 0}100%{background-position:-60% 0}}
-.lz-intro-play{position:relative;overflow:hidden;min-width:clamp(180px,22vw,260px);min-height:clamp(34px,7vh,60px);border-radius:999px;font-size:clamp(16px,2.6vh,22px);
-  background:linear-gradient(180deg,#fff2c0 0%,#f0c868 22%,#c9922f 55%,#8d5f17 100%);color:#2a1a04;
-  box-shadow:0 0 0 1.5px #4d350f,0 0 0 4px #e8c672,0 0 0 5.5px #5a3c0e,inset 0 2px 0 rgba(255,255,255,.7),inset 0 -3px 6px rgba(80,40,0,.5),0 16px 40px -10px rgba(226,180,85,.9);
-  animation:rgPlayGlow 2.4s ease-in-out infinite}
-.lz-intro-play:not(:disabled)::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.75) 46%,transparent 60%);background-size:250% 100%;animation:rgPlaySheen 3.2s 1.2s ease-in-out infinite;pointer-events:none}
-.lz-intro-play:not(:disabled):hover{transform:translateY(-2px) scale(1.03)}
-@keyframes rgPlayGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.12) drop-shadow(0 0 18px rgba(255,214,120,.6))}}
-@keyframes rgPlaySheen{0%,60%{background-position:120% 0}100%{background-position:-40% 0}}
+/* intro: the tagline, and the illustrated logo's entrance */
+.lz-intro-tag{color:#f0d38a;text-shadow:0 2px 3px rgba(0,0,0,.9);font-weight:700;letter-spacing:.22em;animation:rgRise .8s .5s cubic-bezier(.23,1,.32,1) both} /* station:ok one readability shadow under the tagline over the painted room */
+.lz-intro-play{min-height:clamp(34px,7vh,60px)}
 .lz-intro-logo{position:relative;z-index:1}
 .lz-intro .lz-intro-logo,.lz-intro.has-cards .lz-intro-logo{height:auto}
 .rg-logo-img{display:block;height:clamp(44px,17vh,150px)!important;width:auto!important;max-width:100%;object-fit:contain;margin:0 auto;animation:rgLogoIn 1.4s .2s cubic-bezier(.2,1,.3,1) both}
 @keyframes rgLogoIn{0%{opacity:0;transform:scale(1.35);filter:blur(10px) brightness(2)}60%{opacity:1;filter:blur(0) brightness(1.4)}100%{transform:none;filter:none}}
 .lz-brand .rg-logo-img{width:auto;height:clamp(22px,5vh,38px);animation:none}
-@media (prefers-reduced-motion:reduce){ .rg-ib-sky,.rg-ib-room,.lz-intro-card,.lz-intro-card::after,.lz-intro-play,.lz-intro-play::after,.rg-logo-img{animation:none!important} }
+@media (prefers-reduced-motion:reduce){ .rg-ib-sky,.rg-ib-room,.lz-intro-play,.rg-logo-img{animation:none!important} }
 
 /* =====================================================================================================================
    UI kit (art/ui, illustrated in the same sculpted gold as the logo and symbols): astrolabe ring around the ALIGNMENT dial,
    baroque cartouche for the win, a 9-slice brass bar, a round spin medallion, brass knobs. Shell ids are kept as they are.
    ===================================================================================================================== */
-:root{--rg-gold-text:linear-gradient(180deg,#fff8dc 0%,#ffe08a 38%,#e2a83a 62%,#ffe7a6 100%)}
+:root{--rg-gold-text:linear-gradient(180deg,#fff8dc 0%,#ffe08a 38%,#e2a83a 62%,#ffe7a6 100%)} /* station:ok gold-text fill for amounts and captions that have no painted lettering */
 /* the dial */
 .rg-dialbox{position:relative;flex:none;line-height:0}
-.rg-dialring{position:absolute;left:-6%;width:112%;bottom:-6%;height:auto;pointer-events:none;filter:drop-shadow(0 calc(var(--k)*1.2) calc(var(--k)*2.4) rgba(0,0,0,.7))}
-.rg-root.retro .rg-dialring{filter:sepia(.35) hue-rotate(-25deg) saturate(1.6) drop-shadow(0 calc(var(--k)*1.2) calc(var(--k)*2.4) rgba(0,0,0,.7))}
-.rg-dial{filter:none}
-.rg-acap{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;
+.rg-dialring{position:absolute;left:-6%;width:112%;bottom:-6%;height:auto;pointer-events:none}
+.rg-root.retro .rg-dialring{filter:sepia(.35) hue-rotate(-25deg) saturate(1.6)}
+.rg-acap{padding:0!important;
   font-size:clamp(8px,calc(var(--k)*3),15px)!important;letter-spacing:.34em;background-image:var(--rg-gold-text)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;
-  filter:drop-shadow(0 1px 0 #2a1604) drop-shadow(0 0 6px rgba(0,0,0,.9));text-shadow:none}
-.rg-root.retro .rg-acap{background-image:linear-gradient(180deg,#fff0f4,#ffb8cc 50%,#e0708e)!important}
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.95))} /* station:ok one readability shadow under the ALIGNMENT caption over the painted room */
+.rg-root.retro .rg-acap{background-image:linear-gradient(180deg,#fff0f4,#ffb8cc 50%,#e0708e)!important} /* station:ok rose-gold text fill of the ALIGNMENT caption in RETROGRADE (no painted lettering) */
 /* the win cartouche */
-.rg-plq{width:min(100%,calc(var(--k)*74));filter:drop-shadow(0 calc(var(--k)*1.6) calc(var(--k)*3) rgba(0,0,0,.75))}
+.rg-plq{width:min(100%,calc(var(--k)*74))}
 .rg-pl{position:relative;clip-path:none!important;background:none!important;padding:0!important;aspect-ratio:900/490}
 .rg-pl::before{content:"";position:absolute;inset:0;background:url("assets/ui/plaque.webp") center/100% 100% no-repeat;transition:filter 1.2s}
 .rg-root.retro .rg-pl::before{filter:sepia(.35) hue-rotate(-28deg) saturate(1.7) brightness(.95)}
-.rg-pl-in{position:absolute!important;left:12%;right:12%;top:27%;bottom:27%;clip-path:none!important;background:none!important;box-shadow:none!important;padding:0!important;justify-content:center;gap:calc(var(--k)*.8)!important}
-.rg-pl-in::before,.rg-pl-in::after{display:none}
+.rg-pl-in{position:absolute!important;left:12%;right:12%;top:27%;bottom:27%;padding:0!important;justify-content:center;gap:calc(var(--k)*.8)!important}
 .rg-totcap{font-size:clamp(7px,calc(var(--k)*2.4),13px)!important;padding-bottom:calc(var(--k)*.8)}
 .rg-totcap::after{width:calc(var(--k)*22)}
-.rg-total{font:700 clamp(14px,calc(var(--k)*7.6),46px)/1 var(--lz-font-display)!important;background-image:var(--rg-gold-text)!important;filter:drop-shadow(0 2px 0 #2a1604) drop-shadow(0 0 8px rgba(255,190,80,.35))}
-.rg-root.retro .rg-pl-in{background:none!important}
+.rg-total{font:700 clamp(14px,calc(var(--k)*7.6),46px)/1 var(--lz-font-display)!important;background-image:var(--rg-gold-text)!important}
 .rg-root.retro .rg-pl-in .rg-spins{border:0;padding:0;margin:0}
 /* the bar */
-.lz-app[data-game="retrograde"] .lz-panel{background:none;border:solid transparent;border-width:clamp(9px,1.6vh,16px) clamp(22px,2.4vw,40px);
-  border-image:url("assets/ui/bar.webp") 34 96 34 96 fill / clamp(9px,1.6vh,16px) clamp(22px,2.4vw,40px) stretch;box-shadow:0 -10px 30px -18px #000;border-radius:0}
-.lz-app[data-game="retrograde"] .lz-win{background:none;border:0;box-shadow:none;padding:2px 6px}
-.lz-app[data-game="retrograde"] .lz-win .lz-lbl{font-size:9px;letter-spacing:.3em;color:#cdb47c}
-.lz-app[data-game="retrograde"] .lz-win b{font-family:var(--lz-font-display);font-weight:700;color:#8a836c}
-.lz-app[data-game="retrograde"] .lz-win.has b{background:var(--rg-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 #2a1604)}
 .lz-app[data-game="retrograde"] #lzMin,.lz-app[data-game="retrograde"] #lzMax{display:none}
 .lz-app[data-game="retrograde"] .lz-quick{display:flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto}
 .lz-app[data-game="retrograde"] .lz-quick button,.lz-app[data-game="retrograde"] .lz-stepper>button,.lz-app[data-game="retrograde"] .lz-icon{
   width:clamp(30px,5vh,46px);height:clamp(30px,5vh,46px)!important;min-height:0!important;padding:0;border:0;border-radius:50%;flex:none;
-  background:url("assets/ui/knob.webp") center/100% 100% no-repeat;box-shadow:none;color:#ffe7a6;font:700 clamp(15px,2.6vh,22px)/1 var(--lz-font-display);text-shadow:0 1px 0 #000,0 0 6px rgba(0,0,0,.8)}
+  background:url("assets/ui/knob.webp") center/100% 100% no-repeat;color:#ffe7a6;font:700 clamp(15px,2.6vh,22px)/1 var(--lz-font-display)}
 .lz-app[data-game="retrograde"] .lz-quick button{font-size:0;position:relative}
-.lz-app[data-game="retrograde"] .lz-quick button::before{content:"";position:absolute;inset:27%;background:#ffe7a6;-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat;filter:drop-shadow(0 1px 0 #000)}
+.lz-app[data-game="retrograde"] .lz-quick button::before{content:"";position:absolute;inset:27%;background:#ffe7a6;-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
 .lz-app[data-game="retrograde"] #lzFast{--ico:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M13 2 4 14h6l-1 8 9-12h-6z%22/%3E%3C/svg%3E")}
 .lz-app[data-game="retrograde"] #lzAuto{--ico:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M12 4a8 8 0 0 1 7.4 5H22l-3.5 4.5L15 9h2.2A6 6 0 0 0 6.3 10.6l-1.9-.7A8 8 0 0 1 12 4zm-7.4 11H2l3.5-4.5L9 15H6.8a6 6 0 0 0 10.9 1.4l1.9.7A8 8 0 0 1 4.6 15z%22/%3E%3C/svg%3E")}
-.lz-app[data-game="retrograde"] #lzFast[aria-pressed="true"],.lz-app[data-game="retrograde"] #lzAuto.on{filter:drop-shadow(0 0 8px rgba(255,210,110,.9)) brightness(1.15)}
+.lz-app[data-game="retrograde"] #lzFast[aria-pressed="true"],.lz-app[data-game="retrograde"] #lzAuto.on{filter:brightness(1.25)}
 .lz-app[data-game="retrograde"] #lzFast[aria-pressed="true"]::before{background:#fff}
 .lz-app[data-game="retrograde"] #lzAuto.on{font-size:9px;letter-spacing:0;color:#fff}
 .lz-app[data-game="retrograde"] #lzAuto.on::before{display:none}
 .lz-app[data-game="retrograde"] .lz-stepper{gap:6px;align-items:center}
 .lz-app[data-game="retrograde"] .lz-stepper>button:disabled{filter:grayscale(.7) brightness(.6)}
 .lz-app[data-game="retrograde"] .lz-amount{min-height:0!important;height:clamp(30px,5vh,44px)!important;padding:0 14px;border-radius:999px;cursor:pointer;
-  background:linear-gradient(180deg,#0a1030,#050818);border:1.5px solid #c99a3e;box-shadow:inset 0 2px 8px rgba(0,0,0,.8),0 0 0 1px #3a2708,0 0 0 2.5px rgba(255,231,166,.25)}
+  background:#070b24;border:1.5px solid #c99a3e}
 .lz-app[data-game="retrograde"] .lz-amount b{font-family:var(--lz-font-display);font-weight:700;background:var(--rg-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lz-app[data-game="retrograde"] .lz-amount select{pointer-events:none}
 .lz-app[data-game="retrograde"] .lz-amount:focus-visible{outline:2px solid #ffe7a6;outline-offset:2px}
 /* the spin medallion: big, round, rising out of the bar; it turns while a round plays */
 .lz-app[data-game="retrograde"] .lz-action{--sz:clamp(64px,13vh,118px);position:relative;flex:0 0 auto!important;width:var(--sz);height:var(--sz);min-height:0!important;margin:calc(var(--sz) * -.34) 4px -6px;
-  padding:0;border:0;border-radius:50%;background:none!important;box-shadow:none;color:#ffe7a6;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;order:5}
-.lz-app[data-game="retrograde"] .lz-action::before{content:"";position:absolute;inset:0;background:url("assets/ui/spin.webp") center/100% 100% no-repeat;filter:drop-shadow(0 8px 16px rgba(0,0,0,.7)) drop-shadow(0 0 14px rgba(255,200,90,.35));transition:transform .25s cubic-bezier(.2,1,.3,1),filter .2s}
-.lz-app[data-game="retrograde"] .lz-action:not(:disabled):hover::before{transform:scale(1.05);filter:drop-shadow(0 8px 16px rgba(0,0,0,.7)) drop-shadow(0 0 22px rgba(255,214,120,.7)) brightness(1.08)}
+  padding:0;border:0;border-radius:50%;background:none!important;color:#ffe7a6;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;order:5}
+.lz-app[data-game="retrograde"] .lz-action::before{content:"";position:absolute;inset:0;background:url("assets/ui/spin.webp") center/100% 100% no-repeat;transition:transform .25s cubic-bezier(.2,1,.3,1),filter .2s}
+.lz-app[data-game="retrograde"] .lz-action:not(:disabled):hover::before{transform:scale(1.05);filter:brightness(1.1)}
 .lz-app[data-game="retrograde"] .lz-action:not(:disabled):active::before{transform:scale(.95)}
 .lz-app[data-game="retrograde"] .lz-action.busy{filter:none}
-.lz-app[data-game="retrograde"] .lz-action.busy::before{animation:rgSpinBtn 1.1s linear infinite;filter:drop-shadow(0 8px 16px rgba(0,0,0,.7)) saturate(.8) brightness(.85)}
+.lz-app[data-game="retrograde"] .lz-action.busy::before{animation:rgSpinBtn 1.1s linear infinite;filter:saturate(.8) brightness(.85)}
 @keyframes rgSpinBtn{to{transform:rotate(-360deg)}}
 .lz-app[data-game="retrograde"] .lz-action span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .lz-app[data-game="retrograde"] .lz-action small{position:relative;z-index:1;margin-bottom:-2px;padding:1px 8px;border-radius:999px;font:700 clamp(9px,1.5vh,12px)/1.3 var(--lz-font-display);color:#ffe7a6;opacity:1;
-  background:linear-gradient(180deg,#141d4e,#070b26);border:1px solid #c99a3e;box-shadow:0 2px 6px rgba(0,0,0,.6);white-space:nowrap}
-.lz-app[data-game="retrograde"] .lz-action.auto::before{filter:hue-rotate(-40deg) saturate(1.6) drop-shadow(0 0 14px rgba(255,120,160,.6))}
-body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action{width:auto;height:auto;border-radius:999px;margin:0;padding:10px 22px;background:linear-gradient(180deg,#fff2c0,#c9922f)!important;color:#2a1a04}
+  background:#0b1236;border:1px solid #c99a3e;white-space:nowrap}
+.lz-app[data-game="retrograde"] .lz-action.auto::before{filter:hue-rotate(-40deg) saturate(1.6)}
+body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action{width:auto;height:auto;border-radius:999px;margin:0;padding:10px 22px;color:#ffe7a6}
 body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action::before{display:none}
 body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:static;width:auto;height:auto;clip:auto;font-weight:800;letter-spacing:.2em}
 /* modes and the RETROGRADE buy */
-.lz-app[data-game="retrograde"] .lz-modes{background:linear-gradient(180deg,#050818,#0a1030);border:1.5px solid #8a6424;box-shadow:inset 0 2px 6px rgba(0,0,0,.8);border-radius:999px;padding:3px}
 .lz-app[data-game="retrograde"] .lz-modes button{border-radius:999px;color:#bfae86}
 .lz-app[data-game="retrograde"] .lz-modes b{font-family:var(--lz-font-display);letter-spacing:.14em}
-.lz-app[data-game="retrograde"] .lz-modes button[aria-pressed="true"]{background:linear-gradient(180deg,#fff2c0,#e7b955 45%,#a8761f);color:#2a1a04;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 6px rgba(0,0,0,.5)}
-.lz-app[data-game="retrograde"] .lz-feat{border-radius:16px;border:0;background:linear-gradient(180deg,#7a1850,#3a0828);
-  box-shadow:0 0 0 1px #2a0412,0 0 0 2.5px #e8a088,0 0 0 3.5px #5a180c,inset 0 1px 0 rgba(255,220,230,.35),0 10px 24px -10px #000,0 0 26px -8px rgba(255,110,160,.55);
-  font-family:var(--lz-font-display);transition:transform .2s cubic-bezier(.2,1,.3,1)}
-.lz-app[data-game="retrograde"] .lz-feat:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 0 0 1px #2a0412,0 0 0 2.5px #ffc0a8,0 0 0 3.5px #5a180c,inset 0 1px 0 rgba(255,220,230,.45),0 14px 28px -10px #000,0 0 36px -6px rgba(255,130,180,.8)}
-.lz-app[data-game="retrograde"] .lz-feat span{background:linear-gradient(180deg,#fff0f4,#ffc6d6);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.16em}
+.lz-app[data-game="retrograde"] .lz-feat{font-family:var(--lz-font-display);transition:transform .2s cubic-bezier(.2,1,.3,1)}
 /* the header: the illustrated logo, the balance on an enamel plate, brass knobs */
-.lz-app[data-game="retrograde"] .lz-top{background:linear-gradient(180deg,rgba(4,6,20,.92),rgba(8,12,38,.75));border-bottom:1px solid rgba(201,154,62,.55);box-shadow:0 1px 0 rgba(0,0,0,.8),0 8px 24px -12px #000}
 .lz-app[data-game="retrograde"] .lz-brand{display:flex;align-items:center;min-width:0;flex:0 1 auto;overflow:hidden}
-.lz-app[data-game="retrograde"] .lz-brand .rg-logo-img{height:clamp(24px,5.4vh,46px)!important;width:auto!important;max-width:34vw;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
-.lz-app[data-game="retrograde"] .lz-wallet{border-radius:999px;background:linear-gradient(180deg,#0a1030,#050818);border:1.5px solid #c99a3e;box-shadow:inset 0 2px 8px rgba(0,0,0,.8),0 0 0 1px #3a2708}
-.lz-app[data-game="retrograde"] .lz-wallet b{font-family:var(--lz-font-display);font-weight:700;background:var(--rg-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lz-app[data-game="retrograde"] .lz-brand .rg-logo-img{height:clamp(24px,5.4vh,46px)!important;width:auto!important;max-width:34vw;object-fit:contain}
 .lz-app[data-game="retrograde"] .lz-icon{width:clamp(28px,4.6vh,40px);height:clamp(28px,4.6vh,40px)!important}
-.lz-app[data-game="retrograde"] .lz-icon svg{width:46%;height:46%;filter:drop-shadow(0 1px 0 #000)}
 .lz-app[data-game="retrograde"] .lz-tag{background:none;border:0;color:#b8a57a;font-family:var(--lz-font-display);letter-spacing:.12em}
 /* the amount picker panel */
 .rg-amt{position:fixed;z-index:90;display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;padding:12px;overflow:auto;border-radius:16px;
-  background:linear-gradient(180deg,#121b46,#070b24);box-shadow:0 0 0 1px #3a2708,0 0 0 2.5px #c99a3e,0 0 0 3.5px #3a2708,0 24px 60px -16px #000}
+  background:#0c1438;border:1.5px solid #c99a3e}
 .rg-amt[hidden]{display:none}
-.rg-amt-o{padding:8px 4px;border-radius:999px;border:1px solid rgba(201,154,62,.55);background:linear-gradient(180deg,#0a1030,#050818);color:#ffe7a6;font:700 13px/1.2 var(--lz-font-display);cursor:pointer;font-variant-numeric:tabular-nums}
-.rg-amt-o:hover,.rg-amt-o:focus-visible{border-color:#ffe7a6;outline:none;box-shadow:0 0 10px rgba(255,214,120,.5)}
-.rg-amt-o[aria-selected="true"]{background:linear-gradient(180deg,#fff2c0,#e7b955 45%,#a8761f);color:#2a1a04;border-color:#5a3c0e}
+.rg-amt-o{padding:8px 4px;border-radius:999px;border:1px solid rgba(201,154,62,.55);background:#070b24;color:#ffe7a6;font:700 13px/1.2 var(--lz-font-display);cursor:pointer;font-variant-numeric:tabular-nums}
+.rg-amt-o:hover,.rg-amt-o:focus-visible{border-color:#ffe7a6;outline:none}
+.rg-amt-o[aria-selected="true"]{background:#e2b455;color:#2a1a04;border-color:#5a3c0e}
 /* small frames */
 @media (max-height:330px){
   .lz-app[data-game="retrograde"] .lz-panel{border-width:6px 14px;border-image-width:6px 14px}
@@ -553,9 +429,11 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:stati
 }
 
 /* the Old Astronomer: his own transparent 3D canvas, beside the board (landscape) or in the top strip (phone) */
-.rg-wiz{position:absolute;pointer-events:none;filter:drop-shadow(0 calc(var(--k)*2) calc(var(--k)*3) rgba(0,0,0,.55))}
+.rg-wiz{position:absolute;pointer-events:none}
+/* 2026-11-28: the contact shadow is a still picture under his feet (.rg-wizsh). As a CSS drop-shadow on his canvas it was
+   blurred again for every video frame, over his whole height: part of the stutter Lidor saw */
+.rg-wizsh{position:absolute;pointer-events:none}
 .rg-wiz[hidden]{display:none}
-.rg-root.retro .rg-wiz{filter:drop-shadow(0 0 calc(var(--k)*3) rgba(255,90,140,.45)) drop-shadow(0 calc(var(--k)*2) calc(var(--k)*3) rgba(0,0,0,.55))}
 /* with the wizard in the left column the right column holds dial + cartouche; the legend only shows where there is room */
 @media (max-height:900px){ .rg-root.has-wiz[data-land="1"] .rg-legend{display:none} }
 .rg-root.has-wiz[data-land="1"] .rg-plaque{justify-content:flex-start;padding-top:calc(var(--k)*5)}
@@ -574,8 +452,8 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:stati
 .rg-tot{gap:calc(var(--k)*.6)!important;max-width:100%}
 .rg-total{max-width:100%;overflow:hidden;text-overflow:clip}
 /* the free spins: an enamel ribbon above the cartouche (only in RETROGRADE) */
-.rg-plaque>.rg-spins{display:none;position:relative;flex-direction:row;align-items:center;justify-content:center;gap:calc(var(--k)*2.4);width:auto;margin:0 0 calc(var(--k)*-1);padding:calc(var(--k)*1.6) calc(var(--k)*5);border:0!important;border-radius:999px;
-  background:linear-gradient(180deg,#6a1240,#2a0620);box-shadow:0 0 0 1px #2a0412,0 0 0 2.5px #e8a088,0 0 0 3.5px #5a180c,inset 0 1px 0 rgba(255,220,230,.35),0 10px 22px -8px #000;z-index:2}
+.rg-plaque>.rg-spins{display:none;position:relative;flex-direction:row;align-items:center;justify-content:center;gap:calc(var(--k)*2.4);width:auto;margin:0 0 calc(var(--k)*-1);padding:calc(var(--k)*1.6) calc(var(--k)*5);border:1.5px solid #e8a088!important;border-radius:999px;
+  background:#4a0c30;z-index:2}
 .rg-root.retro .rg-plaque>.rg-spins{display:flex}
 .rg-plaque>.rg-spins em{font-size:clamp(10px,calc(var(--k)*3.2),18px)!important;letter-spacing:.22em}
 .rg-plaque>.rg-spins b{font-size:clamp(20px,calc(var(--k)*9),54px)!important}
@@ -601,14 +479,11 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:stati
 }
 
 /* gold digits (canvas) inside the number boxes */
-.rg-gold{display:block;margin:0 auto;filter:drop-shadow(0 .06em .08em rgba(0,0,0,.8))}
-.rg-total:has(.rg-gold),.rg-big-amt:has(.rg-gold),.rg-mpop b:has(.rg-gold){background:none!important;-webkit-text-fill-color:initial;color:inherit;text-shadow:none!important;padding:0!important}
-.rg-total.zero .rg-gold{opacity:.55;filter:grayscale(.4) drop-shadow(0 .06em .08em rgba(0,0,0,.8))}
+.rg-gold{display:block;margin:0 auto}
+.rg-total:has(.rg-gold),.rg-big-amt:has(.rg-gold),.rg-mpop b:has(.rg-gold){background:none!important;-webkit-text-fill-color:initial;color:inherit;padding:0!important}
 .rg-mpop b{font-size:clamp(40px,calc(var(--k)*20),150px)!important}
-.rg-mpop b .rg-gold{filter:drop-shadow(0 0 .25em rgba(255,190,80,.75)) drop-shadow(0 .08em .1em rgba(0,0,0,.9))}
-.rg-mpop[data-hot="3"] b .rg-gold{filter:drop-shadow(0 0 .3em rgba(255,140,90,.9)) drop-shadow(0 .08em .1em rgba(0,0,0,.9))}
-.rg-mpop[data-hot="4"] b .rg-gold{filter:drop-shadow(0 0 .35em rgba(255,110,170,1)) drop-shadow(0 .08em .1em rgba(0,0,0,.9))}
-.rg-mpop small{font-size:clamp(12px,calc(var(--k)*4),24px)!important;background:linear-gradient(180deg,#fff3c8,#e0b35a);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 2px 2px #000)}
+.rg-mpop b .rg-gold{filter:drop-shadow(0 .08em .1em rgba(0,0,0,.9))} /* station:ok one readability shadow under the gold digits over the medallions */
+.rg-mpop small{font-size:clamp(12px,calc(var(--k)*4),24px)!important;background:linear-gradient(180deg,#fff3c8,#e0b35a);-webkit-background-clip:text;background-clip:text;color:transparent!important;filter:drop-shadow(0 2px 2px #000)} /* station:ok gold-text fill and one readability shadow for the ALIGNMENT pop caption over the medallions */
 .rg-big-amt{font-size:clamp(34px,calc(var(--m)*13),110px)!important}
 /* the header, larger (the user: "this part is so small compared with the rest") */
 .lz-app[data-game="retrograde"] .lz-top{padding-top:6px;padding-bottom:6px}
@@ -658,35 +533,20 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:stati
  * The shell's two buttons stay (keyboard, aria-pressed); the pill track is gone. The knob is the brass dial with an
  * engraved needle that swings to the chosen side with a mechanical overshoot; the chosen name is lit gold (STARGAZE in
  * its sea-green) with a small lamp, the other is dull engraved bronze. Tapping the knob turns it to the other side. */
-.lz-app[data-game="retrograde"] .lz-modes{--a:-58deg;position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-auto-flow:row;align-items:center;gap:clamp(4px,.8vh,10px);background:none;border:0;box-shadow:none;border-radius:0;padding:0 2px}
+.lz-app[data-game="retrograde"] .lz-modes{--a:-58deg;position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-auto-flow:row;align-items:center;gap:clamp(4px,.8vh,10px);background:none;border:0;border-radius:0;padding:0 2px}
 .lz-app[data-game="retrograde"][data-mode="stargaze"] .lz-modes{--a:58deg}
-.lz-app[data-game="retrograde"] .lz-modes button{grid-row:1;position:relative;background:none!important;box-shadow:none!important;border-radius:6px;padding:2px 0;color:#8a7650;transition:color .25s}
+.lz-app[data-game="retrograde"] .lz-modes button{grid-row:1;position:relative;background:none!important;border-radius:6px;padding:2px 0;color:#8a7650;transition:color .25s}
 .lz-app[data-game="retrograde"] .lz-modes button[data-mode="base"]{grid-column:1;align-items:flex-end;text-align:right}
 .lz-app[data-game="retrograde"] .lz-modes button[data-mode="stargaze"]{grid-column:3;align-items:flex-start;text-align:left}
-.lz-app[data-game="retrograde"] .lz-modes b{color:transparent;background:linear-gradient(180deg,#9c865a,#5e4c2c);-webkit-background-clip:text;background-clip:text;text-shadow:none;filter:drop-shadow(0 1px 0 rgba(255,230,170,.18)) drop-shadow(0 -1px 0 rgba(0,0,0,.7))}
+.lz-app[data-game="retrograde"] .lz-modes b{color:#9c865a}
 .lz-app[data-game="retrograde"] .lz-modes small{color:#7d6a48}
-.lz-app[data-game="retrograde"] .lz-modes button[aria-pressed="true"] b{background-image:linear-gradient(180deg,#fff6d6,#f3cd6e 50%,#c08a2c);filter:drop-shadow(0 0 6px rgba(255,200,90,.55)) drop-shadow(0 1px 1px rgba(0,0,0,.9))}
+.lz-app[data-game="retrograde"] .lz-modes button[aria-pressed="true"] b{color:#f6d47a}
 .lz-app[data-game="retrograde"] .lz-modes button[aria-pressed="true"] small{color:#f0dca8}
-.lz-app[data-game="retrograde"][data-mode="stargaze"] .lz-modes button[data-mode="stargaze"][aria-pressed="true"]{background:none;color:inherit;box-shadow:none}
-.lz-app[data-game="retrograde"][data-mode="stargaze"] .lz-modes button[data-mode="stargaze"] b{background-image:linear-gradient(180deg,#e6fffb,#86e8dc 50%,#2f9f93);filter:drop-shadow(0 0 7px rgba(95,201,192,.7)) drop-shadow(0 1px 1px rgba(0,0,0,.9))}
-/* the lamp under the chosen name */
-.lz-app[data-game="retrograde"] .lz-modes button::after{content:'';position:absolute;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#6b5634,#2a1e0c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.6);transition:background .25s,box-shadow .25s}
-.lz-app[data-game="retrograde"] .lz-modes button[data-mode="base"]::after{right:-1px;display:none}
-.lz-app[data-game="retrograde"] .lz-modes button[aria-pressed="true"]::after{background:radial-gradient(circle at 40% 35%,#fffbe0,#ffc95a 45%,#c47a12);box-shadow:0 0 8px 2px rgba(255,190,80,.75)}
-.lz-app[data-game="retrograde"][data-mode="stargaze"] .lz-modes button[data-mode="stargaze"]::after{background:radial-gradient(circle at 40% 35%,#f0fffd,#7fe0d6 45%,#1f8a80);box-shadow:0 0 8px 2px rgba(95,201,192,.8)}
-.lz-app[data-game="retrograde"] .lz-modes button::after{display:none}
+.lz-app[data-game="retrograde"][data-mode="stargaze"] .lz-modes button[data-mode="stargaze"] b{color:#86e8dc}
 /* the dial: brass bezel + engraved stops + needle */
-.lz-app[data-game="retrograde"] .lz-modes::before{content:'';grid-row:1;grid-column:2;width:var(--k,clamp(40px,7.4vh,64px));aspect-ratio:1;border-radius:50%;cursor:pointer;
-  background:
-    radial-gradient(circle,#fff4cc 0 6%,#e0ad4a 9%,#8a5a14 13.5%,#3a2406 15%,rgba(0,0,0,.35) 17%,transparent 19%),
-    radial-gradient(circle at 21% 26%,#ffe9a8 0 3.2%,#8a5a14 4.4%,transparent 5.2%),radial-gradient(circle at 79% 26%,#ffe9a8 0 3.2%,#8a5a14 4.4%,transparent 5.2%),
-    url(assets/ui/knob.webp) center/100% 100% no-repeat;
-  -webkit-mask:radial-gradient(circle,#000 70%,transparent 71%);mask:radial-gradient(circle,#000 70%,transparent 71%);
-  filter:drop-shadow(0 3px 4px rgba(0,0,0,.7))}
+.lz-app[data-game="retrograde"] .lz-modes::before{content:'';grid-row:1;grid-column:2;width:var(--k,clamp(40px,7.4vh,64px));aspect-ratio:1;border-radius:50%;cursor:pointer;background:url(assets/ui/knob.webp) center/100% 100% no-repeat}
 .lz-app[data-game="retrograde"] .lz-modes::after{content:'';grid-row:1;grid-column:2;justify-self:center;align-self:center;pointer-events:none;width:calc(var(--k,clamp(40px,7.4vh,64px)) * .74);aspect-ratio:1;rotate:var(--a);transition:rotate .55s cubic-bezier(.3,1.7,.45,1);
-  background:linear-gradient(90deg,#6b4510,#fff1c4 50%,#8a5a14);clip-path:polygon(50% 3%,61% 44%,58% 52%,50% 56%,42% 52%,39% 44%);
-  filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.9)) drop-shadow(0 0 4px rgba(255,210,120,.45))}
-.lz-app[data-game="retrograde"][data-mode="stargaze"] .lz-modes::after{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.9)) drop-shadow(0 0 5px rgba(95,201,192,.7))}
+  background:#f3d993;clip-path:polygon(50% 3%,61% 44%,58% 52%,50% 56%,42% 52%,39% 44%)}
 /* Popout S: the column stacks (ORRERY / knob / STARGAZE), the needle points up or down */
 @media (max-height:330px){
   .lz-app[data-game="retrograde"][data-layout="bar"] .lz-modes{grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:0;--k:22px;--a:0deg}
@@ -708,7 +568,7 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:stati
 @media (max-height:500px){ .lz-intro .lz-intro-cards.rg-bookwrap{display:none} }
 @media (max-aspect-ratio:1/1) and (max-height:620px){ .lz-intro .lz-intro-cards.rg-bookwrap{display:none} }
 @media (max-aspect-ratio:1/1){ .lz-intro .lz-intro-cards.rg-bookwrap{width:min(100%,calc(40vh * 1.498))} }
-.rg-book{position:relative;width:100%;aspect-ratio:1600/1068;perspective:2400px;cursor:pointer;animation:rgBookIn 1.1s .35s cubic-bezier(.2,.9,.25,1) both;filter:drop-shadow(0 18px 26px rgba(0,0,0,.75)) drop-shadow(0 0 30px rgba(255,190,100,.12))}
+.rg-book{position:relative;width:100%;aspect-ratio:1600/1068;perspective:2400px;cursor:pointer;animation:rgBookIn 1.1s .35s cubic-bezier(.2,.9,.25,1) both}
 @keyframes rgBookIn{0%{opacity:0;transform:translateY(8%) rotateX(28deg) scale(.9)}100%{opacity:1;transform:none}}
 .rg-bk-base{position:absolute;inset:0}
 .rg-bk-layer{position:absolute;left:0;top:0;width:100%;height:100%;container-type:inline-size}
@@ -717,11 +577,11 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:stati
 .rg-pg-l{left:13.75%;width:33.75%}
 .rg-pg-r{left:53.1%;width:33.4%;gap:2.6cqw;padding:0 1.2cqw}
 .rg-ill{width:92%;height:92%;object-fit:contain;opacity:.94;filter:sepia(.12) contrast(1.02)}
-.rg-pg-t{font-family:var(--lz-font-display);font-weight:700;font-size:3.6cqw;letter-spacing:.16em;text-indent:.16em;color:#3a220c;text-shadow:0 1px 0 rgba(255,240,200,.35)}
-.rg-pg-t::after{content:'';display:block;width:62%;height:1.4cqw;margin:1.2cqw auto 0;background:radial-gradient(circle,#8a1c16 0 18%,transparent 22%) center/1.4cqw 1.4cqw no-repeat,linear-gradient(90deg,transparent,#6b4a20 30%,#6b4a20 70%,transparent) center/100% 1px no-repeat}
+.rg-pg-t{font-family:var(--lz-font-display);font-weight:700;font-size:3.6cqw;letter-spacing:.16em;text-indent:.16em;color:#3a220c}
+.rg-pg-t::after{content:'';display:block;width:62%;height:1px;margin:1.2cqw auto 0;background:rgba(107,74,32,.75)}
 .rg-pg-r p{margin:0;text-align:left;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;font-style:italic;font-size:2.55cqw;line-height:1.42;color:#3b2612;max-width:26ch;text-wrap:pretty}
 @container (max-width:560px){ .rg-pg-r p{font-size:3.2cqw;line-height:1.36} .rg-pg-t{font-size:4.3cqw} }
-.rg-pg-r p::first-letter{float:left;font-family:var(--lz-font-display);font-style:normal;font-weight:700;font-size:2.4em;line-height:.82;margin:.06em .1em 0 0;color:#8a1c16;text-shadow:0 0 1px rgba(138,28,22,.4)}
+.rg-pg-r p::first-letter{float:left;font-family:var(--lz-font-display);font-style:normal;font-weight:700;font-size:2.4em;line-height:.82;margin:.06em .1em 0 0;color:#8a1c16}
 .rg-pg-n{position:absolute;bottom:2%;left:0;right:0;font-family:var(--lz-font-display);font-style:normal;font-size:1.9cqw;letter-spacing:.3em;color:#6b4a20;opacity:.8}
 /* the turning leaf */
 .rg-leaf{position:absolute;left:50.19%;top:7.49%;width:39.19%;height:68.82%;transform-origin:0 50%;transform-style:preserve-3d;visibility:hidden;pointer-events:none}
@@ -734,27 +594,27 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:stati
 .rg-leaf-b .rg-bk-layer{width:255.18%;height:145.31%;left:-28.07%;top:-10.88%}
 /* light and shade on the leaf as it lifts and falls */
 .rg-leaf-f::after,.rg-leaf-b::after{content:'';position:absolute;inset:0;pointer-events:none;animation:rgLeafShade .98s cubic-bezier(.45,.05,.28,1) both}
-.rg-leaf-f::after{background:linear-gradient(90deg,rgba(40,20,0,.55),rgba(255,240,200,.25) 35%,transparent 70%)}
-.rg-leaf-b::after{background:linear-gradient(270deg,rgba(40,20,0,.55),rgba(255,240,200,.2) 35%,transparent 70%)}
+.rg-leaf-f::after{background:linear-gradient(90deg,rgba(40,20,0,.55),rgba(255,240,200,.25) 35%,transparent 70%)} /* station:ok light and shade on the painted page while it turns */
+.rg-leaf-b::after{background:linear-gradient(270deg,rgba(40,20,0,.55),rgba(255,240,200,.2) 35%,transparent 70%)} /* station:ok light and shade on the painted page while it turns */
 @keyframes rgLeafShade{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
 /* candlelight breathing over the book */
-.rg-bk-glow{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;background:radial-gradient(ellipse 55% 60% at 22% 18%,rgba(255,200,110,.55),transparent 70%);animation:rgCandle 3.4s ease-in-out infinite alternate}
+.rg-bk-glow{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;background:radial-gradient(ellipse 55% 60% at 22% 18%,rgba(255,200,110,.55),transparent 70%);animation:rgCandle 3.4s ease-in-out infinite alternate} /* station:ok candlelight falling on the painted book (soft light, no shape) */
 @keyframes rgCandle{0%{opacity:.55}40%{opacity:.8}55%{opacity:.62}100%{opacity:.9}}
 /* PLAY: the wax seal, pressed onto the bookmark ribbon below the book; the word is stamped in gold under it */
 .lz-intro .lz-intro-load{order:5}.lz-intro .lz-intro-err{order:6}.lz-intro .lz-intro-fine{order:7}
-.lz-intro .lz-intro-play{position:relative;min-width:0;width:clamp(96px,17vh,150px);height:auto;aspect-ratio:auto;padding:clamp(66px,12.6vh,112px) 0 0;margin-top:calc(clamp(96px,17vh,150px) * -.32);border:0!important;border-radius:0;background:url(assets/book/seal.webp) 50% 0/clamp(80px,14.2vh,126px) auto no-repeat!important;box-shadow:none!important;overflow:visible;
-  font-family:var(--lz-font-display);font-size:clamp(14px,2.6vh,22px);letter-spacing:.42em;text-indent:.42em;color:transparent;-webkit-text-fill-color:transparent;background-clip:border-box;filter:drop-shadow(0 6px 8px rgba(0,0,0,.65));transition:transform .2s cubic-bezier(.2,.9,.3,1.4),filter .25s;animation:rgSealIn .7s 1.1s cubic-bezier(.2,1.3,.4,1) both}
-.lz-intro .lz-intro-play::before{content:attr(data-label);position:absolute;left:-40%;right:-40%;bottom:0;text-align:center;background:linear-gradient(180deg,#fff3c8,#e0b35a 55%,#a8761f);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 1px #000) drop-shadow(0 0 8px rgba(0,0,0,.8))}
+.lz-intro .lz-intro-play{position:relative;min-width:0;width:clamp(96px,17vh,150px);height:auto;aspect-ratio:auto;padding:clamp(66px,12.6vh,112px) 0 0;margin-top:calc(clamp(96px,17vh,150px) * -.32);border:0!important;border-radius:0;background:url(assets/book/seal.webp) 50% 0/clamp(80px,14.2vh,126px) auto no-repeat!important;box-shadow:none!important;overflow:visible; /* station:ok box-shadow:none cancels the shell's own PLAY shadow; the painted seal carries the look */
+  font-family:var(--lz-font-display);font-size:clamp(14px,2.6vh,22px);letter-spacing:.42em;text-indent:.42em;color:transparent;-webkit-text-fill-color:transparent;background-clip:border-box;transition:transform .2s cubic-bezier(.2,.9,.3,1.4),filter .25s;animation:rgSealIn .7s 1.1s cubic-bezier(.2,1.3,.4,1) both}
+.lz-intro .lz-intro-play::before{content:attr(data-label);position:absolute;left:-40%;right:-40%;bottom:0;text-align:center;color:#f3d07a;-webkit-text-fill-color:#f3d07a;text-shadow:0 1px 3px #000} /* station:ok one readability shadow under PLAY over the painted room */
 .lz-intro .lz-intro-play::after{display:none!important}
 .lz-intro .lz-intro-play:focus{outline:none}
-.lz-intro .lz-intro-play:focus-visible{outline:none;filter:drop-shadow(0 0 3px #fff3c8) drop-shadow(0 0 14px rgba(255,200,110,.9))}
+.lz-intro .lz-intro-play:focus-visible{outline:none;filter:brightness(1.2)}
 .lz-intro:has(#lzIntroPlay:not(:disabled)) .lz-intro-load{opacity:0;transition:opacity .6s}
-.lz-intro .lz-intro-play:disabled{filter:grayscale(.75) brightness(.7) drop-shadow(0 6px 8px rgba(0,0,0,.65));cursor:default}
+.lz-intro .lz-intro-play:disabled{filter:grayscale(.75) brightness(.7);cursor:default}
 .lz-intro .lz-intro-play:not(:disabled){animation:rgSealIn .7s 1.1s cubic-bezier(.2,1.3,.4,1) both,rgSealGlow 2.6s 2s ease-in-out infinite}
 .lz-intro .lz-intro-play:not(:disabled):hover{transform:translateY(-3px) rotate(-4deg) scale(1.05)}
 .lz-intro .lz-intro-play:not(:disabled):active{transform:scale(.92);transition-duration:.06s}
 @keyframes rgSealIn{0%{opacity:0;transform:scale(1.9) rotate(-18deg)}70%{opacity:1;transform:scale(.94) rotate(2deg)}100%{opacity:1;transform:none}}
-@keyframes rgSealGlow{0%,100%{filter:drop-shadow(0 6px 8px rgba(0,0,0,.65))}50%{filter:drop-shadow(0 6px 8px rgba(0,0,0,.65)) drop-shadow(0 0 16px rgba(255,120,90,.55))}}
+@keyframes rgSealGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.15)}}
 @media (max-height:500px){ .lz-intro .lz-intro-play{margin-top:0} }
 @media (max-aspect-ratio:1/1) and (max-height:620px){ .lz-intro .lz-intro-play{margin-top:0} }
 @media (prefers-reduced-motion:reduce){ .rg-book,.rg-bk-glow,.lz-intro .lz-intro-play{animation:none!important} }
@@ -772,40 +632,11 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:stati
  * inside: a pink-violet nebula (the painted burst) turning slowly behind a deep wine enamel, the 3D astrolabe turning
  * on the left (assets/sym/A.webp, 24 frames), the name in rose-gold, the price in gold, a light sweep every few seconds.
  * Hover: the nebula brightens and the astrolabe turns faster; press: the plate sinks. */
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]{position:relative;overflow:hidden;isolation:isolate;border-radius:12px;padding-left:calc(var(--fa,clamp(30px,5.4vh,46px)) + 14px)!important;padding-right:14px!important;
-  background:radial-gradient(ellipse 120% 90% at 30% 0,rgba(255,150,200,.28),transparent 60%),linear-gradient(180deg,#5a0f3c 0%,#33061f 55%,#1d0212 100%);
-  box-shadow:0 0 0 1px #1a0208,0 0 0 2.5px #f3cd6e,0 0 0 3.5px #6b4510,0 0 0 5px #2a0a10,0 0 0 6px #c08a2c,inset 0 1px 0 rgba(255,225,235,.45),inset 0 -6px 12px rgba(0,0,0,.55),0 12px 26px -10px #000,0 0 30px -6px rgba(255,110,170,.6)}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]::before{content:'';position:absolute;z-index:-1;left:50%;top:50%;width:240%;aspect-ratio:1;translate:-50% -50%;background:url(assets/fx/burst-violet.webp) center/contain no-repeat;opacity:.55;mix-blend-mode:screen;animation:rgFeatNeb 22s linear infinite;pointer-events:none}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]::after{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,235,245,.55) 48%,transparent 60%) 0 0/260% 100% no-repeat;animation:rgFeatSweep 4.6s 1s ease-in-out infinite}
-@keyframes rgFeatNeb{to{rotate:360deg}}
-@keyframes rgFeatSweep{0%,62%{background-position:130% 0}100%{background-position:-40% 0}}
-.rg-feat-astro{position:absolute;z-index:1;left:9px;top:50%;width:var(--fa,clamp(30px,5.4vh,46px));aspect-ratio:1;translate:0 -50%;background:url(assets/sym/A.webp) 0 0/2400% 100% no-repeat;animation:rgFeatAstro 3.2s steps(24) infinite;filter:drop-shadow(0 0 6px rgba(255,150,200,.75)) drop-shadow(0 2px 2px rgba(0,0,0,.8))}
-@keyframes rgFeatAstro{to{background-position:100% 0}}
 .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] span,.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] small{position:relative;z-index:1}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] span{background:linear-gradient(180deg,#fff6f8 0%,#ffd0dc 45%,#e79ab4 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(60,0,20,.9)) drop-shadow(0 0 8px rgba(255,140,190,.55));letter-spacing:.2em}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] small{background:linear-gradient(180deg,#fff3c8,#f0c868 50%,#b9862c);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;filter:drop-shadow(0 1px 1px rgba(0,0,0,.9))}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 0 0 1px #1a0208,0 0 0 2.5px #fff0b8,0 0 0 3.5px #6b4510,0 0 0 5px #2a0a10,0 0 0 6px #f0c868,inset 0 1px 0 rgba(255,225,235,.55),inset 0 -6px 12px rgba(0,0,0,.5),0 16px 30px -10px #000,0 0 44px -4px rgba(255,120,180,.9)}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:not(:disabled):hover::before{opacity:.9;animation-duration:8s}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:not(:disabled):hover .rg-feat-astro{animation-duration:1.2s}
+.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] span{color:#ffd6e0}
+.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] small{color:#ffe08a;font-weight:800}
 .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:not(:disabled):active{transform:translateY(1px) scale(.97);transition-duration:.05s}
 .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:disabled{filter:saturate(.35) brightness(.7)}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:disabled::before,.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:disabled::after,.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:disabled .rg-feat-astro{animation-play-state:paused}
-@media (max-height:330px){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]{--fa:18px;padding-left:24px!important;padding-right:4px!important;border-radius:8px} .rg-feat-astro{left:4px} }
-@media (max-aspect-ratio:1/1){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]{--fa:26px;padding-left:40px!important;padding-right:10px!important} }
-@media (prefers-reduced-motion:reduce){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]::before,.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]::after,.rg-feat-astro{animation:none} }
-/* v2: the astrolabe turns BEHIND the name as an emblem (the name keeps its full width), the nebula is dimmer */
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]{padding-left:10px!important;padding-right:10px!important}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]::before{opacity:.32;mix-blend-mode:normal}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:not(:disabled):hover::before{opacity:.55}
-.rg-feat-astro{left:50%;top:50%;width:auto;height:150%;translate:-50% -50%;opacity:.5;filter:drop-shadow(0 0 10px rgba(255,150,200,.6))}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] span{filter:drop-shadow(0 1px 0 rgba(60,0,20,1)) drop-shadow(0 0 4px rgba(30,0,12,.95)) drop-shadow(0 0 10px rgba(255,140,190,.45))}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] small{filter:drop-shadow(0 1px 1px rgba(0,0,0,1)) drop-shadow(0 0 4px rgba(30,0,12,.95))}
-@media (max-height:330px){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]{padding-left:4px!important;padding-right:4px!important} }
-@media (max-aspect-ratio:1/1){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]{padding-left:10px!important;padding-right:10px!important} }
-/* the name always fits: tighter on a phone and in Popout S; a deeper wine enamel */
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]{background:radial-gradient(ellipse 120% 90% at 30% 0,rgba(255,150,200,.14),transparent 60%),linear-gradient(180deg,#4e0a33 0%,#2c0419 55%,#180110 100%)}
-@media (max-aspect-ratio:1/1){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] span{font-size:clamp(9px,2.6vw,12px)!important;letter-spacing:.05em!important;text-indent:0} .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]{padding-left:6px!important;padding-right:6px!important} }
-@media (max-height:330px){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] span{font-size:6.6px!important;letter-spacing:-.01em!important} .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]{padding-left:1px!important;padding-right:1px!important} }
 /* the legend: tighter rows, and never cut (game.js hides it whole when it does not fit: .lg-off) */
 .rg-legend{gap:calc(var(--k)*1.4)!important;padding:calc(var(--k)*1.8) calc(var(--k)*2.6)!important}
 .rg-legend img{width:calc(var(--k)*7);height:calc(var(--k)*7)}
@@ -813,26 +644,20 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-action span{position:stati
 .rg-root .rg-legend.lg-off{display:none!important}
 /* the RETROGRADE name keeps clear of the frame at every width */
 .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] span{letter-spacing:.12em;text-indent:.12em;white-space:nowrap}
-/* big win: the title and the amount keep a dark ink halo, so the white light of a hit never washes them out */
-.rg-big .rg-big-title{filter:drop-shadow(0 .04em 0 rgba(60,20,0,.95)) drop-shadow(0 0 .12em rgba(12,5,0,.95)) drop-shadow(0 0 .35em rgba(12,5,0,.75)) drop-shadow(0 0 .5em rgba(255,190,90,.35))}
-.rg-big[data-tier="3"] .rg-big-title,.rg-big[data-tier="4"] .rg-big-title{filter:drop-shadow(0 .04em 0 rgba(60,20,0,.95)) drop-shadow(0 0 .12em rgba(12,5,0,.95)) drop-shadow(0 0 .35em rgba(12,5,0,.75)) drop-shadow(0 0 .55em rgba(255,130,160,.55))}
-.rg-big-amt .rg-gold{filter:drop-shadow(0 .05em .03em rgba(0,0,0,.95)) drop-shadow(0 0 .1em rgba(12,5,0,.95)) drop-shadow(0 0 .3em rgba(12,5,0,.8))!important}
-.rg-big .rg-big-kick,.rg-big .rg-big-x{text-shadow:0 1px 2px #000,0 0 6px #000,0 0 14px rgba(0,0,0,.9)}
+/* big win: the amount keeps a dark ink halo, so the white light of a hit never washes it out */
+.rg-big-amt .rg-gold{filter:drop-shadow(0 0 .14em rgba(12,5,0,.95))!important} /* station:ok one dark halo so the gold digits read over the celebration light */
+.rg-big .rg-big-kick,.rg-big .rg-big-x{text-shadow:0 1px 3px #000} /* station:ok one readability shadow over the celebration light */
 
 /* the hurry catcher over the turning PLAY button (game.js): invisible; a tap speeds up the rest of the round */
 .rg-hurry{position:fixed;z-index:60;margin:0;padding:0;border:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .lz-app[data-game="retrograde"] .lz-action.busy.hurry::before{animation-duration:.35s}
-/* the RETROGRADE button stands still; its nebula, astrolabe and light sweep move only while the pointer is over it */
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]::before,.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]::after,.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"] .rg-feat-astro{animation-play-state:paused}
-@media (hover:hover){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:not(:disabled):hover::before,.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:not(:disabled):hover::after,.lz-app[data-game="retrograde"] .lz-feat[data-mode="retro"]:not(:disabled):hover .rg-feat-astro{animation-play-state:running} }
 
 /* ---------- Replay ---------- */
 /* the card before a replay: an enamel plate in the brass frame, rows of the round; the book is not shown */
 .lz-intro.rg-is-replay .rg-bookwrap{display:none!important}
 .rg-rpcard{width:min(92%,440px);padding:clamp(10px,2.2vh,22px) clamp(14px,3vh,28px);border-radius:14px;text-align:left;
-  background:radial-gradient(ellipse 120% 80% at 50% 0,rgba(80,110,220,.22),transparent 60%),linear-gradient(180deg,rgba(16,22,62,.95),rgba(6,9,30,.96));
-  box-shadow:0 0 0 1px #1a0d02,0 0 0 2.5px #f0c868,0 0 0 3.5px #6b4510,0 18px 40px -12px #000;animation:rgBookIn .8s .2s cubic-bezier(.2,.9,.25,1) both}
-.rg-rpcard h2{margin:0 0 clamp(6px,1.4vh,12px);text-align:center;font:700 clamp(14px,2.8vh,22px)/1 var(--lz-font-display);letter-spacing:.3em;text-indent:.3em;background:linear-gradient(180deg,#fff3c8,#e0b35a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  background:#0c1438;border:1.5px solid #f0c868;animation:rgBookIn .8s .2s cubic-bezier(.2,.9,.25,1) both}
+.rg-rpcard h2{margin:0 0 clamp(6px,1.4vh,12px);text-align:center;font:700 clamp(14px,2.8vh,22px)/1 var(--lz-font-display);letter-spacing:.3em;text-indent:.3em;color:#f3d07a}
 .rg-rpcard dl{display:grid;grid-template-columns:auto 1fr;gap:clamp(3px,.9vh,8px) 18px;margin:0}
 .rg-rpcard dt{font:600 clamp(11px,1.9vh,14px)/1.3 var(--lz-font-body);color:#b9aa82;letter-spacing:.04em}
 .rg-rpcard dd{margin:0;text-align:right;font:700 clamp(12px,2.1vh,16px)/1.3 var(--lz-font-body);color:#fff3d0;font-variant-numeric:tabular-nums}
@@ -871,26 +696,25 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-modes{display:none!importa
 #lzApp.rg-barB [hidden]{display:none!important}
 #lzApp.rg-barB .lz-panel{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;grid-template-rows:auto!important;grid-template-areas:none!important;
   align-items:center;gap:12px;height:clamp(58px,9vh,104px);padding:0 clamp(12px,1.6vw,28px)!important;margin:0;position:relative;overflow:visible!important;
-  border:0!important;border-image:none!important;border-radius:0!important;box-shadow:none!important;background:linear-gradient(180deg,rgba(3,5,16,0),rgba(3,5,16,.88) 45%,#03050f)!important}
+  border:0!important;border-radius:0!important;background:#04060f!important}
 #lzApp.rg-barB .lz-panel{z-index:10}
 #lzApp.rg-barB .lz-panel>.rg-bl{grid-column:1;grid-row:1}
 #lzApp.rg-barB .lz-panel>.rg-bc{grid-column:2;grid-row:1}
 #lzApp.rg-barB .lz-panel>.rg-br{grid-column:3;grid-row:1}
 #lzApp.rg-barB .lz-panel>:not(.rg-bl):not(.rg-bc):not(.rg-br){position:absolute}
 #lzApp.rg-barB #lzMsg{left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);z-index:8;white-space:nowrap;margin:0;padding:6px 14px;border-radius:999px;
-  background:rgba(3,5,16,.92);box-shadow:0 0 0 1px rgba(185,139,57,.5);color:#ffe7a6;font:600 13px/1.2 var(--lz-font-body)}
+  background:rgba(3,5,16,.92);border:1px solid rgba(185,139,57,.5);color:#ffe7a6;font:600 13px/1.2 var(--lz-font-body)}
 #lzApp.rg-barB .rg-bl{display:flex;align-items:center;gap:16px;min-width:0}
 #lzApp.rg-barB .rg-br{display:flex;align-items:center;justify-content:flex-end;gap:14px;min-width:0}
 #lzApp.rg-barB .rg-icons{display:flex;align-items:center;gap:8px;flex:none}
 #lzApp.rg-barB .lz-icon{width:clamp(30px,4.6vh,48px)!important;height:clamp(30px,4.6vh,48px)!important}
 /* balance and win: a small engraved label over a plain cream figure, no boxes */
-#lzApp.rg-barB .lz-wallet,#lzApp.rg-barB .lz-win{display:block!important;flex:none!important;min-width:0;background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+#lzApp.rg-barB .lz-wallet,#lzApp.rg-barB .lz-win{display:block!important;flex:none!important;min-width:0;background:none!important;border:0!important;padding:0!important}
 #lzApp.rg-barB .lz-wallet .lz-lbl,#lzApp.rg-barB .lz-win .lz-lbl{display:block!important;margin:0 0 4px;font:700 clamp(9px,1.3vh,14px)/1 var(--lz-font-display)!important;letter-spacing:.28em!important;color:#b9a06a!important}
 #lzApp.rg-barB .lz-wallet b,#lzApp.rg-barB .lz-win b{display:block;font:700 clamp(15px,2.5vh,28px)/1 var(--lz-font-display)!important;letter-spacing:.02em;background:none!important;filter:none!important;color:#f3e6c2!important;-webkit-text-fill-color:#f3e6c2}
 #lzApp.rg-barB .lz-win{text-align:right}
-#lzApp.rg-barB .lz-win.has b{background:var(--rg-gold-text)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 0 #2a1604)!important}
 /* the centre: arrows hug the medallion */
-#lzApp.rg-barB .lz-field{margin:0;min-width:0;width:auto!important;height:auto!important;overflow:visible!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+#lzApp.rg-barB .lz-field{margin:0;min-width:0;width:auto!important;height:auto!important;overflow:visible!important;background:none!important;border:0!important;padding:0!important}
 #lzApp.rg-barB .lz-field>.lz-lbl{display:none!important}
 #lzApp.rg-barB .lz-stepper{display:flex!important;align-items:center;gap:0!important;height:auto!important;overflow:visible!important}
 #lzApp.rg-barB .lz-stepper>button{width:clamp(36px,5.4vh,60px)!important;height:clamp(36px,5.4vh,60px)!important;font-size:clamp(18px,2.8vh,30px)!important}
@@ -905,11 +729,11 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-modes{display:none!importa
 /* the logo on the stage */
 #lzApp.rg-barB .rg-brand{position:absolute;z-index:6;left:12px;top:8px;display:flex;align-items:center;gap:8px;pointer-events:none}
 #lzApp.rg-barB .rg-brand .lz-brand{display:block;height:auto;overflow:visible}
-#lzApp.rg-barB .rg-brand .rg-logo-img{height:clamp(26px,7.6vh,48px)!important;max-width:40vw;width:auto!important;filter:drop-shadow(0 2px 6px rgba(0,0,0,.9))}
+#lzApp.rg-barB .rg-brand .rg-logo-img{height:clamp(26px,7.6vh,48px)!important;max-width:40vw;width:auto!important;filter:drop-shadow(0 2px 6px rgba(0,0,0,.9))} /* station:ok one readability shadow under the painted logo over the room */
 #lzApp.rg-barB .rg-icons.on-stage{position:absolute;z-index:7;top:8px;right:6px;flex-direction:column;gap:6px}
 /* the mode knob + the RETROGRADE buy */
 #lzApp.rg-barB .rg-side{--k:initial;z-index:6;display:flex;align-items:center;pointer-events:auto;text-align:initial}
-#lzApp.rg-barB .rg-modesw{border-radius:999px;padding:4px 12px;background:rgba(3,5,16,.78);box-shadow:0 0 0 1px rgba(185,139,57,.35)}
+#lzApp.rg-barB .rg-modesw{border-radius:999px;padding:4px 12px;background:rgba(3,5,16,.78);border:1px solid rgba(185,139,57,.35)}
 #lzApp.rg-barB .rg-modesw .lz-modes{margin:0}
 #lzApp.rg-barB .rg-side .lz-feats:not([hidden]){display:block!important;margin:0}
 #lzApp.rg-barB .rg-side .lz-feats[hidden],#lzApp.rg-barB .rg-side .lz-modes[hidden]{display:none!important}
@@ -960,9 +784,9 @@ body.lz-is-replay .lz-app[data-game="retrograde"] .lz-modes{display:none!importa
 /* replay: the shell hides bet, balance, modes, buy. The facts run as one line across the top of the bar, the
    PLAY REPLAY button sits in the centre under them, win on the right */
 body.lz-is-replay #lzApp.rg-barB .lz-wallet,body.lz-is-replay #lzApp.rg-barB .rg-side,body.lz-is-replay #lzApp.rg-barB .lz-action small{display:none!important}
-body.lz-is-replay #lzApp.rg-barB .lz-panel{height:auto!important;grid-template-rows:auto auto!important;row-gap:6px;padding-top:8px!important;padding-bottom:8px!important;background:linear-gradient(180deg,rgba(3,5,16,.55),#03050f 40%)!important}
+body.lz-is-replay #lzApp.rg-barB .lz-panel{height:auto!important;grid-template-rows:auto auto!important;row-gap:6px;padding-top:8px!important;padding-bottom:8px!important;background:#04060f!important}
 body.lz-is-replay #lzApp.rg-barB .lz-panel>.rg-bl,body.lz-is-replay #lzApp.rg-barB .lz-panel>.rg-bc,body.lz-is-replay #lzApp.rg-barB .lz-panel>.rg-br{grid-row:2}
-body.lz-is-replay #lzApp.rg-barB .lz-panel>#lzReplay{position:static;grid-row:1;grid-column:1/-1;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}
+body.lz-is-replay #lzApp.rg-barB .lz-panel>#lzReplay{position:static;grid-row:1;grid-column:1/-1;min-width:0;margin:0;padding:0;background:none;border:0}
 body.lz-is-replay #lzApp.rg-barB #lzReplay .lz-facts{display:flex!important;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:2px 0;margin:0;font:600 clamp(11px,1.6vh,15px)/1.3 var(--lz-font-body)}
 body.lz-is-replay #lzApp.rg-barB #lzReplay .lz-facts dt{display:inline!important;margin:0 6px 0 0;color:#b9a06a;font-weight:600}
 body.lz-is-replay #lzApp.rg-barB #lzReplay .lz-facts dd{display:inline!important;margin:0 18px 0 0;color:#f3e6c2;font-weight:700}
@@ -980,20 +804,10 @@ body.lz-is-replay #lzApp.rg-barB .lz-action{--sz:auto;margin:0!important}
    ECLIPSE (2026-11-26): the light bonus buy (30x: 3 free spins from ALIGNMENT x3). Its button is a black sun with a gold
    corona; during the feature the observatory goes dark and golden instead of crimson (.rg-root.retro.ecl).
    ===================================================================================================================== */
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"]{position:relative;overflow:hidden;isolation:isolate;border:0;border-radius:12px;padding-left:12px!important;padding-right:12px!important;
-  background:radial-gradient(circle closest-side at 50% 50%,#040302 0 50%,rgba(255,236,170,.9) 55%,rgba(255,190,80,.45) 66%,rgba(255,150,40,.1) 84%,transparent 100%) center/auto 118% no-repeat,
-    radial-gradient(ellipse 120% 90% at 50% 0,rgba(255,215,130,.16),transparent 60%),linear-gradient(180deg,#22190a 0%,#0e0a04 60%,#050302 100%);
-  box-shadow:0 0 0 1px #140c02,0 0 0 2.5px #f0c868,0 0 0 3.5px #4a3008,inset 0 1px 0 rgba(255,240,200,.35),inset 0 -6px 12px rgba(0,0,0,.5),0 10px 24px -10px #000,0 0 26px -8px rgba(255,200,90,.6);
-  transition:transform .2s cubic-bezier(.2,1,.3,1),box-shadow .2s}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"] span{position:relative;z-index:1;background:linear-gradient(180deg,#fff8dc 0%,#ffe08a 45%,#d89a34 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
-  letter-spacing:.2em;text-indent:.2em;white-space:nowrap;filter:drop-shadow(0 1px 0 rgba(30,15,0,1)) drop-shadow(0 0 4px rgba(0,0,0,.95))}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"] small{position:relative;z-index:1;color:#fff3d6;font-weight:800;filter:drop-shadow(0 1px 1px rgba(0,0,0,1)) drop-shadow(0 0 4px rgba(0,0,0,.95))}
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"]::after{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,240,200,.45) 48%,transparent 60%) 0 0/260% 100% no-repeat;animation:rgFeatSweep 4.6s 2.4s ease-in-out infinite;animation-play-state:paused}
-@media (hover:hover){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"]:not(:disabled):hover::after{animation-play-state:running} }
-.lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"]:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 0 0 1px #140c02,0 0 0 2.5px #fff0b8,0 0 0 3.5px #6b4510,inset 0 1px 0 rgba(255,240,200,.5),inset 0 -6px 12px rgba(0,0,0,.5),0 16px 30px -10px #000,0 0 44px -4px rgba(255,200,90,.9)}
+.lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"] span{position:relative;z-index:1;color:#ffe08a;letter-spacing:.2em;text-indent:.2em;white-space:nowrap}
+.lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"] small{position:relative;z-index:1;color:#fff3d6;font-weight:800}
 .lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"]:not(:disabled):active{transform:translateY(1px) scale(.97);transition-duration:.05s}
 .lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"]:disabled{filter:saturate(.35) brightness(.7)}
-@media (prefers-reduced-motion:reduce){ .lz-app[data-game="retrograde"] .lz-feat[data-mode="eclipse"]::after{animation:none} }
 /* the two buys sit side by side */
 #lzApp.rg-barB .rg-side .lz-feats:not([hidden]){display:flex!important;gap:10px;align-items:center}
 #lzApp.rg-barB .rg-side .lz-feat{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:auto!important;min-height:0!important;padding-top:7px!important;padding-bottom:7px!important}
@@ -1004,12 +818,10 @@ body.lz-is-replay #lzApp.rg-barB .lz-action{--sz:auto;margin:0!important}
 /* during ECLIPSE: a dark golden observatory, gold instruments (instead of RETROGRADE's crimson) */
 .rg-root.room.retro.ecl .rg-sky{filter:grayscale(.55) sepia(.35) brightness(.42) contrast(1.15)}
 .rg-root.room.retro.ecl .rg-room{filter:sepia(.6) saturate(1.25) brightness(.5)}
-.rg-root.retro.ecl .rg-neb2{opacity:.25}
-.rg-root.retro.ecl .rg-dialring,.rg-root.retro.ecl .rg-pl::before{filter:brightness(1.08) saturate(1.15) drop-shadow(0 0 calc(var(--k)*2) rgba(255,200,90,.45))}
+.rg-root.retro.ecl .rg-dialring,.rg-root.retro.ecl .rg-pl::before{filter:brightness(1.08) saturate(1.15)}
 .rg-root.retro.ecl .rg-acap{background-image:var(--rg-gold-text)!important}
 .rg-root.retro.ecl .rg-spins em{color:#ffe08a}
-.rg-root.retro.ecl .rg-wiz{filter:drop-shadow(0 0 calc(var(--k)*3) rgba(255,200,90,.5)) drop-shadow(0 calc(var(--k)*2) calc(var(--k)*3) rgba(0,0,0,.55))}
-.rg-card.ecl .rg-card-title{background:var(--rg-gold-text);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 .04em 0 rgba(40,20,0,.95)) drop-shadow(0 0 .4em rgba(255,200,90,.7))}
+.rg-card.ecl .rg-card-title{background:var(--rg-gold-text);-webkit-background-clip:text;background-clip:text}
 .rg-card.ecl .rg-card-kick{color:#ffe9a8}
 #lzApp.rg-barB .rg-side .lz-feats,#lzApp.rg-barB .rg-side .rg-modesw{flex:none!important}   /* the old bar gave .lz-feats flex-basis 150px: in a column that became its height */
 
@@ -1017,25 +829,25 @@ body.lz-is-replay #lzApp.rg-barB .lz-action{--sz:auto;margin:0!important}
 /* big-win titles: painted lettering per tier (the text stays for screen readers) */
 .rg-big .rg-big-title[data-art]{font-size:0!important;line-height:0;letter-spacing:0;padding:0!important;color:transparent!important;-webkit-text-fill-color:transparent!important;
   -webkit-background-clip:border-box!important;background-clip:border-box!important;background-position:center!important;background-size:contain!important;background-repeat:no-repeat!important;
-  height:clamp(64px,calc(var(--m)*26),250px);max-width:94vw;filter:drop-shadow(0 .5vmin 1.2vmin rgba(0,0,0,.85)) drop-shadow(0 0 3vmin rgba(255,190,90,.35))!important}
+  height:clamp(64px,calc(var(--m)*26),250px);max-width:94vw;filter:drop-shadow(0 .5vmin 1.2vmin rgba(0,0,0,.85))!important} /* station:ok one dark shadow under the painted title over the celebration light */
 .rg-big .rg-big-title[data-art="grand"]{background-image:url(assets/titles/grand.webp)!important;aspect-ratio:1100/420;height:clamp(50px,calc(var(--m)*19),190px)}
 .rg-big .rg-big-title[data-art="celestial"]{background-image:url(assets/titles/celestial.webp)!important;aspect-ratio:1100/730}
-.rg-big .rg-big-title[data-art="cosmic"]{background-image:url(assets/titles/cosmic.webp)!important;aspect-ratio:1100/689;filter:drop-shadow(0 .5vmin 1.2vmin rgba(0,0,0,.85)) drop-shadow(0 0 3.5vmin rgba(220,120,255,.45))!important}
-.rg-big .rg-big-title[data-art="heavenly"]{background-image:url(assets/titles/heavenly.webp)!important;aspect-ratio:1100/736;height:clamp(70px,calc(var(--m)*29),280px);filter:drop-shadow(0 .5vmin 1.2vmin rgba(0,0,0,.85)) drop-shadow(0 0 4vmin rgba(255,220,150,.55))!important}
+.rg-big .rg-big-title[data-art="cosmic"]{background-image:url(assets/titles/cosmic.webp)!important;aspect-ratio:1100/689}
+.rg-big .rg-big-title[data-art="heavenly"]{background-image:url(assets/titles/heavenly.webp)!important;aspect-ratio:1100/736;height:clamp(70px,calc(var(--m)*29),280px)}
 .rg-big[data-tier="1"]:has(.rg-big-title[data-art]){padding-top:calc(var(--m)*8)}
 .rg-big:has(.rg-big-title[data-art]){padding-top:calc(var(--m)*16)}
 
 /* buy buttons: painted plates (art/buttons). The button is the plate's rail band; the sun crest above and the moon
    below hang outside it (::before is the whole picture). Name and price sit on the empty enamel, right of the emblem. */
-#lzApp .lz-feat[data-mode="eclipse"],#lzApp .lz-feat[data-mode="retro"]{position:relative;isolation:isolate;background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;
-  overflow:visible!important;aspect-ratio:3.4/1;height:auto!important;min-height:0!important;min-width:0!important;padding:0 8% 0 27%!important;justify-content:center!important;gap:0!important;filter:drop-shadow(0 5px 8px rgba(0,0,0,.55))}
+#lzApp .lz-feat[data-mode="eclipse"],#lzApp .lz-feat[data-mode="retro"]{position:relative;isolation:isolate;background:none!important;border:0!important;border-radius:0!important;
+  overflow:visible!important;aspect-ratio:3.4/1;height:auto!important;min-height:0!important;min-width:0!important;padding:0 8% 0 27%!important;justify-content:center!important;gap:0!important}
 #lzApp .lz-feat[data-mode="eclipse"]::before,#lzApp .lz-feat[data-mode="retro"]::before{content:''!important;display:block!important;position:absolute!important;z-index:-1!important;left:-1%!important;right:-1%!important;top:-54%!important;bottom:-38%!important;width:auto!important;height:auto!important;aspect-ratio:auto!important;translate:none!important;
   background:url(assets/ui/buy-eclipse.webp) center/100% 100% no-repeat!important;opacity:1!important;mix-blend-mode:normal!important;animation:none!important;pointer-events:none}
 #lzApp .lz-feat[data-mode="retro"]::before{background-image:url(assets/ui/buy-retro.webp)!important}
 #lzApp .lz-feat[data-mode="eclipse"]::after,#lzApp .lz-feat[data-mode="retro"]::after,#lzApp .lz-feat[data-mode="retro"] .rg-feat-astro{display:none!important}
 #lzApp .lz-feat[data-mode="eclipse"] span,#lzApp .lz-feat[data-mode="retro"] span{font-size:clamp(8px,1.6vh,15px)!important;letter-spacing:.1em!important;text-indent:.1em!important;line-height:1.1}
 #lzApp .lz-feat[data-mode="eclipse"] small,#lzApp .lz-feat[data-mode="retro"] small{font-size:clamp(8px,1.5vh,14px)!important;line-height:1.1}
-#lzApp .lz-feat[data-mode="eclipse"]:not(:disabled):hover,#lzApp .lz-feat[data-mode="retro"]:not(:disabled):hover{transform:translateY(-2px);box-shadow:none!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.6)) drop-shadow(0 0 12px rgba(255,200,100,.55)) brightness(1.08)}
+#lzApp .lz-feat[data-mode="eclipse"]:not(:disabled):hover,#lzApp .lz-feat[data-mode="retro"]:not(:disabled):hover{transform:translateY(-2px);filter:brightness(1.12)}
 #lzApp .lz-feat[data-mode="eclipse"]:disabled,#lzApp .lz-feat[data-mode="retro"]:disabled{filter:saturate(.35) brightness(.7)}
 #lzApp.rg-barB .rg-side.in-col .lz-feats:not([hidden]){gap:12px}
 #lzApp.rg-barB .rg-side.in-col .lz-feat{flex:1 1 0!important;max-width:190px!important}
@@ -1043,7 +855,7 @@ body.lz-is-replay #lzApp.rg-barB .lz-action{--sz:auto;margin:0!important}
 
 /* TOTAL WIN at zero: solid and quiet, not faded ghost digits */
 .rg-total.zero{opacity:1}
-.rg-total.zero .rg-gold{opacity:1;filter:drop-shadow(0 .06em .08em rgba(0,0,0,.8)) brightness(.78) saturate(.8);transform:scale(.82)}
+.rg-total.zero .rg-gold{opacity:1;filter:brightness(.78) saturate(.8);transform:scale(.82)}
 
 /* RTP / time / bet under the logo, never under the board */
 #lzApp.rg-barB .rg-brand{flex-direction:column;align-items:flex-start;gap:2px}
@@ -1059,3 +871,221 @@ body.lz-is-replay #lzApp.rg-barB .lz-action{--sz:auto;margin:0!important}
 .rg-big .rg-big-title[data-art]{height:clamp(90px,calc(var(--m)*36),340px)}
 .rg-big .rg-big-title[data-art="grand"]{height:clamp(66px,calc(var(--m)*25),250px)}
 .rg-big .rg-big-title[data-art="heavenly"]{height:clamp(100px,calc(var(--m)*40),380px)}
+
+/* ---- 2026-11-27: the 2x-5x celebration (standard 7.2): the big-win stage, smaller, with no painted title ---- */
+.rg-big[data-tier="0"]{padding-top:calc(var(--m)*6)}
+.rg-big[data-tier="0"] .rg-big-title{display:none}
+.rg-big[data-tier="0"] .rg-big-amt{font-size:clamp(28px,calc(var(--m)*9.5),84px)!important}
+/* phone: the wizard is a bust cut from the full figure; its box edges (right and bottom) fade into the sky instead of
+   ending on a hard straight line (seen on 375x667 and 390x844 in the 2026-11-27 station run). A compositing mask on the
+   painting, not a decoration. */
+.rg-wiz.bust{-webkit-mask-image:linear-gradient(90deg,#000 72%,transparent 99%),linear-gradient(180deg,#000 70%,transparent 99%);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,#000 72%,transparent 99%),linear-gradient(180deg,#000 70%,transparent 99%);mask-composite:intersect} /* station:ok mask that blends the cut bust into the sky */
+
+/* =====================================================================================================================
+   STATION FIXES (2026-11-27, first station run: 19 fails). Scoped like BAR B so it wins over the older rules.
+   ===================================================================================================================== */
+/* item 1: one win counter on screen. TOTAL WIN on the stage is the game's own; the bar's WIN goes */
+#lzApp.rg-barB .lz-win{display:none!important}
+/* item 1: phone, every button at least 44px; the knobs at the right edge of the stage */
+@media (max-aspect-ratio:1/1){
+  #lzApp.rg-barB .rg-icons.on-stage .lz-icon{width:44px!important;height:44px!important}
+  #lzApp.rg-barB .lz-stepper>button{width:44px!important;height:44px!important}
+  #lzApp.rg-barB .lz-quick{flex-direction:row!important;gap:6px}
+  #lzApp.rg-barB .lz-quick button{width:44px!important;height:44px!important}
+  #lzApp.rg-barB .lz-panel .lz-amount{height:44px!important;min-width:0!important;padding:0 10px!important}
+  /* mode knob on its own row, the two buys under it, apart at the sides so the spin medallion rises between them */
+  #lzApp.rg-barB .rg-side:not(.in-col){flex-wrap:wrap;justify-content:center;align-items:center;row-gap:clamp(14px,2.6vh,26px);bottom:30px;left:6px;right:6px}
+  #lzApp.rg-barB .rg-side:not(.in-col) .rg-modesw{zoom:1;flex:none}
+  #lzApp.rg-barB .rg-side:not(.in-col) .lz-feats{zoom:1;flex:1 1 100%;width:100%;justify-content:space-between!important}
+  #lzApp.rg-barB .rg-side:not(.in-col) .lz-feat{width:min(42vw,168px)!important;min-height:44px!important}
+  #lzApp .rg-side:not(.in-col) .lz-feat[data-mode="eclipse"] span,#lzApp .rg-side:not(.in-col) .lz-feat[data-mode="retro"] span,
+  #lzApp .rg-side:not(.in-col) .lz-feat[data-mode="eclipse"] small,#lzApp .rg-side:not(.in-col) .lz-feat[data-mode="retro"] small{font-size:clamp(11px,3.1vw,14px)!important}
+  /* during a spin the bet arrows step out of the way (desktop: dimmed by the shell) */
+  #lzApp.rg-barB:has(.lz-action.busy) .lz-stepper>button{visibility:hidden}
+}
+@media (max-aspect-ratio:1/1) and (max-width:360px){
+  #lzApp.rg-barB .rg-side:not(.in-col) .rg-modesw{zoom:1}
+  #lzApp.rg-barB .lz-stepper>button{width:44px!important;height:44px!important}
+  #lzApp.rg-barB .lz-action{--sz:72px}
+}
+/* item 7: no caption under 12px on the smallest frame */
+.rg-root[data-land="0"] .rg-acap,.rg-root[data-small="1"] .rg-acap{font-size:max(12px,1em)!important}
+.rg-acap{font-size:max(12px,calc(var(--k)*3.2))!important}
+/* item 7: the small engraved labels (BALANCE, TOTAL WIN, ALIGNMENT) at least 12px, 16px from a 576px-high frame */
+#lzApp.rg-barB .lz-wallet .lz-lbl{font-size:clamp(12px,2.8vh,16px)!important;letter-spacing:.2em!important}
+/* tiny frames: info and sound leave the bar (at most 7 controls in it) for the stage, under the logo */
+#lzApp.rg-barB .rg-icons.on-stage.tiny{flex-direction:row;top:auto;right:auto;left:6px;bottom:6px}
+
+/* the play amount next to the balance (it was a badge under the medallion, overlapping it at every size) */
+#lzApp.rg-barB .lz-panel .lz-amount{position:static;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;height:clamp(36px,6vh,52px)!important;padding:0 clamp(10px,1.4vw,18px)!important;white-space:nowrap}
+#lzApp.rg-barB .lz-panel .lz-amount b{font-size:clamp(14px,2.6vh,24px)!important}
+body.lz-is-replay #lzApp.rg-barB .lz-panel .lz-amount{display:none!important}
+@media (max-height:330px){ #lzApp.rg-barB .lz-panel .lz-amount{height:26px!important;padding:0 8px!important} #lzApp.rg-barB .lz-panel .lz-amount b{font-size:12px!important} }
+.rg-root .rg-totcap{font-size:max(12px,calc(var(--k)*3.2))!important}
+
+/* phone: balance over the play amount on the left, the medallion twice the size of the arrows, turbo + auto on the right */
+@media (max-aspect-ratio:1/1){
+  #lzApp.rg-barB .lz-panel{height:74px;gap:4px;padding:0 6px!important}
+  #lzApp.rg-barB .rg-bl{flex-direction:column;align-items:flex-start;gap:2px}
+  #lzApp.rg-barB .lz-panel .lz-amount{height:44px!important;padding:0 10px!important}
+  #lzApp.rg-barB .lz-action{--sz:88px!important;margin:-26px 0 -6px!important}
+  #lzApp.rg-barB .rg-spinw{margin:0 4px}
+  #lzApp.rg-barB .rg-br{gap:4px}
+  #lzApp.rg-barB .lz-wallet b{font-size:13px!important}
+  #lzApp.rg-barB .rg-side:not(.in-col) .lz-modes button{min-height:44px!important}
+}
+@media (max-aspect-ratio:1/1) and (max-width:360px){ #lzApp.rg-barB .lz-action{--sz:88px!important} #lzApp.rg-barB .lz-wallet b{font-size:12px!important} #lzApp.rg-barB .lz-panel .lz-amount b{font-size:13px!important} }
+/* short landscape frames: info + sound on the stage, in a row under the logo */
+#lzApp.rg-barB .rg-icons.on-stage.tiny{flex-direction:row;top:clamp(40px,14vh,64px);right:auto;left:8px;bottom:auto}
+/* Popout S: the mode knob large enough for 12px labels */
+@media (max-height:330px){ #lzApp.rg-barB .rg-side:not(.in-col) .rg-modesw{zoom:.85} }
+
+/* phone: row 1 above the bar = the mode knob (without its small cost lines) + turbo + auto */
+#lzApp.rg-barB .rg-row1{display:flex;align-items:center;justify-content:center;gap:8px;flex:1 1 100%}
+#lzApp.rg-barB .rg-row1 .lz-quick{display:flex!important;flex-direction:row!important;gap:6px}
+#lzApp.rg-barB .rg-row1 .lz-quick button{width:44px!important;height:44px!important}
+@media (max-aspect-ratio:1/1){
+  #lzApp.rg-barB .rg-row1 .lz-modes small{display:none!important}
+  #lzApp.rg-barB .rg-row1 .lz-modes b{letter-spacing:.06em!important}
+}
+/* Popout S: the mode labels at least 12px */
+@media (max-height:330px){ .lz-app[data-game="retrograde"] .rg-side .lz-modes b{font-size:14px!important} }
+
+@media (max-aspect-ratio:1/1){
+  #lzApp.rg-barB .rg-row1 .rg-modesw{zoom:.78!important;padding:2px 10px}
+  #lzApp.rg-barB .rg-row1 .lz-modes button{min-height:57px!important;height:57px!important;max-height:none!important;display:flex!important;flex-direction:column;justify-content:center}
+  #lzApp.rg-barB .rg-bl{flex-direction:row;align-items:center}
+}
+
+/* the big-win titles kept decoded (see game.js: rg-warm): painted under everything, almost transparent */
+.rg-warm{position:absolute;inset:0;z-index:0;display:flex;flex-wrap:wrap;align-content:flex-start;overflow:hidden;opacity:.004;pointer-events:none}
+.rg-warm i{display:block;height:clamp(90px,calc(var(--m)*36),340px);aspect-ratio:1100/700;background:center/contain no-repeat}
+.rg-warm i[data-art="grand"]{background-image:url(assets/titles/grand.webp)}
+.rg-warm i[data-art="celestial"]{background-image:url(assets/titles/celestial.webp)}
+.rg-warm i[data-art="cosmic"]{background-image:url(assets/titles/cosmic.webp)}
+.rg-warm i[data-art="heavenly"]{background-image:url(assets/titles/heavenly.webp)}
+
+/* phones (2026-11-27): the room and the sky are big paintings. Their own layers (will-change) let the browser change
+   their filters (lamps, RETROGRADE, suspense) on the graphics card instead of repainting and re-decoding the painting,
+   which froze a phone mid-round; the lamp keyframes use fixed values so they can run there too */
+.rg-sky,.rg-room{will-change:transform,filter}
+
+/* ---- 2026-11-28: the mode knob and the buy plates always fit (Lidor: "the words come out, everything is cut") ----
+   The side is exactly as wide as its column; each label is one line in its own box, and game.js (fitSide) shrinks it
+   until it fits. In a narrow column (4:3 screens) the two plates stand one above the other. */
+#lzApp.rg-barB .rg-side.in-col{width:100%;max-width:100%;box-sizing:border-box;align-items:stretch}
+#lzApp.rg-barB .rg-side .rg-modesw{max-width:100%;box-sizing:border-box;min-width:0}
+#lzApp.rg-barB .rg-side.in-col .rg-modesw{width:100%;padding:4px 8px}
+.lz-app[data-game="retrograde"] .rg-side .lz-modes{width:100%;min-width:0;box-sizing:border-box}
+.lz-app[data-game="retrograde"] .rg-side .lz-modes button{min-width:0;overflow:hidden}
+.lz-app[data-game="retrograde"] .rg-side .lz-modes b,.lz-app[data-game="retrograde"] .rg-side .lz-modes small,
+#lzApp .rg-side .lz-feat span,#lzApp .rg-side .lz-feat small{display:block!important;max-width:100%;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:clip}
+#lzApp .rg-side .lz-feat{min-width:0}
+#lzApp.rg-barB .rg-side .lz-feats{min-width:0;max-width:100%}
+#lzApp.rg-barB .rg-side.in-col.stack .lz-feats:not([hidden]){flex-direction:column!important;align-items:center;gap:clamp(34px,6vh,52px)!important}
+#lzApp.rg-barB .rg-side.in-col.stack .lz-feat{flex:none!important;width:min(100%,240px)!important;max-width:none!important}
+/* 2026-11-28: the room for the emblem on the left of a buy plate is a share of the PLATE, not of the column: a % padding
+   is taken from the parent's width, which left "RETROGRADE" 44px on a phone. The plate is a size container and its labels
+   are placed in cqw (percent of the plate's own width). */
+#lzApp .rg-side .lz-feat[data-mode="eclipse"],#lzApp .rg-side .lz-feat[data-mode="retro"]{container-type:inline-size;padding:0!important}
+#lzApp .rg-side .lz-feat[data-mode="eclipse"] span,#lzApp .rg-side .lz-feat[data-mode="retro"] span,
+#lzApp .rg-side .lz-feat[data-mode="eclipse"] small,#lzApp .rg-side .lz-feat[data-mode="retro"] small{margin:0 7cqw 0 26cqw!important;width:67cqw;max-width:67cqw!important;text-align:center}
+/* a narrow column (4:3 screens, under 230px): the mode knob stands upright, ORRERY above the dial and STARGAZE below it */
+.lz-app[data-game="retrograde"] .rg-side.narrow .lz-modes{grid-template-columns:minmax(0,1fr)!important;grid-auto-rows:auto;justify-items:center;row-gap:4px}
+.lz-app[data-game="retrograde"] .rg-side.narrow .lz-modes::before,.lz-app[data-game="retrograde"] .rg-side.narrow .lz-modes::after{grid-row:2!important;grid-column:1!important;justify-self:center}
+.lz-app[data-game="retrograde"] .rg-side.narrow .lz-modes button[data-mode="base"]{grid-row:1!important;grid-column:1!important;align-items:center!important;text-align:center!important;width:100%}
+.lz-app[data-game="retrograde"] .rg-side.narrow .lz-modes button[data-mode="stargaze"]{grid-row:3!important;grid-column:1!important;align-items:center!important;text-align:center!important;width:100%}
+#lzApp.rg-barB .rg-side.narrow .rg-modesw{border-radius:18px}
+/* 2026-11-28: TOTAL WIN sits inside the plaque's blue enamel, below the sun crest (its letters ran under the sun's rays) */
+.rg-pl-in{top:40%!important;bottom:21%!important;gap:0!important}
+.rg-totcap{padding-bottom:calc(var(--k)*.3)!important;line-height:1!important}
+.rg-totcap::after{display:none}
+/* the caption and the amount are sized by the plaque itself (a size container), at every screen: the caption in the
+   enamel under the sun, the amount under it, both inside the frame */
+.rg-pl{container-type:size}
+.rg-pl-in{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;left:13%!important;right:13%!important}
+.rg-root .rg-totcap{position:static!important;font-size:clamp(7px,7.5cqh,18px)!important;letter-spacing:.2em!important;text-indent:.2em!important;white-space:nowrap;max-width:100%;overflow:hidden;margin:0!important}
+.rg-root .rg-total{font-size:clamp(12px,18cqh,58px)!important;max-width:100%}
+.rg-root[data-land="0"] .rg-totcap{font-size:clamp(7px,6.2cqh,14px)!important;letter-spacing:.14em!important;text-indent:.14em!important}
+.rg-root[data-land="0"] .rg-total{font-size:clamp(12px,15cqh,40px)!important}
+.rg-root[data-land="0"] .rg-pl-in{top:43%!important;bottom:22%!important}
+/* phone: the TOTAL WIN cartouche takes the whole width it is given (it was 80px wide on a 390px phone) */
+.rg-root[data-land="0"] .rg-plaque{display:flex;align-items:center;justify-content:center}
+.rg-root[data-land="0"] .rg-plq{width:100%!important}
+.rg-root[data-land="0"] .rg-pl{width:100%!important}
+/* a small cartouche (a phone's top strip): no room for two lines in the enamel; the amount alone, larger */
+@container (max-height: 72px){ .rg-root .rg-totcap{display:none!important} .rg-root .rg-total{font-size:clamp(12px,24cqh,40px)!important} }
+
+/* ---- 2026-11-28 independent review fixes ---- */
+/* 1. info + sound in the logo column, under the RTP line */
+#lzApp.rg-barB .rg-brand .rg-icons.in-brand{position:static!important;display:flex;flex-direction:row;gap:6px;margin-top:6px;pointer-events:auto}
+#lzApp.rg-barB .rg-brand .rg-icons.in-brand *{pointer-events:auto}
+/* 4. Popout S: the mode knob without its dark disc and without the small cost lines, so it does not sit on the wizard as a blot */
+@media (max-height:330px){
+  #lzApp.rg-barB .rg-side:not(.in-col) .rg-modesw{padding:0!important;zoom:.6!important}
+  .lz-app[data-game="retrograde"] .rg-side:not(.in-col) .lz-modes small{display:none!important}
+  .lz-app[data-game="retrograde"] .rg-side .lz-modes b{font-size:16px!important}
+}
+/* 9. during RETROGRADE / ECLIPSE there is nothing to switch: the mode knob leaves with the buy plates */
+.rg-root.retro ~ * .rg-modesw,#lzApp:has(.rg-root.retro) .rg-side .rg-modesw{visibility:hidden}
+/* 10. the "2.20x" line of the 2x-5x celebration readable over the medallions */
+.rg-big[data-tier="0"] .rg-big-x{font-size:clamp(12px,calc(var(--m)*3.4),22px)!important;font-weight:700;color:#fff3c4!important;background:rgba(3,5,16,.72);padding:.25em .7em;border-radius:999px}
+/* Popout S: ALIGNMENT tighter (its wide spacing made it bigger than the dial); the small mode knob keeps a dark backing so
+   it reads as a control and not as letters on the wizard's robe */
+.rg-root[data-small="1"] .rg-acap{letter-spacing:.12em!important;text-indent:.12em!important}
+@media (max-height:330px){ #lzApp.rg-barB .rg-side:not(.in-col) .rg-modesw{background:rgba(3,5,16,.82)!important;border-radius:14px!important;padding:4px 6px!important;border:1px solid rgba(185,139,57,.45)!important} }
+
+/* 2026-11-28: the confirm button (Begin) and the PLAY REPLAY button are the painted brass pill (art/ui2/button), not a CSS gradient */
+.lz-app[data-game="retrograde"] .lz-btns .lz-go,body.lz-is-replay #lzApp.rg-barB .lz-action{background:url(assets/ui/button.webp) center/100% 100% no-repeat!important;border:0!important;color:#ffe7a6!important;-webkit-text-fill-color:#ffe7a6!important;min-height:44px;padding-left:2.2em!important;padding-right:2.2em!important}
+/* the painted Begin button keeps the picture's own proportions (2.4:1) and its gold label reads on the enamel */
+.lz-app[data-game="retrograde"] .lz-btns .lz-go{aspect-ratio:2.4/1;height:auto!important;min-height:54px;font-weight:700!important;letter-spacing:.12em;font-size:15px!important}
+.lz-app[data-game="retrograde"] .lz-btns .lz-go,.lz-app[data-game="retrograde"] .lz-btns .lz-go *{color:#ffe7a6!important;-webkit-text-fill-color:#ffe7a6!important}
+/* the buy dialog lives outside .lz-app: the painted Begin button by id, no shell border around it, gold label */
+.lz-btns .lz-go{background:url(assets/ui/button.webp) center/100% 100% no-repeat!important;background-color:transparent!important;border:0!important;outline-offset:2px;aspect-ratio:2.4/1;height:auto!important;min-height:54px;font-weight:700!important;letter-spacing:.12em;font-size:15px!important;color:#ffe7a6!important;-webkit-text-fill-color:#ffe7a6!important}
+.lz-btns .lz-go *{color:#ffe7a6!important;-webkit-text-fill-color:#ffe7a6!important}
+
+/* 2026-11-28 (Lidor): the ORRERY / STARGAZE knob in the logo column, above the wizard */
+#lzApp.rg-barB .rg-brand .rg-modesw.in-brand{pointer-events:auto;margin-top:10px;width:max-content}
+#lzApp.rg-barB .rg-brand .rg-modesw.in-brand *{pointer-events:auto}
+
+/* TOTAL WIN in the logo column (landscape) */
+#lzApp.rg-barB .rg-brand .rg-plq.in-brand{pointer-events:none;margin-top:12px;max-width:none}
+/* the cartouche in the logo column sits outside .rg-root: its sizes and the RETROGRADE tint are given here too */
+.rg-plq.in-brand .rg-total{font-size:clamp(14px,18cqh,58px)!important;max-width:100%}
+.rg-plq.in-brand .rg-totcap{position:static!important;font-size:clamp(9px,7cqh,18px)!important;letter-spacing:.2em!important;text-indent:.2em!important;white-space:nowrap;max-width:100%;overflow:hidden;margin:0!important}
+#lzApp:has(.rg-root.retro) .rg-plq.in-brand .rg-pl::before{filter:sepia(.35) hue-rotate(-28deg) saturate(1.7) brightness(.95)}
+/* 2026-11-28 (Lidor, picture of the bar): in landscape the mode knob sits left of the minus and TOTAL WIN right of the
+   plus, inside the bar's centre group */
+#lzApp.rg-barB .rg-bc{display:flex!important;align-items:center;gap:clamp(10px,1.6vw,26px)}
+#lzApp.rg-barB .rg-bc .rg-modesw.in-bar{flex:none;margin:0;width:max-content}
+#lzApp.rg-barB .rg-bc .rg-plq.in-bar{flex:none;pointer-events:none;margin:0;max-width:none;align-self:center}
+.rg-plq.in-bar .rg-total{font-size:clamp(12px,18cqh,58px)!important;max-width:100%}
+.rg-plq.in-bar .rg-totcap{position:static!important;font-size:clamp(8px,7cqh,18px)!important;letter-spacing:.2em!important;text-indent:.2em!important;white-space:nowrap;max-width:100%;overflow:hidden;margin:0!important}
+#lzApp:has(.rg-root.retro) .rg-plq.in-bar .rg-pl::before{filter:sepia(.35) hue-rotate(-28deg) saturate(1.7) brightness(.95)}
+/* TOTAL WIN between the plus and turbo: centred in that space, standing on the bar's bottom edge, free to rise above it */
+#lzApp.rg-barB .rg-br{display:flex!important;align-items:flex-end}
+#lzApp.rg-barB .rg-br .rg-plq.in-bar{flex:none;margin:0 auto 4px auto;align-self:flex-end;pointer-events:none;max-width:none;position:relative;z-index:2}
+#lzApp.rg-barB .rg-br .lz-quick{align-self:center}
+/* landscape: a taller bar, so the mode knob and TOTAL WIN sit inside it and nothing is cut at the bottom (the board is
+   20% smaller to give the room) */
+@media (min-aspect-ratio:1/1) and (min-height:331px){
+  #lzApp.rg-barB .lz-panel{height:clamp(76px,13vh,132px)!important;align-items:center}
+  #lzApp.rg-barB .rg-br .rg-plq.in-bar{align-self:center;margin:0 auto}
+}
+/* landscape (Lidor 2026-11-28: "not in the black part, on the normal background"): the bar floats over the room, raised
+   off the bottom edge, with no black band; the stage runs to the bottom and game.js lays the board out above the bar */
+@media (min-aspect-ratio:1/1) and (min-height:331px){
+  #lzApp.rg-barB{grid-template-rows:0 minmax(0,1fr) 0!important;position:relative}
+  #lzApp.rg-barB .lz-panel{position:absolute!important;left:0;right:0;bottom:clamp(18px,6vh,64px);background:none!important;z-index:10}
+  #lzApp.rg-barB .lz-wallet b,#lzApp.rg-barB .lz-wallet .lz-lbl{text-shadow:0 1px 3px #000,0 0 10px rgba(0,0,0,.85)} /* station:ok one readability shadow: the balance now sits on the painted floor */
+}
+/* 2026-11-28 (Lidor: "make both bigger, a good share of the screen"): the buy plates fill the right column now that
+   TOTAL WIN moved into the bar; larger labels (fitSide still shrinks one that would not fit) */
+#lzApp.rg-barB .rg-side.in-col .lz-feat{max-width:none!important}
+#lzApp.rg-barB .rg-side.in-col.stack .lz-feat{width:min(100%,380px)!important}
+#lzApp.rg-barB .rg-side.in-col .lz-feats:not([hidden]){width:100%;justify-content:center}
+#lzApp .rg-side.in-col .lz-feat[data-mode="eclipse"] span,#lzApp .rg-side.in-col .lz-feat[data-mode="retro"] span{font-size:clamp(13px,2.6vh,26px)!important}
+#lzApp .rg-side.in-col .lz-feat[data-mode="eclipse"] small,#lzApp .rg-side.in-col .lz-feat[data-mode="retro"] small{font-size:clamp(12px,2.3vh,22px)!important}
+/* Lidor: "longer, reaching down": the plates keep their painted proportions (a taller plate distorted the art) and stand
+   further apart, reaching down towards the bar */
+#lzApp.rg-barB .rg-side.in-col.stack .lz-feats:not([hidden]){gap:clamp(44px,8vh,80px)!important}
