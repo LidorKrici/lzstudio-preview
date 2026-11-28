@@ -20,7 +20,7 @@
 @font-face{font-family:"Cabinet Grotesk";src:url("../assets/fonts/cabinet-grotesk.woff2") format("woff2");font-weight:100 900;font-display:swap}
 @font-face{font-family:"Martian Mono";src:url("../assets/fonts/martian-mono.woff2") format("woff2");font-weight:100 800;font-stretch:75% 112.5%;font-display:swap}
 </style>
-<link rel="stylesheet" href="../assets/site.css?v=4fd67144">
+<link rel="stylesheet" href="../assets/site.css?v=2ae6afc2">
 <script>document.documentElement.className='js'+(matchMedia('(prefers-reduced-motion: reduce)').matches?' reduce':'')+(matchMedia('(hover: hover) and (pointer: fine)').matches?' fine':' coarse');setTimeout(function(){var c=document.documentElement.classList;if(!c.contains('ready'))c.add('ready','failsafe')},6000);</script>
 </head>
 <body data-page="game" data-theme="ink">
@@ -130,7 +130,7 @@
 </main>
 
 <dialog class="demo" data-demo-dialog aria-label="HODL demo">
-  <div class="demo-bar"><span>HODL <i>Demo, play money</i></span><button type="button" data-demo-close>Close</button></div>
+  <div class="demo-bar"><span class="sr-only">HODL, demo, play money</span><button type="button" data-demo-close aria-label="Close the demo"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div>
   <iframe title="HODL demo" allow="autoplay; fullscreen" loading="lazy"></iframe>
 </dialog>
 <div class="curtain" data-curtain aria-hidden="true"><div class="curtain-count" data-count>0</div></div>
